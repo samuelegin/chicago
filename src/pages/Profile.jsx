@@ -147,10 +147,10 @@ export default function Profile() {
             <p className="mt-1 text-[11px] text-neutral-500 md:hidden">Drag the avatar left or right</p>
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 mb-3">
-              <p className="text-base font-semibold truncate">{profile.username}</p>
+            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-3 mb-3">
+              <p className="text-base font-semibold truncate text-center sm:text-left">{profile.username}</p>
               {!isOwnProfile ? (
-                <button className="text-xs font-semibold bg-primary text-white rounded-md px-4 py-1.5">
+                <button className="text-xs font-semibold bg-primary text-white rounded-md px-4 py-1.5 whitespace-nowrap">
                   Follow
                 </button>
               ) : null}

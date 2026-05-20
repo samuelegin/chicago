@@ -39,7 +39,7 @@ export default function MobileNav() {
   };
 
   return (
-    <nav className="lg:hidden shrink-0 bg-white border-t border-border z-50" aria-label="Mobile tab navigation">
+    <nav className="lg:hidden fixed bottom-0 inset-x-0 shrink-0 bg-white border-t border-border z-50" aria-label="Mobile tab navigation">
       <div
         className="flex items-center justify-around h-[70px] px-2"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
