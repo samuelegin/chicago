@@ -1,51 +1,94 @@
-const CACHE_NAME = 'chicago-social-cache-v1';
-const ASSETS_TO_CACHE = [
+// ─── bump this string on every deploy to force cache invalidation ────────────
+const CACHE_VERSION = 'v' + Date.now(); // auto-busts on every SW file change
+const CACHE_NAME = 'chicago-social-' + CACHE_VERSION;
+
+// Only pre-cache truly static assets that never change filename
+const PRECACHE_ASSETS = [
   '/',
-  '/index.html',
   '/manifest.json',
   '/logo.jpg',
-  '/download.webp',
-  '/download.jfif',
 ];
 
+// ─── Install: pre-cache shell assets only ────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(PRECACHE_ASSETS))
+      .then(() => self.skipWaiting()) // activate immediately, don't wait for old tabs to close
   );
-  self.skipWaiting();
 });
 
+// ─── Activate: delete ALL old caches immediately ─────────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) =>
-      Promise.all(
-        cacheNames
-          .filter((cacheName) => cacheName !== CACHE_NAME)
-          .map((cacheName) => caches.delete(cacheName))
+    caches.keys()
+      .then((cacheNames) =>
+        Promise.all(
+          cacheNames
+            .filter((name) => name !== CACHE_NAME)
+            .map((name) => {
+              console.log('[SW] Deleting old cache:', name);
+              return caches.delete(name);
+            })
+        )
       )
-    )
+      .then(() => self.clients.claim()) // take control of all open tabs immediately
   );
-  self.clients.claim();
 });
 
+// ─── Fetch strategy ──────────────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
+  const { request } = event;
 
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) return cachedResponse;
+  // Ignore non-GET and non-http(s) requests (chrome-extension://, etc.)
+  if (request.method !== 'GET') return;
+  if (!request.url.startsWith('http')) return;
 
-      return fetch(event.request)
+  const url = new URL(request.url);
+
+  // ── Vite hashed assets (JS/CSS with content hash in filename) ──
+  // These are safe to cache aggressively because the hash changes on rebuild.
+  // Pattern: /assets/index-AbCdEfGh.js  or  /assets/index-AbCdEfGh.css
+  if (url.pathname.startsWith('/assets/')) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(request);
+        if (cached) return cached;
+        const response = await fetch(request);
+        if (response.ok) cache.put(request, response.clone());
+        return response;
+      })
+    );
+    return;
+  }
+
+  // ── HTML navigation requests — always network-first ──
+  // This is the key fix: index.html must ALWAYS come from the network
+  // so the latest hashed asset filenames are picked up after a deploy.
+  if (request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html')) {
+    event.respondWith(
+      fetch(request)
         .then((response) => {
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
+          // Update the cache with the fresh HTML
+          if (response.ok) {
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
           }
-
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
           return response;
         })
-        .catch(() => caches.match('/index.html'));
-    })
+        .catch(() => caches.match('/')) // offline fallback
+    );
+    return;
+  }
+
+  // ── Everything else — network-first, cache as fallback ──
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        if (response.ok) {
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
+        }
+        return response;
+      })
+      .catch(() => caches.match(request))
   );
 });
