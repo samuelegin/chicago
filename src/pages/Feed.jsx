@@ -82,8 +82,8 @@ export default function Feed() {
     <div className="flex h-full overflow-hidden">
 
       {/* ── Centered feed column ── */}
-      <div className="flex-1 flex justify-center px-3 lg:px-4 py-5 overflow-x-hidden">
-        <div className="w-full max-w-[470px] space-y-3">
+      <div className="flex-1 flex justify-center px-2 sm:px-3 lg:px-4 py-5 overflow-hidden">
+        <div className="w-full max-w-[520px] space-y-3">
           <WhoToFollow users={topUsers} />
 
           <CreatePost

@@ -1,32 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import useWallet from '../../hooks/useWallet';
 import { Button } from '../ui/button';
-import { Download } from 'lucide-react';
 
 export default function MobileHeader() {
   const { address, connect, connecting } = useWallet();
-  const [installPrompt, setInstallPrompt] = useState(null);
-
-  useEffect(() => {
-    const handleBeforeInstall = (event) => {
-      event.preventDefault();
-      setInstallPrompt(event);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
-  }, []);
-
-  const handleInstallClick = async () => {
-    if (!installPrompt) return;
-    installPrompt.prompt();
-    const choice = await installPrompt.userChoice;
-    setInstallPrompt(null);
-    if (choice.outcome === 'accepted') {
-      console.log('PWA install accepted');
-    }
-  };
 
   const handleConnect = async () => {
     await connect();
@@ -42,28 +20,15 @@ export default function MobileHeader() {
           </span>
         </Link>
         <div className="flex items-center gap-4">
-          {installPrompt ? (
-            <Button
-              onClick={handleInstallClick}
-              variant="outline"
-              size="sm"
-              className="text-xs gap-2"
-              aria-label="Install Chicago app"
-            >
-              <Download className="w-4 h-4" />
-              Install
-            </Button>
-          ) : (
-            <Button
-              onClick={handleConnect}
-              disabled={connecting}
-              variant="outline"
-              size="sm"
-              className="text-xs"
-            >
-              {connecting ? 'Connecting...' : address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Connect Wallet'}
-            </Button>
-          )}
+          <Button
+            onClick={handleConnect}
+            disabled={connecting}
+            variant="outline"
+            size="sm"
+            className="text-xs"
+          >
+            {connecting ? 'Connecting...' : address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Connect Wallet'}
+          </Button>
         </div>
       </div>
     </header>
