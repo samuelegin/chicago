@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Newspaper, BarChart2, CircleUserRound, Layers, PenLine } from 'lucide-react';
+import { Newspaper, BarChart2, CircleUserRound, Layers, Megaphone } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const NAV = [
@@ -8,7 +8,7 @@ const NAV = [
   { path: '/leaderboard',   icon: BarChart2,       label: 'Leaderboard' },
   { path: '/profile',       icon: CircleUserRound, label: 'Profile'    },
   { path: '/staking',       icon: Layers,          label: 'Staking'    },
-  { path: '/?compose=true', icon: PenLine,         label: 'Compose'    },
+  { path: '/ads',           icon: Megaphone,       label: 'Marketplace' },
 ];
 
 export default function MobileNav() {
@@ -17,7 +17,7 @@ export default function MobileNav() {
   const pointerStart = useRef(null);
 
   const selectedIndex = NAV.findIndex(
-    ({ path }) => pathname === path || (path !== '/' && path !== '/?compose=true' && pathname.startsWith(path))
+    ({ path }) => pathname === path || (path !== '/' && pathname.startsWith(path))
   );
   const currentIndex = selectedIndex < 0 ? 0 : selectedIndex;
 
@@ -47,7 +47,7 @@ export default function MobileNav() {
         onPointerUp={handlePointerUp}
       >
         {NAV.map(({ path, icon: Icon, label }) => {
-          const active = pathname === path || (path !== '/' && path !== '/?compose=true' && pathname.startsWith(path));
+          const active = pathname === path || (path !== '/' && pathname.startsWith(path));
           return (
             <Link
               key={path}
