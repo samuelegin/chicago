@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { UserProfileService, PostService } from '@/api/services';
 import { useAuth } from '@/lib/AuthContext';
+import { useTheme } from 'next-themes';
 import { Loader2, Copy, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PostCard from '@/components/feed/PostCard';
@@ -44,6 +45,7 @@ export default function Profile() {
   const [dragBaseOffset, setDragBaseOffset] = useState(0);
   const [isMobile,       setIsMobile]       = useState(false);
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   const pathParts    = window.location.pathname.split('/');
   const viewUserId   = pathParts[2] || null;
@@ -149,11 +151,20 @@ export default function Profile() {
           <div className="flex-1 min-w-0">
             <div className="flex flex-col sm:flex-row items-center sm:items-center gap-3 mb-3">
               <p className="text-base font-semibold truncate text-center sm:text-left">{profile.username}</p>
-              {!isOwnProfile ? (
-                <button className="text-xs font-semibold bg-primary text-white rounded-md px-4 py-1.5 whitespace-nowrap">
-                  Follow
+              <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
+                {!isOwnProfile ? (
+                  <button className="text-xs font-semibold bg-primary text-white rounded-md px-4 py-1.5 whitespace-nowrap">
+                    Follow
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  className="text-xs font-semibold rounded-md border border-border/80 bg-white/90 px-4 py-1.5 text-foreground shadow-sm transition hover:bg-slate-100 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:bg-slate-800"
+                >
+                  {theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
                 </button>
-              ) : null}
+              </div>
             </div>
 
             {/* Stats row */}
