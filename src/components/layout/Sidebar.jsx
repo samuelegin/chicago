@@ -29,7 +29,7 @@ export default function Sidebar() {
   const profileActive = pathname === '/profile' || pathname.startsWith('/profile/');
 
   return (
-    <aside className="hidden lg:flex flex-col w-[244px] shrink-0 h-screen border-r border-border bg-white px-3 py-5">
+    <aside className="hidden lg:flex flex-col w-[244px] shrink-0 h-screen border-r border-border bg-card px-3 py-5">
       {/* Wordmark */}
       <Link to="/" className="px-3 py-3 mb-2 flex items-center gap-2">
         <img src="/logo.jpg" alt="Chicago logo" className="w-8 h-8 rounded-full object-cover shrink-0" />
@@ -48,8 +48,8 @@ export default function Sidebar() {
               to={path}
               className={`flex items-center gap-4 px-3 py-2.5 rounded-lg transition-colors ${
                 active
-                  ? 'font-semibold text-foreground bg-neutral-100'
-                  : 'font-normal text-foreground hover:bg-neutral-100'
+                  ? 'font-semibold text-foreground bg-muted'
+                  : 'font-normal text-foreground hover:bg-muted'
               }`}
             >
               <Icon strokeWidth={active ? 2.5 : 1.8} className="w-[22px] h-[22px] shrink-0" />
@@ -64,8 +64,8 @@ export default function Sidebar() {
         to="/profile"
         className={`flex items-center gap-4 px-3 py-2.5 rounded-lg transition-colors mt-1 ${
           profileActive
-            ? 'font-semibold text-foreground bg-neutral-100'
-            : 'font-normal text-foreground hover:bg-neutral-100'
+            ? 'font-semibold text-foreground bg-muted'
+            : 'font-normal text-foreground hover:bg-muted'
         }`}
       >
         <CircleUserRound strokeWidth={profileActive ? 2.5 : 1.8} className="w-[22px] h-[22px] shrink-0" />

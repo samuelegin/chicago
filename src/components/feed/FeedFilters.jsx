@@ -4,7 +4,7 @@ import { CATEGORIES } from '@/lib/constants';
 
 export default function FeedFilters({ activeCategory, onCategoryChange, sortBy, onSortChange }) {
   return (
-    <div className="bg-white border border-border rounded-xl overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+    <div className="bg-card border border-border rounded-xl overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
       {/* Sort tabs */}
       <div className="flex border-b border-border">
         {[
@@ -15,7 +15,7 @@ export default function FeedFilters({ activeCategory, onCategoryChange, sortBy, 
             key={value}
             onClick={() => onSortChange(value)}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold transition-colors relative ${
-              sortBy === value ? 'text-foreground' : 'text-neutral-400 hover:text-neutral-600'
+              sortBy === value ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <Icon
@@ -53,7 +53,7 @@ function Chip({ active, onClick, label }) {
       className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
         active
           ? 'text-white border-transparent bg-gradient-to-r from-amber-500 to-yellow-400 shadow-sm shadow-amber-200'
-          : 'bg-white text-neutral-500 border-border hover:border-amber-300 hover:text-amber-600'
+          : 'bg-transparent text-muted-foreground border-border hover:border-amber-500/50 hover:text-amber-600'
       }`}
     >
       {label}

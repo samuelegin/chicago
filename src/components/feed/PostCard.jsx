@@ -21,11 +21,11 @@ function Avatar({ name, avatar, rank, size = 40 }) {
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       {meta ? (
         <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${meta.gradient} shadow-md p-[2px]`}>
-          <div className="w-full h-full rounded-full bg-white p-[2px]">
-            <div className="w-full h-full rounded-full bg-neutral-100 overflow-hidden flex items-center justify-center">
+          <div className="w-full h-full rounded-full bg-card p-[2px]">
+            <div className="w-full h-full rounded-full bg-muted overflow-hidden flex items-center justify-center">
               {avatar
                 ? <img src={avatar} alt={name} className="w-full h-full object-cover" />
-                : <span className="font-bold text-neutral-500 select-none" style={{ fontSize: size * 0.38 }}>
+                : <span className="font-bold text-muted-foreground select-none" style={{ fontSize: size * 0.38 }}>
                     {(name || '?')[0].toUpperCase()}
                   </span>
               }
@@ -33,10 +33,10 @@ function Avatar({ name, avatar, rank, size = 40 }) {
           </div>
         </div>
       ) : (
-        <div className="w-full h-full rounded-full bg-neutral-100 overflow-hidden flex items-center justify-center border border-border">
+        <div className="w-full h-full rounded-full bg-muted overflow-hidden flex items-center justify-center border border-border">
           {avatar
             ? <img src={avatar} alt={name} className="w-full h-full object-cover" />
-            : <span className="font-bold text-neutral-400 select-none" style={{ fontSize: size * 0.38 }}>
+            : <span className="font-bold text-muted-foreground select-none" style={{ fontSize: size * 0.38 }}>
                 {(name || '?')[0].toUpperCase()}
               </span>
           }
@@ -115,14 +115,14 @@ export default function PostCard({ post, authorProfile, currentUserId }) {
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -2 }}
       transition={{ duration: 0.2 }}
-      className="relative bg-white border border-border rounded-xl overflow-visible"
+      className="relative bg-card border border-border rounded-xl overflow-visible"
       style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)', transition: 'box-shadow 0.2s ease' }}
       onMouseEnter={e => e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.08)'}
       onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'}
     >
       {/* Trending banner */}
       {isTrending && (
-        <div className="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-amber-50 to-yellow-50 border-b border-amber-100">
+        <div className="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-amber-500/10 to-yellow-400/10 border-b border-amber-500/20">
           <TrendingUp className="w-3 h-3 text-amber-500" strokeWidth={2.5} />
           <span className="text-[11px] font-bold text-amber-600 tracking-wide uppercase">TRENDIN TA</span>
         </div>
@@ -141,17 +141,17 @@ export default function PostCard({ post, authorProfile, currentUserId }) {
             </div>
             <div className="flex items-center gap-1.5 mt-0.5">
               {post.category && (
-                <span className="text-[11px] text-neutral-400 capitalize">{post.category}</span>
+                <span className="text-[11px] text-muted-foreground capitalize">{post.category}</span>
               )}
-              <span className="text-[11px] text-neutral-300">·</span>
-              <span className="text-[11px] text-neutral-400">
+              <span className="text-[11px] text-border">·</span>
+              <span className="text-[11px] text-muted-foreground">
                 {formatDistanceToNow(new Date(post.created_date || Date.now()), { addSuffix: true })}
               </span>
             </div>
           </div>
         </Link>
-        <button className="p-1.5 rounded-full hover:bg-neutral-100 transition-colors ml-2 shrink-0">
-          <MoreHorizontal className="w-4 h-4 text-neutral-400" strokeWidth={2} />
+        <button className="p-1.5 rounded-full hover:bg-muted transition-colors ml-2 shrink-0">
+          <MoreHorizontal className="w-4 h-4 text-muted-foreground" strokeWidth={2} />
         </button>
       </div>
 
@@ -206,7 +206,7 @@ export default function PostCard({ post, authorProfile, currentUserId }) {
       )}
 
       {/* Divider */}
-      <div className="mx-4 border-t border-neutral-50" />
+      <div className="mx-4 border-t border-border" />
 
       {/* Action bar */}
       <div className="px-3 py-2 flex items-center gap-1">
@@ -214,16 +214,16 @@ export default function PostCard({ post, authorProfile, currentUserId }) {
         <motion.button
           whileTap={{ scale: 0.8 }}
           onClick={like}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition-colors group"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors group"
         >
           <motion.div animate={liked ? { scale: [1, 1.4, 1] } : {}} transition={{ duration: 0.3 }}>
             <Heart
               strokeWidth={liked ? 0 : 1.8}
-              className={`w-5 h-5 transition-all ${liked ? 'fill-red-500 text-red-500' : 'text-neutral-400 group-hover:text-red-400'}`}
+              className={`w-5 h-5 transition-all ${liked ? 'fill-red-500 text-red-500' : 'text-muted-foreground group-hover:text-red-400'}`}
             />
           </motion.div>
           {localLikes > 0 && (
-            <span className={`text-[12px] font-semibold ${liked ? 'text-red-500' : 'text-neutral-400'}`}>
+            <span className={`text-[12px] font-semibold ${liked ? 'text-red-500' : 'text-muted-foreground'}`}>
               {localLikes.toLocaleString()}
             </span>
           )}
@@ -233,7 +233,7 @@ export default function PostCard({ post, authorProfile, currentUserId }) {
         <button
           onClick={() => setShowComments(prev => !prev)}
           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors ${
-            showComments ? 'bg-blue-50 text-blue-600' : 'hover:bg-blue-50 text-neutral-600'
+            showComments ? 'bg-blue-500/10 text-blue-500' : 'hover:bg-blue-500/10 text-muted-foreground'
           }`}
         >
           <MessageCircle strokeWidth={1.8} className="w-5 h-5" />
@@ -247,9 +247,9 @@ export default function PostCard({ post, authorProfile, currentUserId }) {
           whileTap={{ scale: 0.8 }}
           onClick={handleShare}
           aria-label="Share post"
-          className="ml-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-green-50 transition-colors group"
+          className="ml-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-green-500/10 transition-colors group"
         >
-          <Share2 strokeWidth={1.8} className="w-5 h-5 text-neutral-400 group-hover:text-green-400" />
+          <Share2 strokeWidth={1.8} className="w-5 h-5 text-muted-foreground group-hover:text-green-400" />
         </motion.button>
       </div>
 
@@ -268,29 +268,29 @@ export default function PostCard({ post, authorProfile, currentUserId }) {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', stiffness: 260, damping: 29 }}
-              className="absolute inset-x-0 bottom-0 top-16 rounded-t-3xl border border-border bg-white shadow-2xl overflow-hidden"
+              className="absolute inset-x-0 bottom-0 top-16 rounded-t-3xl border border-border bg-card shadow-2xl overflow-hidden"
             >
-              <div className="flex items-center gap-3 px-4 py-4 border-b border-border bg-white">
+              <div className="flex items-center gap-3 px-4 py-4 border-b border-border bg-card">
                 <button
                   onClick={() => setShowComments(false)}
-                  className="rounded-full bg-neutral-100 px-3 py-1 text-sm font-semibold text-neutral-700 hover:bg-neutral-200"
+                  className="rounded-full bg-muted px-3 py-1 text-sm font-semibold text-foreground hover:bg-muted/80"
                 >
                   Back
                 </button>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold">Comments</p>
-                  <p className="text-[11px] text-neutral-500 truncate">{post.comments_count} total</p>
+                  <p className="text-[11px] text-muted-foreground truncate">{post.comments_count} total</p>
                 </div>
               </div>
-              <div className="h-[calc(100vh-6.5rem)] overflow-y-auto divide-y divide-border bg-white">
+              <div className="h-[calc(100vh-6.5rem)] overflow-y-auto divide-y divide-border bg-card">
                 {comments.length === 0 ? (
-                  <div className="px-4 py-5 text-sm text-neutral-500">No comments yet.</div>
+                  <div className="px-4 py-5 text-sm text-muted-foreground">No comments yet.</div>
                 ) : (
                   comments.map(comment => (
                     <div key={comment.id} className="px-4 py-4">
                       <p className="text-[13px] leading-snug">
                         <span className="font-semibold text-foreground">{comment.author_name}</span>{' '}
-                        <span className="text-neutral-600">{comment.content}</span>
+                        <span className="text-muted-foreground">{comment.content}</span>
                       </p>
                     </div>
                   ))

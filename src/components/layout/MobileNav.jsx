@@ -39,7 +39,7 @@ export default function MobileNav() {
   };
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-border" aria-label="Mobile tab navigation">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border" aria-label="Mobile tab navigation">
       <div
         className="flex items-center justify-around h-[82px] px-2 max-w-full"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
@@ -54,13 +54,13 @@ export default function MobileNav() {
               to={path}
               aria-label={`Navigate to ${label}`}
               title={label}
-              className="relative flex flex-col items-center justify-center w-16 text-[10px] text-neutral-500"
+              className="relative flex flex-col items-center justify-center w-16 text-[10px] text-muted-foreground"
             >
               <Icon
                 strokeWidth={active ? 2.5 : 1.8}
-                className={`w-[22px] h-[22px] transition-colors ${active ? 'text-amber-500' : 'text-neutral-400'}`}
+                className={`w-[22px] h-[22px] transition-colors ${active ? 'text-amber-500' : 'text-muted-foreground'}`}
               />
-              <span className={`mt-1 transition-colors ${active ? 'text-amber-500 font-semibold' : 'text-neutral-500'}`}>
+              <span className={`mt-1 transition-colors ${active ? 'text-amber-500 font-semibold' : 'text-muted-foreground'}`}>
                 {label}
               </span>
               {active && (

@@ -8,7 +8,7 @@ import { STAKING_TIERS, DURATION_BONUSES, CIS_WEIGHTS } from '@/lib/constants';
 function InfoRow({ label, value, highlight }) {
   return (
     <div className="flex items-center justify-between py-2 border-b border-border last:border-0">
-      <span className="text-sm text-neutral-500">{label}</span>
+      <span className="text-sm text-muted-foreground">{label}</span>
       <span className={`text-sm font-semibold ${highlight ? 'text-primary' : 'text-foreground'}`}>{value}</span>
     </div>
   );
@@ -38,9 +38,9 @@ export default function Staking() {
     <div className="max-w-[600px] mx-auto px-4 py-6 space-y-3">
 
       {/* Header */}
-      <div className="bg-white border border-border rounded-sm px-5 py-4">
+      <div className="bg-card border border-border rounded-sm px-5 py-4">
         <h1 className="text-base font-semibold">CLT Staking</h1>
-        <p className="text-xs text-neutral-500 mt-0.5">
+        <p className="text-xs text-muted-foreground mt-0.5">
           Lock CLT tokens to boost your Influence Score and unlock rank tiers
         </p>
       </div>
@@ -49,8 +49,8 @@ export default function Staking() {
       {profile ? (
         <StakingPanel profile={profile} onStakeUpdate={() => setProfile(p => ({ ...p }))} />
       ) : (
-        <div className="bg-white border border-border rounded-sm flex justify-center py-12">
-          <Loader2 className="w-5 h-5 animate-spin text-neutral-300" />
+        <div className="bg-card border border-border rounded-sm flex justify-center py-12">
+          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
         </div>
       )}
 
@@ -58,8 +58,8 @@ export default function Staking() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
         {/* Amount boosts */}
-        <div className="bg-white border border-border rounded-sm px-4 py-3">
-          <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Amount Boosts</p>
+        <div className="bg-card border border-border rounded-sm px-4 py-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Amount Boosts</p>
           {STAKING_TIERS.map(t => (
             <InfoRow
               key={t.min}
@@ -71,8 +71,8 @@ export default function Staking() {
         </div>
 
         {/* Duration bonuses */}
-        <div className="bg-white border border-border rounded-sm px-4 py-3">
-          <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Duration Bonuses</p>
+        <div className="bg-card border border-border rounded-sm px-4 py-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Duration Bonuses</p>
           {DURATION_BONUSES.filter(d => d.days > 0).map(d => (
             <InfoRow
               key={d.days}
@@ -84,24 +84,24 @@ export default function Staking() {
         </div>
 
         {/* CIS weights */}
-        <div className="bg-white border border-border rounded-sm px-4 py-3">
-          <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Score Weights</p>
+        <div className="bg-card border border-border rounded-sm px-4 py-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Score Weights</p>
           <InfoRow label="Social reputation"   value={`${CIS_WEIGHTS.social * 100}%`} />
           <InfoRow label="Staking power"       value={`${CIS_WEIGHTS.staking * 100}%`} highlight />
           <InfoRow label="Consistency"         value={`${CIS_WEIGHTS.consistency * 100}%`} />
-          <p className="text-[11px] text-neutral-400 mt-2">Content quality always outweighs token holdings</p>
+          <p className="text-[11px] text-muted-foreground mt-2">Content quality always outweighs token holdings</p>
         </div>
 
         {/* Rules */}
-        <div className="bg-white border border-border rounded-sm px-4 py-3">
-          <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Rules</p>
+        <div className="bg-card border border-border rounded-sm px-4 py-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Rules</p>
           {[
             'Boost activates after 7-day minimum',
             'Early unstake removes multiplier',
             'Stake → unstake cycling is penalized',
             'Full bonus only on completed locks',
           ].map((r, i) => (
-            <div key={i} className="py-2 border-b border-border last:border-0 text-sm text-neutral-600">{r}</div>
+            <div key={i} className="py-2 border-b border-border last:border-0 text-sm text-muted-foreground">{r}</div>
           ))}
         </div>
       </div>

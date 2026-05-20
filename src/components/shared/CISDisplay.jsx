@@ -14,14 +14,14 @@ export default function CISDisplay({ score = 0 }) {
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between items-center text-xs">
-        <span className="text-neutral-500">Influence Score</span>
+        <span className="text-muted-foreground">Influence Score</span>
         <span className="font-semibold text-foreground">{score.toLocaleString()}</span>
       </div>
-      <div className="h-1 rounded-full bg-neutral-100 overflow-hidden">
+      <div className="h-1 rounded-full bg-muted overflow-hidden">
         <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${pct}%` }} />
       </div>
       {next && (
-        <div className="flex justify-between text-[10px] text-neutral-400">
+        <div className="flex justify-between text-[10px] text-muted-foreground">
           <span>{cfg.label}</span>
           <span>{next.label} · {next.minScore.toLocaleString()}</span>
         </div>

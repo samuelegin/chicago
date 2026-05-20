@@ -14,8 +14,8 @@ export default function WhoToFollow({ users = [] }) {
   if (users.length === 0) return null;
 
   return (
-    <div className="bg-white border border-border rounded-xl px-4 py-3.5" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-      <p className="text-[11px] font-bold text-neutral-400 tracking-wider uppercase mb-3">Who to Follow</p>
+    <div className="bg-card border border-border rounded-xl px-4 py-3.5" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+      <p className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase mb-3">Who to Follow</p>
       <div className="flex gap-4 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
         {users.slice(0, 8).map((user) => {
           const ring = RANK_RING[user.rank];
@@ -24,20 +24,20 @@ export default function WhoToFollow({ users = [] }) {
               <Link to={`/profile/${user.user_id}`} className="relative">
                 {ring ? (
                   <div className={`rounded-full bg-gradient-to-br ${ring} p-[2px] shadow-sm`}>
-                    <div className="rounded-full bg-white p-[2px]">
-                      <div className="w-11 h-11 rounded-full bg-neutral-100 overflow-hidden flex items-center justify-center">
+                    <div className="rounded-full bg-card p-[2px]">
+                      <div className="w-11 h-11 rounded-full bg-muted overflow-hidden flex items-center justify-center">
                         {user.avatar_url
                           ? <img src={user.avatar_url} alt={user.username} className="w-full h-full object-cover" />
-                          : <span className="text-sm font-bold text-neutral-400">{(user.username || '?')[0].toUpperCase()}</span>
+                          : <span className="text-sm font-bold text-muted-foreground">{(user.username || '?')[0].toUpperCase()}</span>
                         }
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="w-11 h-11 rounded-full bg-neutral-100 border border-border overflow-hidden flex items-center justify-center">
+                  <div className="w-11 h-11 rounded-full bg-muted border border-border overflow-hidden flex items-center justify-center">
                     {user.avatar_url
                       ? <img src={user.avatar_url} alt={user.username} className="w-full h-full object-cover" />
-                      : <span className="text-sm font-bold text-neutral-400">{(user.username || '?')[0].toUpperCase()}</span>
+                      : <span className="text-sm font-bold text-muted-foreground">{(user.username || '?')[0].toUpperCase()}</span>
                     }
                   </div>
                 )}

@@ -15,11 +15,11 @@ import { toast } from 'sonner';
 
 function Avatar({ name, avatar, size = 80 }) {
   return (
-    <div className="rounded-full bg-neutral-200 overflow-hidden shrink-0 flex items-center justify-center"
+    <div className="rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center"
          style={{ width: size, height: size }}>
       {avatar
         ? <img src={avatar} alt={name} className="w-full h-full object-cover" />
-        : <span className="font-semibold text-neutral-400 select-none" style={{ fontSize: size * 0.36 }}>
+        : <span className="font-semibold text-muted-foreground select-none" style={{ fontSize: size * 0.36 }}>
             {(name || '?')[0].toUpperCase()}
           </span>
       }
@@ -31,7 +31,7 @@ function StatCol({ value, label }) {
   return (
     <div className="flex flex-col items-center gap-0.5">
       <span className="text-sm font-semibold text-foreground">{value}</span>
-      <span className="text-xs text-neutral-500">{label}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
     </div>
   );
 }
@@ -108,7 +108,7 @@ export default function Profile() {
 
   if (!profile) return (
     <div className="flex justify-center py-24">
-      <Loader2 className="w-5 h-5 animate-spin text-neutral-300" />
+      <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
     </div>
   );
 
@@ -123,7 +123,7 @@ export default function Profile() {
     <div className="max-w-[720px] mx-auto px-4 py-6 space-y-6">
 
       {/* Profile card */}
-      <div className="relative overflow-hidden rounded-[28px] border border-border/70 bg-gradient-to-br from-slate-50 via-white to-sky-50 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+      <div className="relative overflow-hidden rounded-[28px] border border-border/70 bg-gradient-to-br from-primary/5 via-card to-primary/5 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.08)]">
         <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-sky-300/20 blur-3xl" />
         <div className="absolute -left-16 bottom-10 h-36 w-36 rounded-full bg-violet-200/20 blur-3xl" />
 
@@ -131,7 +131,7 @@ export default function Profile() {
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between mb-6">
           <div className="flex flex-col items-center gap-2 md:items-start">
             <div
-              className="story-ring overflow-hidden rounded-full border border-border/70 bg-white p-1 shadow-sm touch-pan-y"
+              className="story-ring overflow-hidden rounded-full border border-border/70 bg-card p-1 shadow-sm touch-pan-y"
               style={{
                 transform: `translateX(${avatarOffset}px)`,
                 transition: dragStartX === null ? 'transform 0.25s ease-out' : 'none',
@@ -146,7 +146,7 @@ export default function Profile() {
                 <Avatar name={profile.username} avatar={profile.avatar_url} size={80} />
               </div>
             </div>
-            <p className="mt-1 text-[11px] text-neutral-500 md:hidden">Drag the avatar left or right</p>
+            <p className="mt-1 text-[11px] text-muted-foreground md:hidden">Drag the avatar left or right</p>
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex flex-col sm:flex-row items-center sm:items-center gap-3 mb-3">
@@ -168,7 +168,7 @@ export default function Profile() {
             </div>
 
             {/* Stats row */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 bg-white/80 rounded-3xl border border-border/70 p-4 shadow-inner">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 bg-card/80 rounded-3xl border border-border/70 p-4 shadow-inner">
               <StatCol value={(profile.posts_count || 0).toLocaleString()}     label="posts"     />
               <StatCol value={(profile.followers_count || 0).toLocaleString()} label="followers" />
               <StatCol value={(profile.following_count || 0).toLocaleString()} label="following" />
@@ -186,7 +186,7 @@ export default function Profile() {
           </div>
           {profile.bio && <p className="text-sm text-foreground leading-relaxed">{profile.bio}</p>}
           {profile.wallet_address && (
-            <button onClick={handleCopy} className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-white/90 px-4 py-2 text-xs font-medium text-neutral-600 shadow-sm transition hover:bg-slate-100">
+            <button onClick={handleCopy} className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/90 px-4 py-2 text-xs font-medium text-muted-foreground shadow-sm transition hover:bg-muted">
               <span className="font-mono">{truncateWallet(profile.wallet_address)}</span>
               {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
             </button>
@@ -200,8 +200,8 @@ export default function Profile() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white/90 border border-border/70 rounded-[28px] overflow-hidden shadow-sm">
-        <div className="flex gap-2 p-3 bg-slate-50">
+      <div className="bg-card/90 border border-border/70 rounded-[28px] overflow-hidden shadow-sm">
+        <div className="flex gap-2 p-3 bg-muted/50">
           {TABS.map(t => (
             <button
               key={t.value}
@@ -209,7 +209,7 @@ export default function Profile() {
               className={`flex-1 rounded-full px-4 py-2 text-xs font-semibold transition-all ${
                 activeTab === t.value
                   ? 'bg-foreground text-white shadow-sm'
-                  : 'text-neutral-500 hover:bg-white hover:text-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               }`}
             >
               {t.label}
@@ -222,7 +222,7 @@ export default function Profile() {
             {userPosts.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-sm font-semibold">No posts yet</p>
-                <p className="text-xs text-neutral-400 mt-1">Share something with the community</p>
+                <p className="text-xs text-muted-foreground mt-1">Share something with the community</p>
               </div>
             ) : (
               <div className="space-y-4 px-3 py-4">

@@ -9,9 +9,9 @@ const TABS = ['Users', 'Posts', 'Ads'];
 
 function StatCard({ label, value }) {
   return (
-    <div className="bg-white border border-border rounded-sm px-4 py-3 text-center">
+    <div className="bg-card border border-border rounded-sm px-4 py-3 text-center">
       <p className="text-xl font-semibold text-foreground">{value}</p>
-      <p className="text-xs text-neutral-500 mt-0.5">{label}</p>
+      <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
     </div>
   );
 }
@@ -32,7 +32,7 @@ export default function Admin() {
   if (user?.role !== 'admin') return (
     <div className="flex flex-col items-center justify-center py-24 gap-3">
       <p className="text-sm font-semibold">Admin access required</p>
-      <p className="text-xs text-neutral-500">Contact the platform owner to request access</p>
+      <p className="text-xs text-muted-foreground">Contact the platform owner to request access</p>
     </div>
   );
 
@@ -42,9 +42,9 @@ export default function Admin() {
     <div className="max-w-[700px] mx-auto px-4 py-6 space-y-4">
 
       {/* Header */}
-      <div className="bg-white border border-border rounded-sm px-4 py-3">
+      <div className="bg-card border border-border rounded-sm px-4 py-3">
         <h1 className="text-base font-semibold">Admin Panel</h1>
-        <p className="text-xs text-neutral-500 mt-0.5">Manage users, content and campaigns</p>
+        <p className="text-xs text-muted-foreground mt-0.5">Manage users, content and campaigns</p>
       </div>
 
       {/* Stats */}
@@ -56,7 +56,7 @@ export default function Admin() {
       </div>
 
       {/* Tabs + content */}
-      <div className="bg-white border border-border rounded-sm overflow-hidden">
+      <div className="bg-card border border-border rounded-sm overflow-hidden">
         <div className="flex border-b border-border">
           {TABS.map(t => (
             <button
@@ -65,7 +65,7 @@ export default function Admin() {
               className={`flex-1 py-2.5 text-xs font-semibold tracking-wider uppercase transition-colors ${
                 tab === t
                   ? 'text-foreground border-b-2 border-foreground -mb-px'
-                  : 'text-neutral-400 hover:text-neutral-600'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {t}
@@ -75,7 +75,7 @@ export default function Admin() {
 
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-5 h-5 animate-spin text-neutral-300" />
+            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
           </div>
         ) : (
           <>
@@ -84,26 +84,26 @@ export default function Admin() {
               <div className="divide-y divide-border">
                 {users.map(u => (
                   <div key={u.id} className="flex items-center gap-3 px-4 py-3">
-                    <div className="w-8 h-8 rounded-full bg-neutral-200 flex items-center justify-center shrink-0">
-                      <span className="text-xs font-semibold text-neutral-500">{(u.username || '?')[0].toUpperCase()}</span>
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                      <span className="text-xs font-semibold text-muted-foreground">{(u.username || '?')[0].toUpperCase()}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold truncate">{u.username}</p>
-                        {u.is_banned && <span className="text-[10px] font-semibold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full">Banned</span>}
+                        {u.is_banned && <span className="text-[10px] font-semibold text-red-500 bg-red-500/10 border border-red-500/30 px-1.5 py-0.5 rounded-full">Banned</span>}
                       </div>
-                      <p className="text-[11px] text-neutral-400">CIS {u.cis_score || 0} · Posts {u.posts_count || 0}</p>
+                      <p className="text-[11px] text-muted-foreground">CIS {u.cis_score || 0} · Posts {u.posts_count || 0}</p>
                     </div>
                     <button
                       onClick={() => banUser.mutate({ id: u.id, banned: !u.is_banned })}
-                      className={`text-xs font-semibold border border-border rounded px-2.5 py-1 hover:bg-neutral-50 flex items-center gap-1 transition-colors ${u.is_banned ? 'text-foreground' : 'text-red-600 border-red-200 hover:bg-red-50'}`}
+                      className={`text-xs font-semibold border border-border rounded px-2.5 py-1 hover:bg-muted flex items-center gap-1 transition-colors ${u.is_banned ? 'text-foreground' : 'text-red-600 border-red-500/30 hover:bg-red-500/10'}`}
                     >
                       <Ban className="w-3 h-3" />
                       {u.is_banned ? 'Unban' : 'Ban'}
                     </button>
                   </div>
                 ))}
-                {users.length === 0 && <p className="text-sm text-neutral-400 text-center py-12">No users</p>}
+                {users.length === 0 && <p className="text-sm text-muted-foreground text-center py-12">No users</p>}
               </div>
             )}
 
@@ -116,20 +116,20 @@ export default function Admin() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-semibold">{post.author_name || 'Anonymous'}</p>
                         {post.is_flagged && (
-                          <span className="text-[10px] font-semibold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full">Flagged</span>
+                          <span className="text-[10px] font-semibold text-red-500 bg-red-500/10 border border-red-500/30 px-1.5 py-0.5 rounded-full">Flagged</span>
                         )}
                       </div>
-                      <p className="text-xs text-neutral-500 line-clamp-2 mt-0.5">{post.content}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{post.content}</p>
                     </div>
                     <button
                       onClick={() => delPost.mutate(post.id)}
-                      className="shrink-0 p-1.5 text-neutral-400 hover:text-red-500 transition-colors rounded"
+                      className="shrink-0 p-1.5 text-muted-foreground hover:text-red-500 transition-colors rounded"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
-                {posts.length === 0 && <p className="text-sm text-neutral-400 text-center py-12">No posts</p>}
+                {posts.length === 0 && <p className="text-sm text-muted-foreground text-center py-12">No posts</p>}
               </div>
             )}
 
@@ -142,12 +142,12 @@ export default function Admin() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-semibold">{ad.project_name}</p>
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${
-                          ad.status === 'pending'  ? 'text-amber-600 bg-amber-50 border-amber-200' :
-                          ad.status === 'approved' || ad.status === 'active' ? 'text-green-600 bg-green-50 border-green-200' :
-                          'text-red-600 bg-red-50 border-red-200'
+                          ad.status === 'pending'  ? 'text-amber-600 bg-amber-500/10 border-amber-500/30' :
+                          ad.status === 'approved' || ad.status === 'active' ? 'text-green-600 bg-green-500/10 border-green-500/30' :
+                          'text-red-500 bg-red-500/10 border-red-500/30'
                         }`}>{ad.status}</span>
                       </div>
-                      <p className="text-[11px] text-neutral-400 mt-0.5">
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
                         {ad.duration_days}d · {ad.placement} · {ad.payment_amount} {(ad.payment_type || '').toUpperCase()}
                       </p>
                     </div>
@@ -155,13 +155,13 @@ export default function Admin() {
                       <div className="flex gap-1.5 shrink-0">
                         <button
                           onClick={() => updateAd.mutate({ id: ad.id, status: 'approved' })}
-                          className="flex items-center gap-1 text-xs font-semibold text-green-600 border border-green-200 bg-green-50 hover:bg-green-100 rounded px-2 py-1 transition-colors"
+                          className="flex items-center gap-1 text-xs font-semibold text-green-600 border border-green-500/30 bg-green-500/10 hover:bg-green-500/20 rounded px-2 py-1 transition-colors"
                         >
                           <CheckCircle className="w-3 h-3" /> Approve
                         </button>
                         <button
                           onClick={() => updateAd.mutate({ id: ad.id, status: 'rejected' })}
-                          className="flex items-center gap-1 text-xs font-semibold text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 rounded px-2 py-1 transition-colors"
+                          className="flex items-center gap-1 text-xs font-semibold text-red-600 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 rounded px-2 py-1 transition-colors"
                         >
                           <XCircle className="w-3 h-3" /> Reject
                         </button>
@@ -169,7 +169,7 @@ export default function Admin() {
                     )}
                   </div>
                 ))}
-                {ads.length === 0 && <p className="text-sm text-neutral-400 text-center py-12">No ad campaigns</p>}
+                {ads.length === 0 && <p className="text-sm text-muted-foreground text-center py-12">No ad campaigns</p>}
               </div>
             )}
           </>

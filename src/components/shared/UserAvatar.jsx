@@ -5,11 +5,11 @@ export default function UserAvatar({ name, avatar, size = 'md', noRing = false }
   const fs = Math.round(px * 0.36);
 
   const img = (
-    <div className="rounded-full bg-neutral-200 overflow-hidden shrink-0 flex items-center justify-center"
+    <div className="rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center"
          style={{ width: px, height: px }}>
       {avatar
         ? <img src={avatar} alt={name} className="w-full h-full object-cover" />
-        : <span className="font-semibold text-neutral-500 select-none" style={{ fontSize: fs }}>
+        : <span className="font-semibold text-muted-foreground select-none" style={{ fontSize: fs }}>
             {(name || '?')[0].toUpperCase()}
           </span>
       }

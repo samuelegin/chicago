@@ -6,10 +6,10 @@ import { CATEGORIES } from '@/lib/constants';
 
 function Avatar({ name, avatar }) {
   return (
-    <div className="w-9 h-9 rounded-full bg-neutral-100 border border-border overflow-hidden shrink-0 flex items-center justify-center">
+    <div className="w-9 h-9 rounded-full bg-muted border border-border overflow-hidden shrink-0 flex items-center justify-center">
       {avatar
         ? <img src={avatar} alt={name} className="w-full h-full object-cover" />
-        : <span className="text-sm font-bold text-neutral-400">{(name || '?')[0].toUpperCase()}</span>
+        : <span className="text-sm font-bold text-muted-foreground">{(name || '?')[0].toUpperCase()}</span>
       }
     </div>
   );
@@ -64,7 +64,7 @@ export default function CreatePost({ userProfile, onPostCreated }) {
 
   return (
     <div
-      className={`bg-white border rounded-xl px-4 py-3.5 transition-all duration-200 ${
+      className={`bg-card border rounded-xl px-4 py-3.5 transition-all duration-200 ${
         focused ? 'border-amber-300 shadow-md shadow-amber-100' : 'border-border'
       }`}
       style={{ boxShadow: focused ? '0 4px 20px rgba(245,158,11,0.1)' : '0 1px 4px rgba(0,0,0,0.04)' }}
@@ -78,7 +78,7 @@ export default function CreatePost({ userProfile, onPostCreated }) {
             value={content}
             onChange={e => setContent(e.target.value)}
             onFocus={() => setFocused(true)}
-            className="w-full resize-none text-[14px] text-foreground placeholder:text-neutral-400 focus:outline-none bg-transparent leading-relaxed"
+            className="w-full resize-none text-[14px] text-foreground placeholder:text-muted-foreground focus:outline-none bg-transparent leading-relaxed"
           />
 
           {imgPreview && (
@@ -105,7 +105,7 @@ export default function CreatePost({ userProfile, onPostCreated }) {
                   />
                   {i > 1 && (
                     <button onClick={() => setPollOptions(pollOptions.filter((_, j) => j !== i))}>
-                      <X className="w-4 h-4 text-neutral-400 hover:text-neutral-600" />
+                      <X className="w-4 h-4 text-muted-foreground hover:text-foreground" />
                     </button>
                   )}
                 </div>
@@ -129,18 +129,18 @@ export default function CreatePost({ userProfile, onPostCreated }) {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="flex items-center mt-3 pt-3 border-t border-neutral-100 gap-2">
+            <div className="flex items-center mt-3 pt-3 border-t border-border gap-2">
               <select
                 value={category}
                 onChange={e => setCategory(e.target.value)}
-                className="text-xs text-neutral-500 border-none bg-transparent focus:outline-none cursor-pointer font-medium"
+                className="text-xs text-muted-foreground border-none bg-transparent focus:outline-none cursor-pointer font-medium"
               >
                 {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
 
               <button
                 onClick={() => fileRef.current?.click()}
-                className="ml-auto p-1.5 rounded-lg text-neutral-400 hover:text-amber-500 hover:bg-amber-50 transition-colors"
+                className="ml-auto p-1.5 rounded-lg text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 transition-colors"
               >
                 <Image strokeWidth={1.8} className="w-4 h-4" />
               </button>
@@ -148,8 +148,8 @@ export default function CreatePost({ userProfile, onPostCreated }) {
                 onClick={() => setPostType(t => t === 'poll' ? 'text' : 'poll')}
                 className={`p-1.5 rounded-lg transition-colors ${
                   postType === 'poll'
-                    ? 'text-amber-500 bg-amber-50'
-                    : 'text-neutral-400 hover:text-amber-500 hover:bg-amber-50'
+                    ? 'text-amber-500 bg-amber-500/10'
+                    : 'text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10'
                 }`}
               >
                 <BarChart3 strokeWidth={1.8} className="w-4 h-4" />

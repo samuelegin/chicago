@@ -10,23 +10,23 @@ import { motion } from 'framer-motion';
 
 function SkeletonCard() {
   return (
-    <div className="bg-white border border-border rounded-xl p-4 space-y-3 animate-pulse">
+    <div className="bg-card border border-border rounded-xl p-4 space-y-3 animate-pulse">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-neutral-100" />
+        <div className="w-10 h-10 rounded-full bg-muted" />
         <div className="space-y-1.5 flex-1">
-          <div className="h-3 w-28 rounded bg-neutral-100" />
-          <div className="h-2.5 w-20 rounded bg-neutral-100" />
+          <div className="h-3 w-28 rounded bg-muted" />
+          <div className="h-2.5 w-20 rounded bg-muted" />
         </div>
       </div>
       <div className="space-y-2">
-        <div className="h-3 rounded bg-neutral-100 w-full" />
-        <div className="h-3 rounded bg-neutral-100 w-4/5" />
-        <div className="h-3 rounded bg-neutral-100 w-3/5" />
+        <div className="h-3 rounded bg-muted w-full" />
+        <div className="h-3 rounded bg-muted w-4/5" />
+        <div className="h-3 rounded bg-muted w-3/5" />
       </div>
       <div className="flex gap-4 pt-1">
-        <div className="h-3 w-10 rounded bg-neutral-100" />
-        <div className="h-3 w-10 rounded bg-neutral-100" />
-        <div className="h-3 w-10 rounded bg-neutral-100" />
+        <div className="h-3 w-10 rounded bg-muted" />
+        <div className="h-3 w-10 rounded bg-muted" />
+        <div className="h-3 w-10 rounded bg-muted" />
       </div>
     </div>
   );
@@ -103,9 +103,9 @@ export default function Feed() {
               {[1,2,3].map(i => <SkeletonCard key={i} />)}
             </div>
           ) : posts.length === 0 ? (
-            <div className="bg-white border border-border rounded-xl py-14 text-center">
+            <div className="bg-card border border-border rounded-xl py-14 text-center">
               <p className="text-sm font-semibold">No posts yet</p>
-              <p className="text-xs text-neutral-500 mt-1">Be the first to post</p>
+              <p className="text-xs text-muted-foreground mt-1">Be the first to post</p>
             </div>
           ) : (
             <div className="space-y-3">

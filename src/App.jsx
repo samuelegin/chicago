@@ -17,25 +17,25 @@ import Login from '@/pages/Login';
 
 function LoadingScreen() {
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center bg-white gap-5">
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-background gap-5">
       <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-sm">
         <img src="/logo.jpg" alt="Chicago" className="w-full h-full object-cover" />
       </div>
-      <div className="w-5 h-5 border-2 border-neutral-200 border-t-neutral-800 rounded-full animate-spin" />
+      <div className="w-5 h-5 border-2 border-muted border-t-foreground rounded-full animate-spin" />
     </div>
   );
 }
 
 function AccessDenied() {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-white p-6">
+    <div className="fixed inset-0 flex items-center justify-center bg-background p-6">
       <div className="max-w-xs w-full text-center space-y-4">
         <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-sm mx-auto">
           <img src="/logo.jpg" alt="Chicago" className="w-full h-full object-cover" />
         </div>
         <div>
           <p className="text-base font-semibold">Access Required</p>
-          <p className="text-sm text-neutral-500 mt-1">You are not registered. Contact an admin to request access.</p>
+          <p className="text-sm text-muted-foreground mt-1">You are not registered. Contact an admin to request access.</p>
         </div>
         <button
           onClick={() => window.location.href = '/login'}

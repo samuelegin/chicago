@@ -11,7 +11,7 @@ export default function MobileHeader() {
   };
 
   return (
-    <header className="lg:hidden shrink-0 bg-white border-b border-border z-40">
+    <header className="lg:hidden shrink-0 bg-card border-b border-border z-40">
       <div className="flex items-center justify-between px-4 h-[70px]">
         <Link to="/" className="flex items-center gap-2">
           <img src="/logo.jpg" alt="Chicago logo" className="w-8 h-8 rounded-full object-cover shrink-0" />

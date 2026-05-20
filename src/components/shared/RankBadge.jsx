@@ -2,7 +2,7 @@ import React from 'react';
 
 const STYLES = {
   bronze:  'text-amber-700  bg-amber-50  border-amber-200',
-  silver:  'text-neutral-500 bg-neutral-100 border-neutral-200',
+  silver:  'text-muted-foreground bg-muted border-border',
   gold:    'text-yellow-700 bg-yellow-50  border-yellow-200',
   diamond: 'text-sky-700    bg-sky-50     border-sky-200',
   og:      'text-purple-700 bg-purple-50  border-purple-200',

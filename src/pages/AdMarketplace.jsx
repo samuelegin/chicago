@@ -5,11 +5,11 @@ import { Loader2, ExternalLink, Plus, X, Eye, MousePointer } from 'lucide-react'
 import { toast } from 'sonner';
 
 const STATUS_STYLES = {
-  pending:  'text-amber-600  bg-amber-50  border-amber-200',
-  approved: 'text-green-600  bg-green-50  border-green-200',
+  pending:  'text-amber-600 bg-amber-500/10 border-amber-500/30',
+  approved: 'text-green-600 bg-green-500/10 border-green-500/30',
   active:   'text-primary    bg-yellow-50 border-yellow-200',
-  rejected: 'text-red-600    bg-red-50    border-red-200',
-  expired:  'text-neutral-500 bg-neutral-100 border-neutral-200',
+  rejected: 'text-red-500 bg-red-500/10 border-red-500/30',
+  expired:  'text-muted-foreground bg-muted border-border',
 };
 
 const PRICING = { 1: { eth: 0.05, clt: 500 }, 3: { eth: 0.12, clt: 1200 }, 7: { eth: 0.25, clt: 2500 } };
@@ -18,7 +18,7 @@ const BLANK   = { project_name: '', description: '', website_url: '', x_account:
 function AdCard({ ad }) {
   const statusCls = STATUS_STYLES[ad.status] || STATUS_STYLES.pending;
   return (
-    <div className="bg-white border border-border rounded-sm overflow-hidden">
+    <div className="bg-card border border-border rounded-sm overflow-hidden">
       {ad.banner_url && (
         <img src={ad.banner_url} alt={ad.project_name} className="w-full h-40 object-cover" />
       )}
@@ -29,8 +29,8 @@ function AdCard({ ad }) {
             {ad.status}
           </span>
         </div>
-        <p className="text-xs text-neutral-500 line-clamp-2">{ad.description}</p>
-        <div className="flex items-center gap-4 text-xs text-neutral-400">
+        <p className="text-xs text-muted-foreground line-clamp-2">{ad.description}</p>
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{(ad.impressions || 0).toLocaleString()}</span>
           <span className="flex items-center gap-1"><MousePointer className="w-3 h-3" />{(ad.clicks || 0).toLocaleString()}</span>
           <span>{ad.duration_days}d</span>
@@ -74,7 +74,7 @@ export default function AdMarketplace() {
       placeholder={placeholder}
       value={form[key] || ''}
       onChange={e => setForm({ ...form, [key]: e.target.value })}
-      className="w-full text-sm border border-border rounded px-3 py-2 focus:outline-none focus:border-neutral-400"
+      className="w-full text-sm border border-border rounded px-3 py-2 focus:outline-none focus:border-primary"
       {...extra}
     />
   );
@@ -90,7 +90,7 @@ export default function AdMarketplace() {
         }
         setForm(newForm);
       }}
-      className="w-full text-sm border border-border rounded px-3 py-2 focus:outline-none focus:border-neutral-400 bg-white"
+      className="w-full text-sm border border-border rounded px-3 py-2 focus:outline-none focus:border-primary bg-card"
     >
       {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
     </select>
@@ -100,14 +100,14 @@ export default function AdMarketplace() {
     <div className="max-w-[600px] mx-auto px-4 py-6 space-y-3">
 
       {/* Header */}
-      <div className="bg-white border border-border rounded-sm px-4 py-3 flex items-center justify-between">
+      <div className="bg-card border border-border rounded-sm px-4 py-3 flex items-center justify-between">
         <div>
           <h1 className="text-base font-semibold">Ad Marketplace</h1>
-          <p className="text-xs text-neutral-500 mt-0.5">Promote your project to the Chicago community</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Promote your project to the Chicago community</p>
         </div>
         <button
           onClick={() => setShowForm(v => !v)}
-          className="flex items-center gap-1.5 text-sm font-semibold border border-border rounded-md px-3 py-1.5 hover:bg-neutral-50 transition-colors"
+          className="flex items-center gap-1.5 text-sm font-semibold border border-border rounded-md px-3 py-1.5 hover:bg-muted transition-colors"
         >
           {showForm ? <><X className="w-4 h-4" /> Cancel</> : <><Plus className="w-4 h-4" /> Submit Ad</>}
         </button>
@@ -115,7 +115,7 @@ export default function AdMarketplace() {
 
       {/* Form */}
       {showForm && (
-        <div className="bg-white border border-border rounded-sm px-4 py-4 space-y-3">
+        <div className="bg-card border border-border rounded-sm px-4 py-4 space-y-3">
           <p className="text-sm font-semibold">Campaign Details</p>
           <div className="grid grid-cols-2 gap-2">
             {field('Project Name', 'project_name')}
@@ -128,7 +128,7 @@ export default function AdMarketplace() {
             value={form.description}
             onChange={e => setForm({ ...form, description: e.target.value })}
             rows={3}
-            className="w-full text-sm border border-border rounded px-3 py-2 focus:outline-none focus:border-neutral-400 resize-none"
+            className="w-full text-sm border border-border rounded px-3 py-2 focus:outline-none focus:border-primary resize-none"
           />
           <div className="grid grid-cols-3 gap-2">
             {sel('category', [['defi','DeFi'],['nft','NFT'],['gaming','Gaming'],['infrastructure','Infrastructure'],['social','Social'],['other','Other']])}
@@ -138,7 +138,7 @@ export default function AdMarketplace() {
           {sel('placement', [['feed','Feed'],['sidebar','Sidebar'],['trending','Trending Section']])}
 
           <div className="flex items-center justify-between border border-border rounded px-3 py-2.5">
-            <span className="text-xs text-neutral-500">Total cost</span>
+            <span className="text-xs text-muted-foreground">Total cost</span>
             <span className="text-sm font-semibold">{price} {form.payment_type.toUpperCase()}</span>
           </div>
 
@@ -155,12 +155,12 @@ export default function AdMarketplace() {
       {/* Ad list */}
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="w-5 h-5 animate-spin text-neutral-300" />
+          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
         </div>
       ) : ads.length === 0 ? (
-        <div className="bg-white border border-border rounded-sm py-16 text-center">
+        <div className="bg-card border border-border rounded-sm py-16 text-center">
           <p className="text-sm font-semibold">No campaigns yet</p>
-          <p className="text-xs text-neutral-500 mt-1">Be the first to promote your project</p>
+          <p className="text-xs text-muted-foreground mt-1">Be the first to promote your project</p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 gap-3">

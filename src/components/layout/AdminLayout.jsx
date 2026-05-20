@@ -8,18 +8,18 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen bg-background">
       {/* Admin top bar */}
-      <header className="sticky top-0 z-40 bg-white border-b border-border">
+      <header className="sticky top-0 z-40 bg-card border-b border-border">
         <div className="flex items-center gap-3 px-5 h-[54px] max-w-5xl mx-auto">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-neutral-100 transition-colors"
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-colors"
             aria-label="Go back"
           >
             <ArrowLeft strokeWidth={1.8} className="w-5 h-5 text-foreground" />
           </button>
 
           <div className="flex items-center gap-2">
-            <SlidersHorizontal strokeWidth={1.8} className="w-4 h-4 text-neutral-500" />
+            <SlidersHorizontal strokeWidth={1.8} className="w-4 h-4 text-muted-foreground" />
             <span className="text-[15px] font-semibold text-foreground">Admin</span>
           </div>
 
