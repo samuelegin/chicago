@@ -58,12 +58,13 @@ function RankPill({ rank }) {
 }
 
 export default function PostCard({ post, authorProfile, currentUserId }) {
-  const [liked,        setLiked]        = useState(false);
-  const [saved,        setSaved]        = useState(false);
-  const [localLikes,   setLocalLikes]   = useState(post.likes_count || 0);
-  const [burst,        setBurst]        = useState(false);
-  const [showComments, setShowComments] = useState(false);
-  const [commentText,  setCommentText]  = useState('');
+  const [liked,         setLiked]         = useState(false);
+  const [currentLikeId, setCurrentLikeId] = useState(null);
+  const [saved,         setSaved]         = useState(false);
+  const [localLikes,    setLocalLikes]    = useState(post.likes_count || 0);
+  const [burst,         setBurst]         = useState(false);
+  const [showComments,  setShowComments]  = useState(false);
+  const [commentText,   setCommentText]   = useState('');
   const queryClient = useQueryClient();
 
   const { data: comments = [] } = useQuery({
@@ -71,6 +72,18 @@ export default function PostCard({ post, authorProfile, currentUserId }) {
     queryFn:  () => CommentService.getByPost(post.id),
     enabled: showComments && !!post.id,
     staleTime: 1000 * 60 * 5,
+  });
+
+  const { data: likes = [] } = useQuery({
+    queryKey: ['postLikes', post.id],
+    queryFn:  () => LikeService.getByPost(post.id),
+    enabled: !!post.id,
+    staleTime: 1000 * 60 * 2,
+    onSuccess: (likes) => {
+      const currentLike = likes.find(like => like.user_id === currentUserId);
+      setLiked(Boolean(currentLike));
+      setCurrentLikeId(currentLike?.id || null);
+    },
   });
 
   const addCommentMutation = useMutation({
@@ -108,13 +121,41 @@ export default function PostCard({ post, authorProfile, currentUserId }) {
   const isTrending = true;
 
   const like = async () => {
-    if (liked) return;
-    setLiked(true);
-    setLocalLikes(n => n + 1);
-    setBurst(true);
-    setTimeout(() => setBurst(false), 700);
-    await LikeService.create({ post_id: post.id, user_id: currentUserId });
-    await PostService.update(post.id, { likes_count: localLikes + 1 });
+    if (!currentUserId) {
+      toast.error('Log in to like');
+      return;
+    }
+
+    const currentCount = localLikes;
+    const nextCount = liked ? Math.max(0, currentCount - 1) : currentCount + 1;
+
+    setLiked(prev => !prev);
+    setLocalLikes(nextCount);
+
+    if (!liked) {
+      setBurst(true);
+      setTimeout(() => setBurst(false), 700);
+    }
+
+    try {
+      if (liked) {
+        if (!currentLikeId) throw new Error('No like record');
+        await LikeService.delete(currentLikeId);
+        await PostService.update(post.id, { likes_count: nextCount });
+        setCurrentLikeId(null);
+      } else {
+        const response = await LikeService.create({ post_id: post.id, user_id: currentUserId });
+        await PostService.update(post.id, { likes_count: nextCount });
+        setCurrentLikeId(response?.id || null);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['postLikes', post.id] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    } catch (err) {
+      setLiked(liked);
+      setLocalLikes(currentCount);
+      toast.error('Unable to update like');
+    }
   };
 
   const handleShare = async () => {
