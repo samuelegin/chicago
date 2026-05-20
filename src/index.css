@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background:         0 0% 98%;  /* #fafafa */
+    --foreground:         0 0% 9%;
+    --card:               0 0% 100%;
+    --card-foreground:    0 0% 9%;
+    --popover:            0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+
+    /* Gold primary */
+    --primary:            42 85% 44%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary:          0 0% 96%;
+    --secondary-foreground: 0 0% 20%;
+    --muted:              0 0% 96%;
+    --muted-foreground:   0 0% 50%;
+    --accent:             0 0% 96%;
+    --accent-foreground:  0 0% 9%;
+    --destructive:        0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border:             0 0% 90%;
+    --input:              0 0% 90%;
+    --ring:               42 85% 44%;
+    --radius:             0.5rem;
+  }
+
+  * { @apply border-border; box-sizing: border-box; }
+
+  html { min-height: 100dvh; }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  button,
+  [role="button"],
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgba(251, 191, 36, 0.95);
+    outline-offset: 2px;
+  }
+
+  .sr-only {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+}
+
+/* Story ring – gold gradient */
+.story-ring {
+  background: linear-gradient(45deg, hsl(42 85% 44%), hsl(44 95% 60%), hsl(38 75% 38%));
+  padding: 2px;
+  border-radius: 9999px;
+  display: inline-block;
+}
+.story-ring-inner {
+  background: white;
+  border-radius: 9999px;
+  padding: 2px;
+}
+
+/* Thin scrollbar */
+::-webkit-scrollbar       { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
