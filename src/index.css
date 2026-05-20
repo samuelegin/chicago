@@ -82,3 +82,25 @@
 ::-webkit-scrollbar       { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 4px; }
+
+/* ── Leaderboard hero stays dark even in light mode ─────────────────────── */
+/* Illustrations have black backgrounds — keeping hero dark makes them pop   */
+.leaderboard-hero {
+  background: #08090f;
+}
+
+/* Light mode row surface */
+:root:not(.dark) .leaderboard-rows {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+:root:not(.dark) .leaderboard-rows a:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+/* Floating orb animation */
+@keyframes float-orb {
+  from { transform: translateY(0px) scale(1); }
+  to   { transform: translateY(-18px) scale(1.06); }
+}

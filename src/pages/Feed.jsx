@@ -7,7 +7,6 @@ import FeedFilters from '@/components/feed/FeedFilters';
 import WhoToFollow from '@/components/feed/StoriesRow';
 import RightSidebar from '@/components/feed/RightSidebar';
 import { motion } from 'framer-motion';
-import { useAuth } from '@/lib/AuthContext';
 
 function SkeletonCard() {
   return (
@@ -32,6 +31,7 @@ function SkeletonCard() {
     </div>
   );
 }
+import { useAuth } from '@/lib/AuthContext';
 
 export default function Feed() {
   const [activeCategory, setActiveCategory] = useState('all');
@@ -82,8 +82,8 @@ export default function Feed() {
     <div className="flex h-full overflow-hidden">
 
       {/* ── Centered feed column ── */}
-      <div className="flex-1 flex justify-center px-2 sm:px-3 lg:px-4 py-5 overflow-y-auto overflow-x-hidden">
-        <div className="w-full max-w-[1080px] space-y-3">
+      <div className="flex-1 flex justify-center px-2 sm:px-3 lg:px-4 py-5 overflow-hidden">
+        <div className="w-full max-w-[520px] space-y-3">
           <WhoToFollow users={topUsers} />
 
           <CreatePost
@@ -99,9 +99,8 @@ export default function Feed() {
           />
 
           {isLoading ? (
-            /* Skeleton grid — 1 col mobile, 2 col desktop */
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {[1,2,3,4].map(i => <SkeletonCard key={i} />)}
+            <div className="space-y-3">
+              {[1,2,3].map(i => <SkeletonCard key={i} />)}
             </div>
           ) : posts.length === 0 ? (
             <div className="bg-card border border-border rounded-xl py-14 text-center">
@@ -109,8 +108,7 @@ export default function Feed() {
               <p className="text-xs text-muted-foreground mt-1">Be the first to post</p>
             </div>
           ) : (
-            /* Posts grid — 1 col on mobile, 2 col on desktop (md+) */
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
+            <div className="space-y-3">
               {posts.map((post, i) => (
                 <motion.div
                   key={post.id}

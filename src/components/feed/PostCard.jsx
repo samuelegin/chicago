@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Heart, MessageCircle, Bookmark, MoreHorizontal, Share2, TrendingUp, Send } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Heart, MessageCircle, Bookmark, MoreHorizontal, Share2, TrendingUp } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CommentService, LikeService, PostService } from '@/api/services';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { toast } from 'sonner';
 
 const RANK_META = {
@@ -58,14 +57,11 @@ function RankPill({ rank }) {
 }
 
 export default function PostCard({ post, authorProfile, currentUserId }) {
-  const [liked,         setLiked]         = useState(false);
-  const [currentLikeId, setCurrentLikeId] = useState(null);
-  const [saved,         setSaved]         = useState(false);
-  const [localLikes,    setLocalLikes]    = useState(post.likes_count || 0);
-  const [burst,         setBurst]         = useState(false);
-  const [showComments,  setShowComments]  = useState(false);
-  const [commentText,   setCommentText]   = useState('');
-  const queryClient = useQueryClient();
+  const [liked,        setLiked]        = useState(false);
+  const [saved,        setSaved]        = useState(false);
+  const [localLikes,   setLocalLikes]   = useState(post.likes_count || 0);
+  const [burst,        setBurst]        = useState(false);
+  const [showComments, setShowComments] = useState(false);
 
   const { data: comments = [] } = useQuery({
     queryKey: ['postComments', post.id],
@@ -74,88 +70,18 @@ export default function PostCard({ post, authorProfile, currentUserId }) {
     staleTime: 1000 * 60 * 5,
   });
 
-  const { data: likes = [] } = useQuery({
-    queryKey: ['postLikes', post.id],
-    queryFn:  () => LikeService.getByPost(post.id),
-    enabled: !!post.id,
-    staleTime: 1000 * 60 * 2,
-    onSuccess: (likes) => {
-      const currentLike = likes.find(like => like.user_id === currentUserId);
-      setLiked(Boolean(currentLike));
-      setCurrentLikeId(currentLike?.id || null);
-    },
-  });
-
-  const addCommentMutation = useMutation({
-    mutationFn: (content) =>
-      CommentService.create({
-        post_id:     post.id,
-        author_id:   currentUserId,
-        content,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['postComments', post.id] });
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-      setCommentText('');
-      toast.success('Comment posted');
-    },
-    onError: () => toast.error('Failed to post comment'),
-  });
-
-  const handleAddComment = () => {
-    const trimmed = commentText.trim();
-    if (!trimmed) return;
-    if (!currentUserId) { toast.error('Log in to comment'); return; }
-    addCommentMutation.mutate(trimmed);
-  };
-
-  const handleCommentKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleAddComment();
-    }
-  };
-
   const rank = authorProfile?.rank;
   // make trending banner show on all posts (intentionally unprofessional)
   const isTrending = true;
 
   const like = async () => {
-    if (!currentUserId) {
-      toast.error('Log in to like');
-      return;
-    }
-
-    const currentCount = localLikes;
-    const nextCount = liked ? Math.max(0, currentCount - 1) : currentCount + 1;
-
-    setLiked(prev => !prev);
-    setLocalLikes(nextCount);
-
-    if (!liked) {
-      setBurst(true);
-      setTimeout(() => setBurst(false), 700);
-    }
-
-    try {
-      if (liked) {
-        if (!currentLikeId) throw new Error('No like record');
-        await LikeService.delete(currentLikeId);
-        await PostService.update(post.id, { likes_count: nextCount });
-        setCurrentLikeId(null);
-      } else {
-        const response = await LikeService.create({ post_id: post.id, user_id: currentUserId });
-        await PostService.update(post.id, { likes_count: nextCount });
-        setCurrentLikeId(response?.id || null);
-      }
-
-      queryClient.invalidateQueries({ queryKey: ['postLikes', post.id] });
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-    } catch (err) {
-      setLiked(liked);
-      setLocalLikes(currentCount);
-      toast.error('Unable to update like');
-    }
+    if (liked) return;
+    setLiked(true);
+    setLocalLikes(n => n + 1);
+    setBurst(true);
+    setTimeout(() => setBurst(false), 700);
+    await LikeService.create({ post_id: post.id, user_id: currentUserId });
+    await PostService.update(post.id, { likes_count: localLikes + 1 });
   };
 
   const handleShare = async () => {
@@ -327,64 +253,53 @@ export default function PostCard({ post, authorProfile, currentUserId }) {
         </motion.button>
       </div>
 
-      <Sheet open={showComments} onOpenChange={setShowComments}>
-        <SheetContent side="bottom" className="h-[min(85vh,calc(100vh-3.5rem))] rounded-t-3xl p-0 overflow-hidden bg-card shadow-2xl">
-          <div className="flex h-full flex-col">
-            <div className="flex flex-col gap-3 border-b border-border px-4 py-3 bg-card">
-              <div className="mx-auto h-1.5 w-14 rounded-full bg-border/30" />
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold text-foreground">Comments</p>
-                  <p className="text-xs text-muted-foreground">{comments.length} comment{comments.length === 1 ? '' : 's'}</p>
+      <AnimatePresence>
+        {showComments && (
+          <motion.div className="fixed inset-0 z-40">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/30"
+              onClick={() => setShowComments(false)}
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 260, damping: 29 }}
+              className="absolute inset-x-0 bottom-0 top-16 rounded-t-3xl border border-border bg-card shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center gap-3 px-4 py-4 border-b border-border bg-card">
+                <button
+                  onClick={() => setShowComments(false)}
+                  className="rounded-full bg-muted px-3 py-1 text-sm font-semibold text-foreground hover:bg-muted/80"
+                >
+                  Back
+                </button>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold">Comments</p>
+                  <p className="text-[11px] text-muted-foreground truncate">{post.comments_count} total</p>
                 </div>
               </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto bg-muted/40 px-4 py-3 divide-y divide-border">
-              {comments.length === 0 ? (
-                <div className="py-6 text-center text-[13px] text-muted-foreground">No comments yet — be first!</div>
-              ) : (
-                comments.map(comment => (
-                  <div key={comment.id} className="py-3">
-                    <p className="text-[13px] leading-snug">
-                      <span className="font-semibold text-foreground">{comment.author_name} </span>
-                      <span className="text-muted-foreground">{comment.content}</span>
-                    </p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      {comment.created_date
-                        ? formatDistanceToNow(new Date(comment.created_date), { addSuffix: true })
-                        : 'just now'}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="border-t border-border bg-card px-4 py-3">
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={commentText}
-                  onChange={e => setCommentText(e.target.value)}
-                  onKeyDown={handleCommentKeyDown}
-                  placeholder="Write a comment…"
-                  maxLength={500}
-                  className="flex-1 bg-muted rounded-full px-4 py-2 text-[13px] text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
-                />
-                <motion.button
-                  whileTap={{ scale: 0.85 }}
-                  onClick={handleAddComment}
-                  disabled={!commentText.trim() || addCommentMutation.isPending}
-                  aria-label="Post comment"
-                  className="p-2 rounded-full bg-blue-500 text-white disabled:opacity-40 hover:bg-blue-600 transition-colors"
-                >
-                  <Send className="w-4 h-4" strokeWidth={2} />
-                </motion.button>
+              <div className="h-[calc(100vh-6.5rem)] overflow-y-auto divide-y divide-border bg-card">
+                {comments.length === 0 ? (
+                  <div className="px-4 py-5 text-sm text-muted-foreground">No comments yet.</div>
+                ) : (
+                  comments.map(comment => (
+                    <div key={comment.id} className="px-4 py-4">
+                      <p className="text-[13px] leading-snug">
+                        <span className="font-semibold text-foreground">{comment.author_name}</span>{' '}
+                        <span className="text-muted-foreground">{comment.content}</span>
+                      </p>
+                    </div>
+                  ))
+                )}
               </div>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.article>
   );
 }
