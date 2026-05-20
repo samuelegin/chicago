@@ -79,10 +79,10 @@ export default function Feed() {
   profiles.forEach(p => { profileMap[p.user_id] = p; });
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full overflow-hidden">
 
       {/* ── Centered feed column ── */}
-      <div className="flex-1 flex justify-center px-4 py-5">
+      <div className="flex-1 flex justify-center px-3 lg:px-4 py-5 overflow-x-hidden">
         <div className="w-full max-w-[470px] space-y-3">
           <WhoToFollow users={topUsers} />
 
@@ -128,8 +128,10 @@ export default function Feed() {
         </div>
       </div>
 
-      {/* ── Right sidebar ── */}
-      <RightSidebar topUsers={topUsers} currentUser={userProfile} />
+      {/* ── Right sidebar (desktop only) ── */}
+      <div className="hidden lg:block">
+        <RightSidebar topUsers={topUsers} currentUser={userProfile} />
+      </div>
     </div>
   );
 }

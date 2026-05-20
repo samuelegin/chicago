@@ -36,7 +36,7 @@ export default function AppLayout() {
   }, [navigate]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background" style={{ minHeight: '100dvh', paddingBottom: 'env(safe-area-inset-bottom)', paddingTop: 'env(safe-area-inset-top)' }}>
+    <div className="flex h-screen overflow-hidden bg-background" style={{ minHeight: '100dvh', paddingTop: 'env(safe-area-inset-top)' }}>
       {/* Desktop left sidebar — fixed in place, never scrolls */}
       <Sidebar />
 

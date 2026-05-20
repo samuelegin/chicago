@@ -38,7 +38,7 @@ export default function Leaderboard() {
   });
 
   return (
-    <div className="max-w-[600px] mx-auto px-4 py-6 space-y-4">
+    <div className="max-w-[600px] mx-auto px-3 lg:px-4 py-6 space-y-4">
       {/* Header */}
       <div className="bg-gradient-to-r from-sky-50 via-white to-violet-50 border border-border rounded-3xl px-5 py-5 shadow-sm">
         <h1 className="text-base font-semibold tracking-wide text-foreground">Leaderboard</h1>
@@ -72,7 +72,7 @@ export default function Leaderboard() {
         ) : (
           <div className="space-y-4">
             {/* Top 3 highlighted */}
-            <div className="grid grid-cols-3 gap-3 items-end">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 items-end px-1">
               {[users[1], users[0], users[2]].filter(Boolean).map((u, idx) => {
                 const isTop = idx === 1;
                 const isSecond = idx === 0;
@@ -81,11 +81,11 @@ export default function Leaderboard() {
                   <Link
                     key={u.id}
                     to={`/profile/${u.user_id}`}
-                    className={`flex flex-col items-center text-center rounded-3xl p-4 transition-all ${
+                    className={`flex flex-col items-center text-center rounded-3xl p-3 sm:p-4 transition-all ${
                       isTop
-                        ? 'col-span-1 bg-gradient-to-br from-amber-100 via-white to-amber-50 border-2 border-amber-200 shadow-[0_24px_60px_rgba(251,191,36,0.18)] scale-[1.04] -mb-3'
+                        ? 'col-span-1 bg-gradient-to-br from-amber-100 via-white to-amber-50 border-2 border-amber-200 shadow-[0_12px_32px_rgba(251,191,36,0.12)] sm:shadow-[0_24px_60px_rgba(251,191,36,0.18)] scale-100 sm:scale-[1.04]'
                         : 'bg-white border border-border shadow-sm'
-                    } ${isSecond ? 'translate-y-4' : ''} ${isThird ? 'translate-y-7' : ''}`}
+                    } ${isSecond ? 'translate-y-2 sm:translate-y-4' : ''} ${isThird ? 'translate-y-4 sm:translate-y-7' : ''}`}
                   >
                     <span className={`text-xs font-semibold tracking-[0.12em] uppercase ${isTop ? 'text-amber-500' : 'text-neutral-400'}`}>
                       #{isTop ? 1 : idx === 0 ? 2 : 3}
@@ -106,7 +106,7 @@ export default function Leaderboard() {
             </div>
 
             {/* Positions 4 - 10 */}
-            <div className="mt-3 bg-white border border-border rounded-sm divide-y divide-border">
+            <div className="mt-6 sm:mt-3 bg-white border border-border rounded-sm divide-y divide-border">
               {users.slice(3, 10).map((u, i) => (
                 <Link
                   key={u.id}
