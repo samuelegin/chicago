@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { UserProfileService, PostService } from '@/api/services';
 import { useAuth } from '@/lib/AuthContext';
 import { useTheme } from 'next-themes';
-import { Loader2, Copy, Check } from 'lucide-react';
+import { Loader2, Copy, Check, Sun, Moon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PostCard from '@/components/feed/PostCard';
 import StakingPanel from '@/components/staking/StakingPanel';
@@ -160,9 +160,9 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                  className="text-xs font-semibold rounded-md border border-border/80 bg-white/90 px-4 py-1.5 text-foreground shadow-sm transition hover:bg-slate-100 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:bg-slate-800"
+                  className="p-2 rounded-lg border border-border text-foreground hover:bg-secondary transition-colors"
                 >
-                  {theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
+                  {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 </button>
               </div>
             </div>
