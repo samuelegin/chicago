@@ -4,37 +4,43 @@ import { CATEGORIES } from '@/lib/constants';
 
 export default function FeedFilters({ activeCategory, onCategoryChange, sortBy, onSortChange }) {
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-      {/* Sort tabs */}
-      <div className="flex border-b border-border">
-        {[
-          { value: 'recent',   label: 'Recent',   Icon: Clock  },
-          { value: 'trending', label: 'Trending', Icon: Flame  },
-        ].map(({ value, label, Icon }) => (
-          <button
-            key={value}
-            onClick={() => onSortChange(value)}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold transition-colors relative ${
-              sortBy === value ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Icon
-              className={`w-3.5 h-3.5 ${value === 'trending' && sortBy === value ? 'text-amber-500' : ''}`}
-              strokeWidth={2.2}
-            />
-            {label}
-            {sortBy === value && (
-              <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500 to-yellow-400 rounded-t" />
-            )}
-          </button>
-        ))}
-      </div>
+    <div className="space-y-2">
 
-      {/* Category chips */}
-      <div className="flex gap-2 px-3 py-2.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-        <Chip active={activeCategory === 'all'} onClick={() => onCategoryChange('all')} label="All" />
+      {/* Row 1: Sort + Category chips all in one scrollable strip */}
+      <div className="flex gap-2 overflow-x-auto hide-scrollbar">
+        {/* Sort pills */}
+        {[
+          { value: 'recent',   label: 'Recent',   Icon: Clock },
+          { value: 'trending', label: 'Trending', Icon: Flame },
+        ].map(({ value, label, Icon }) => {
+          const active = sortBy === value;
+          return (
+            <button
+              key={value}
+              onClick={() => onSortChange(value)}
+              className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-[12px] font-bold transition-all"
+              style={{
+                fontFamily: 'JetBrains Mono, monospace',
+                background: active ? '#ffd700' : 'rgba(19,19,19,0.7)',
+                color: active ? '#000' : 'rgba(208,198,171,0.65)',
+                border: active ? '1px solid #ffd700' : '1px solid rgba(255,255,255,0.1)',
+                backdropFilter: 'blur(12px)',
+                boxShadow: active ? '0 0 14px rgba(255,215,0,0.35)' : 'none',
+              }}
+            >
+              <Icon className="w-3 h-3" strokeWidth={2.5} />
+              {label}
+            </button>
+          );
+        })}
+
+        {/* Thin divider */}
+        <div className="shrink-0 self-stretch w-px my-1" style={{ background: 'rgba(255,255,255,0.1)' }} />
+
+        {/* Category chips */}
+        <CategoryChip active={activeCategory === 'all'} onClick={() => onCategoryChange('all')} label="All" />
         {CATEGORIES.map(c => (
-          <Chip
+          <CategoryChip
             key={c.value}
             active={activeCategory === c.value}
             onClick={() => onCategoryChange(c.value)}
@@ -42,19 +48,26 @@ export default function FeedFilters({ activeCategory, onCategoryChange, sortBy, 
           />
         ))}
       </div>
+
     </div>
   );
 }
 
-function Chip({ active, onClick, label }) {
+function CategoryChip({ active, onClick, label }) {
   return (
     <button
       onClick={onClick}
-      className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
-        active
-          ? 'text-white border-transparent bg-gradient-to-r from-amber-500 to-yellow-400 shadow-sm shadow-amber-200'
-          : 'bg-transparent text-muted-foreground border-border hover:border-amber-500/50 hover:text-amber-600'
-      }`}
+      className="shrink-0 px-4 py-2 rounded-full text-[12px] font-bold transition-all"
+      style={{
+        fontFamily: 'JetBrains Mono, monospace',
+        background: active
+          ? 'linear-gradient(135deg, rgba(255,215,0,0.18) 0%, rgba(255,215,0,0.07) 100%)'
+          : 'rgba(19,19,19,0.7)',
+        color: active ? '#ffd700' : 'rgba(208,198,171,0.65)',
+        border: active ? '1px solid rgba(255,215,0,0.45)' : '1px solid rgba(255,255,255,0.1)',
+        backdropFilter: 'blur(12px)',
+        boxShadow: active ? '0 0 10px rgba(255,215,0,0.15)' : 'none',
+      }}
     >
       {label}
     </button>

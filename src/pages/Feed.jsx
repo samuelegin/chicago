@@ -7,31 +7,32 @@ import FeedFilters from '@/components/feed/FeedFilters';
 import WhoToFollow from '@/components/feed/StoriesRow';
 import RightSidebar from '@/components/feed/RightSidebar';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/lib/AuthContext';
 
 function SkeletonCard() {
   return (
-    <div className="bg-card border border-border rounded-xl p-4 space-y-3 animate-pulse">
+    <div
+      className="glass-card rounded-2xl p-5 space-y-4 animate-pulse"
+    >
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-muted" />
-        <div className="space-y-1.5 flex-1">
-          <div className="h-3 w-28 rounded bg-muted" />
-          <div className="h-2.5 w-20 rounded bg-muted" />
+        <div className="w-10 h-10 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }} />
+        <div className="space-y-2 flex-1">
+          <div className="h-3 w-28 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }} />
+          <div className="h-2.5 w-20 rounded-full" style={{ background: 'rgba(255,255,255,0.04)' }} />
         </div>
       </div>
       <div className="space-y-2">
-        <div className="h-3 rounded bg-muted w-full" />
-        <div className="h-3 rounded bg-muted w-4/5" />
-        <div className="h-3 rounded bg-muted w-3/5" />
+        <div className="h-3 rounded-full w-full" style={{ background: 'rgba(255,255,255,0.05)' }} />
+        <div className="h-3 rounded-full w-4/5" style={{ background: 'rgba(255,255,255,0.04)' }} />
+        <div className="h-3 rounded-full w-3/5" style={{ background: 'rgba(255,255,255,0.03)' }} />
       </div>
       <div className="flex gap-4 pt-1">
-        <div className="h-3 w-10 rounded bg-muted" />
-        <div className="h-3 w-10 rounded bg-muted" />
-        <div className="h-3 w-10 rounded bg-muted" />
+        <div className="h-3 w-10 rounded-full" style={{ background: 'rgba(255,255,255,0.04)' }} />
+        <div className="h-3 w-10 rounded-full" style={{ background: 'rgba(255,255,255,0.04)' }} />
       </div>
     </div>
   );
 }
-import { useAuth } from '@/lib/AuthContext';
 
 export default function Feed() {
   const [activeCategory, setActiveCategory] = useState('all');
@@ -82,8 +83,9 @@ export default function Feed() {
     <div className="flex h-full overflow-hidden">
 
       {/* ── Centered feed column ── */}
-      <div className="flex-1 flex justify-center px-2 sm:px-3 lg:px-4 py-5 overflow-hidden">
-        <div className="w-full max-w-[520px] space-y-3">
+      <div className="flex-1 flex justify-center px-4 sm:px-5 lg:px-6 py-6 overflow-y-auto">
+        <div className="w-full max-w-[580px] space-y-6">
+
           <WhoToFollow users={topUsers} />
 
           <CreatePost
@@ -99,16 +101,28 @@ export default function Feed() {
           />
 
           {isLoading ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {[1,2,3].map(i => <SkeletonCard key={i} />)}
             </div>
           ) : posts.length === 0 ? (
-            <div className="bg-card border border-border rounded-xl py-14 text-center">
-              <p className="text-sm font-semibold">No posts yet</p>
-              <p className="text-xs text-muted-foreground mt-1">Be the first to post</p>
+            <div
+              className="glass-card rounded-2xl py-16 text-center"
+            >
+              <p
+                className="text-sm font-bold"
+                style={{ color: '#e5e2e1', fontFamily: 'Sora, sans-serif' }}
+              >
+                No posts yet
+              </p>
+              <p
+                className="text-xs mt-1"
+                style={{ color: '#999077', fontFamily: 'JetBrains Mono, monospace' }}
+              >
+                Be the first to post
+              </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {posts.map((post, i) => (
                 <motion.div
                   key={post.id}

@@ -1,15 +1,20 @@
 import React, { useState, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Image, BarChart3, X, Sparkles } from 'lucide-react';
+import { Image, BarChart3, Smile, X, Send } from 'lucide-react';
 import { PostService, uploadFile } from '@/api/services';
 import { CATEGORIES } from '@/lib/constants';
 
 function Avatar({ name, avatar }) {
   return (
-    <div className="w-9 h-9 rounded-full bg-muted border border-border overflow-hidden shrink-0 flex items-center justify-center">
+    <div
+      className="w-9 h-9 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
+      style={{ background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.1)' }}
+    >
       {avatar
         ? <img src={avatar} alt={name} className="w-full h-full object-cover" />
-        : <span className="text-sm font-bold text-muted-foreground">{(name || '?')[0].toUpperCase()}</span>
+        : <span className="text-sm font-bold" style={{ color: '#999077', fontFamily: 'Sora, sans-serif' }}>
+            {(name || '?')[0].toUpperCase()}
+          </span>
       }
     </div>
   );
@@ -64,111 +69,164 @@ export default function CreatePost({ userProfile, onPostCreated }) {
 
   return (
     <div
-      className={`bg-card border rounded-xl px-4 py-3.5 transition-all duration-200 ${
-        focused ? 'border-amber-300 shadow-md shadow-amber-100' : 'border-border'
-      }`}
-      style={{ boxShadow: focused ? '0 4px 20px rgba(245,158,11,0.1)' : '0 1px 4px rgba(0,0,0,0.04)' }}
+      className="glass-card rounded-2xl overflow-hidden transition-all duration-300"
+      style={{
+        borderColor: focused ? 'rgba(0,238,252,0.35)' : 'rgba(255,255,255,0.08)',
+        boxShadow: focused ? '0 0 20px rgba(0,238,252,0.06)' : 'none',
+      }}
     >
-      <div className="flex gap-3 items-start">
+      {/* Top: avatar + textarea */}
+      <div className="flex gap-3 items-start px-4 pt-4 pb-3">
         <Avatar name={userProfile?.username} avatar={userProfile?.avatar_url} />
-        <div className="flex-1 min-w-0">
-          <textarea
-            rows={focused ? 3 : 1}
-            placeholder="What's on your mind?"
-            value={content}
-            onChange={e => setContent(e.target.value)}
-            onFocus={() => setFocused(true)}
-            className="w-full resize-none text-[14px] text-foreground placeholder:text-muted-foreground focus:outline-none bg-transparent leading-relaxed"
-          />
+        <textarea
+          rows={focused ? 4 : 2}
+          placeholder="Share your latest insight..."
+          value={content}
+          onChange={e => setContent(e.target.value)}
+          onFocus={() => setFocused(true)}
+          className="flex-1 resize-none text-[14px] focus:outline-none leading-relaxed bg-transparent"
+          style={{
+            color: content ? '#e5e2e1' : 'rgba(208,198,171,0.35)',
+            fontFamily: 'Geist, sans-serif',
+            caretColor: '#00eefc',
+          }}
+        />
+      </div>
 
-          {imgPreview && (
-            <div className="relative mt-2 rounded-lg overflow-hidden border border-border">
-              <img src={imgPreview} alt="" className="w-full max-h-60 object-cover" />
-              <button
-                onClick={() => { setImageFile(null); setImgPreview(null); setPostType('text'); }}
-                className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-black/80 transition-colors"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          )}
+      {/* Image preview */}
+      {imgPreview && (
+        <div className="px-4 pb-3">
+          <div className="relative rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+            <img src={imgPreview} alt="" className="w-full max-h-48 object-cover" />
+            <button
+              onClick={() => { setImageFile(null); setImgPreview(null); setPostType('text'); }}
+              className="absolute top-2 right-2 rounded-full p-1"
+              style={{ background: 'rgba(0,0,0,0.7)', color: '#fff' }}
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      )}
 
-          {postType === 'poll' && (
-            <div className="mt-2 space-y-1.5">
-              {pollOptions.map((o, i) => (
-                <div key={i} className="flex gap-2 items-center">
-                  <input
-                    placeholder={`Option ${i + 1}`}
-                    value={o}
-                    onChange={e => { const n = [...pollOptions]; n[i] = e.target.value; setPollOptions(n); }}
-                    className="flex-1 text-sm border border-border rounded-lg px-3 py-2 focus:outline-none focus:border-amber-300 transition-colors"
-                  />
-                  {i > 1 && (
-                    <button onClick={() => setPollOptions(pollOptions.filter((_, j) => j !== i))}>
-                      <X className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-                    </button>
-                  )}
-                </div>
-              ))}
-              {pollOptions.length < 4 && (
-                <button onClick={() => setPollOptions([...pollOptions, ''])}
-                  className="text-xs font-bold text-amber-600 hover:text-amber-700 transition-colors">
-                  + Add option
+      {/* Poll options */}
+      {postType === 'poll' && (
+        <div className="px-4 pb-3 space-y-2">
+          {pollOptions.map((o, i) => (
+            <div key={i} className="flex gap-2 items-center">
+              <input
+                placeholder={`Option ${i + 1}`}
+                value={o}
+                onChange={e => { const n = [...pollOptions]; n[i] = e.target.value; setPollOptions(n); }}
+                className="flex-1 text-[13px] px-3 py-2 rounded-xl focus:outline-none transition-all"
+                style={{
+                  background: 'rgba(0,0,0,0.4)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  color: '#e5e2e1',
+                  fontFamily: 'Geist, sans-serif',
+                }}
+                onFocus={e => e.currentTarget.style.borderColor = 'rgba(255,215,0,0.4)'}
+                onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}
+              />
+              {i > 1 && (
+                <button onClick={() => setPollOptions(pollOptions.filter((_, j) => j !== i))}>
+                  <X className="w-4 h-4" style={{ color: 'rgba(208,198,171,0.5)' }} />
                 </button>
               )}
             </div>
+          ))}
+          {pollOptions.length < 4 && (
+            <button
+              onClick={() => setPollOptions([...pollOptions, ''])}
+              className="text-xs font-bold"
+              style={{ color: '#ffd700', fontFamily: 'JetBrains Mono, monospace' }}
+            >
+              + Add option
+            </button>
           )}
         </div>
-      </div>
+      )}
 
-      <AnimatePresence>
-        {focused && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
+      {/* Bottom toolbar */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        {/* Row 1: icons left + Share button right */}
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-1">
+            <IconBtn onClick={() => fileRef.current?.click()} active={false}>
+              <Image strokeWidth={1.8} className="w-[18px] h-[18px]" />
+            </IconBtn>
+            <IconBtn
+              onClick={() => setPostType(t => t === 'poll' ? 'text' : 'poll')}
+              active={postType === 'poll'}
+            >
+              <BarChart3 strokeWidth={1.8} className="w-[18px] h-[18px]" />
+            </IconBtn>
+            <IconBtn onClick={() => {}} active={false}>
+              <Smile strokeWidth={1.8} className="w-[18px] h-[18px]" />
+            </IconBtn>
+          </div>
+
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImg} />
+
+          {/* Share pill — full gold, never clipped */}
+          <button
+            onClick={submit}
+            disabled={!content.trim() || submitting}
+            className="flex items-center gap-2 rounded-full font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{
+              background: '#ffd700',
+              color: '#000',
+              fontFamily: 'Sora, sans-serif',
+              fontSize: 14,
+              padding: '10px 24px',
+              boxShadow: '0 0 18px rgba(255,215,0,0.35)',
+              whiteSpace: 'nowrap',
+            }}
           >
-            <div className="flex items-center mt-3 pt-3 border-t border-border gap-2">
-              <select
-                value={category}
-                onChange={e => setCategory(e.target.value)}
-                className="text-xs text-muted-foreground border-none bg-transparent focus:outline-none cursor-pointer font-medium"
-              >
-                {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-              </select>
+            {submitting ? 'Posting…' : 'Share'}
+            <Send className="w-3.5 h-3.5" strokeWidth={2.5} />
+          </button>
+        </div>
 
-              <button
-                onClick={() => fileRef.current?.click()}
-                className="ml-auto p-1.5 rounded-lg text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 transition-colors"
-              >
-                <Image strokeWidth={1.8} className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setPostType(t => t === 'poll' ? 'text' : 'poll')}
-                className={`p-1.5 rounded-lg transition-colors ${
-                  postType === 'poll'
-                    ? 'text-amber-500 bg-amber-500/10'
-                    : 'text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10'
-                }`}
-              >
-                <BarChart3 strokeWidth={1.8} className="w-4 h-4" />
-              </button>
-
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImg} />
-
-              <button
-                onClick={submit}
-                disabled={!content.trim() || submitting}
-                className="ml-1 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-amber-500 to-yellow-400 shadow-sm shadow-amber-200 disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-md hover:shadow-amber-200 transition-all"
-              >
-                <Sparkles className="w-3.5 h-3.5" strokeWidth={2.2} />
-                {submitting ? 'Posting…' : 'Share'}
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        {/* Row 2: category select */}
+        <div className="px-4 pb-3">
+          <select
+            value={category}
+            onChange={e => setCategory(e.target.value)}
+            className="text-[12px] font-bold focus:outline-none cursor-pointer border-none bg-transparent"
+            style={{ color: 'rgba(208,198,171,0.55)', fontFamily: 'JetBrains Mono, monospace' }}
+          >
+            {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+          </select>
+        </div>
+      </div>
     </div>
+  );
+}
+
+function IconBtn({ onClick, active, children }) {
+  return (
+    <button
+      onClick={onClick}
+      className="p-2 rounded-xl transition-all"
+      style={{
+        color: active ? '#ffd700' : 'rgba(208,198,171,0.5)',
+        background: active ? 'rgba(255,215,0,0.1)' : 'transparent',
+      }}
+      onMouseEnter={e => {
+        if (!active) {
+          e.currentTarget.style.color = '#e5e2e1';
+          e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+        }
+      }}
+      onMouseLeave={e => {
+        if (!active) {
+          e.currentTarget.style.color = 'rgba(208,198,171,0.5)';
+          e.currentTarget.style.background = 'transparent';
+        }
+      }}
+    >
+      {children}
+    </button>
   );
 }
