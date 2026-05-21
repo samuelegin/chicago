@@ -1,141 +1,131 @@
-import React, { useState, useEffect } from 'react';
-import { UserProfileService, PostService } from '@/api/services';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import CreatePost from '@/components/feed/CreatePost';
-import PostCard from '@/components/feed/PostCard';
-import FeedFilters from '@/components/feed/FeedFilters';
-import WhoToFollow from '@/components/feed/StoriesRow';
-import RightSidebar from '@/components/feed/RightSidebar';
-import { motion } from 'framer-motion';
-import { useAuth } from '@/lib/AuthContext';
-
-function SkeletonCard() {
-  return (
-    <div
-      className="glass-card rounded-2xl p-5 space-y-4 animate-pulse"
-    >
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }} />
-        <div className="space-y-2 flex-1">
-          <div className="h-3 w-28 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }} />
-          <div className="h-2.5 w-20 rounded-full" style={{ background: 'rgba(255,255,255,0.04)' }} />
-        </div>
-      </div>
-      <div className="space-y-2">
-        <div className="h-3 rounded-full w-full" style={{ background: 'rgba(255,255,255,0.05)' }} />
-        <div className="h-3 rounded-full w-4/5" style={{ background: 'rgba(255,255,255,0.04)' }} />
-        <div className="h-3 rounded-full w-3/5" style={{ background: 'rgba(255,255,255,0.03)' }} />
-      </div>
-      <div className="flex gap-4 pt-1">
-        <div className="h-3 w-10 rounded-full" style={{ background: 'rgba(255,255,255,0.04)' }} />
-        <div className="h-3 w-10 rounded-full" style={{ background: 'rgba(255,255,255,0.04)' }} />
-      </div>
-    </div>
-  );
-}
+import { useState } from 'react'
+import { Icon, RightSidebar } from '../components/Layout'
+import PostCard from '../components/PostCard'
+import {
+  feedPosts,
+  feedCategories,
+  currentUser,
+  suggestedUsers,
+  trendingTopics,
+} from '../data/mockData'
+// BACKEND: replace mock imports above with:
+//   import api from '../services/api'
+//   useEffect(() => { api.getFeedPosts(activeFilter).then(setPosts) }, [activeFilter])
 
 export default function Feed() {
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [sortBy,         setSortBy]         = useState('recent');
-  const [userProfile,    setUserProfile]    = useState(null);
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const [posts, setPosts] = useState(feedPosts)
+  const [activeFilter, setActiveFilter] = useState('general')
+  const [suggested, setSuggested] = useState(suggestedUsers)
+  const [postContent, setPostContent] = useState('')
 
-  useEffect(() => {
-    if (!user) return;
-    (async () => {
-      const profiles = await UserProfileService.getByUserId(user.id);
-      if (profiles.length > 0) {
-        setUserProfile(profiles[0]);
-      } else {
-        const p = await UserProfileService.create({
-          user_id:  user.id,
-          username: user.full_name || user.email?.split('@')[0] || 'User',
-        });
-        setUserProfile(p);
-      }
-    })();
-  }, [user]);
+  const handleLike = (postId) => {
+    // BACKEND: await api.likePost(postId)
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 }
+          : p
+      )
+    )
+  }
 
-  const { data: posts   = [], isLoading } = useQuery({
-    queryKey: ['posts', activeCategory, sortBy],
-    queryFn: () => {
-      const filter = activeCategory !== 'all' ? { category: activeCategory } : {};
-      const sort   = sortBy === 'trending' ? '-likes_count' : '-created_date';
-      return PostService.filter(filter, sort, 30);
-    },
-  });
+  const handleFollow = (userId) => {
+    // BACKEND: await api.followUser(userId)
+    setSuggested((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, following: !u.following } : u))
+    )
+  }
 
-  const { data: topUsers = [] } = useQuery({
-    queryKey: ['topUsers'],
-    queryFn:  () => UserProfileService.list('-cis_score', 10),
-  });
+  const handlePost = () => {
+    if (!postContent.trim()) return
+    // BACKEND: await api.createPost({ content: postContent, category: activeFilter })
+    const newPost = {
+      id: `p_${Date.now()}`,
+      author: currentUser,
+      content: postContent,
+      images: [],
+      likes: 0,
+      comments: 0,
+      shares: 0,
+      trending: false,
+      category: 'General',
+      timestamp: 'just now',
+      liked: false,
+    }
+    setPosts([newPost, ...posts])
+    setPostContent('')
+  }
 
-  const { data: profiles = [] } = useQuery({
-    queryKey: ['profiles'],
-    queryFn:  () => UserProfileService.list('-cis_score', 100),
-  });
-
-  const profileMap = {};
-  profiles.forEach(p => { profileMap[p.user_id] = p; });
+  const filteredPosts =
+    activeFilter === 'general'
+      ? posts
+      : posts.filter((p) => p.category.toLowerCase().replace(' ', '-') === activeFilter)
 
   return (
-    <div className="flex h-full overflow-hidden">
-      <div className="flex-1 overflow-hidden">
-        <div className="mx-auto grid w-full max-w-[1060px] gap-5 px-4 py-7 sm:px-5 lg:px-6 xl:px-8 xl:grid-cols-[minmax(0,760px)_260px]">
-          <div className="space-y-6">
-            <WhoToFollow users={topUsers} />
-
-            <CreatePost
-              userProfile={userProfile}
-              onPostCreated={() => queryClient.invalidateQueries({ queryKey: ['posts'] })}
+    <div className="flex-1 lg:ml-[300px] lg:mr-[340px] max-w-2xl w-full flex flex-col gap-4 lg:gap-8 min-w-0">
+      {/* Compose Box */}
+      <section className="bg-surface-container border border-on-background/10 lg:neo-border lg:neo-shadow p-3 lg:p-6">
+        <div className="flex gap-3">
+          <img src={currentUser.avatar} alt="Me" className="w-9 h-9 lg:w-12 lg:h-12 border border-on-background/20 lg:neo-border object-cover" />
+          <div className="flex-1">
+            <textarea
+              value={postContent}
+              onChange={(e) => setPostContent(e.target.value)}
+              className="w-full bg-background border border-on-background/15 lg:neo-border p-2 lg:p-4 text-sm lg:text-body-md focus:outline-none min-h-[70px] lg:min-h-[100px] resize-none placeholder:text-on-surface-variant text-on-surface"
+              placeholder="What's on your mind?"
             />
-
-            <FeedFilters
-              activeCategory={activeCategory}
-              onCategoryChange={setActiveCategory}
-              sortBy={sortBy}
-              onSortChange={setSortBy}
-            />
-
-            {isLoading ? (
-              <div className="space-y-4">
-                {[1,2,3].map(i => <SkeletonCard key={i} />)}
-              </div>
-            ) : posts.length === 0 ? (
-              <div className="glass-card rounded-2xl py-16 text-center">
-                <p className="text-sm font-bold" style={{ color: '#e5e2e1', fontFamily: 'Sora, sans-serif' }}>
-                  No posts yet
-                </p>
-                <p className="text-xs mt-1" style={{ color: '#999077', fontFamily: 'JetBrains Mono, monospace' }}>
-                  Be the first to post
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-5">
-                {posts.map((post, i) => (
-                  <motion.div
-                    key={post.id}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.04, duration: 0.25 }}
-                  >
-                    <PostCard
-                      post={post}
-                      authorProfile={profileMap[post.author_id]}
-                      currentUserId={userProfile?.user_id}
-                    />
-                  </motion.div>
+            <div className="flex justify-between items-center mt-2 lg:mt-4">
+              <div className="flex gap-2 lg:gap-4 text-on-surface-variant">
+                {['image', 'gif_box', 'poll', 'sentiment_satisfied'].map((icon) => (
+                  <Icon key={icon} name={icon} className="cursor-pointer hover:text-primary-container text-[18px] lg:text-[24px]" />
                 ))}
               </div>
-            )}
-          </div>
-
-          <div className="hidden lg:block">
-            <RightSidebar topUsers={topUsers} currentUser={userProfile} />
+              <button
+                onClick={handlePost}
+                className="px-4 lg:px-8 py-1.5 lg:py-2 bg-primary-container text-on-primary-fixed font-bold text-sm lg:text-base border border-on-background/20 lg:neo-border lg:neo-shadow-sm active:scale-95 transition-all"
+              >
+                Post
+              </button>
+            </div>
           </div>
         </div>
+      </section>
+
+      {/* Category Filters */}
+      <div className="flex gap-2 lg:gap-4 overflow-x-auto pb-2 no-scrollbar">
+        {feedCategories.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => setActiveFilter(cat.id)}
+            className={`shrink-0 px-3 lg:px-6 py-1 lg:py-2 text-sm lg:text-base font-bold border border-on-background/20 lg:neo-border transition-colors ${
+              activeFilter === cat.id
+                ? 'bg-primary-container text-on-primary-fixed lg:neo-shadow-sm'
+                : 'bg-surface-container hover:bg-primary-container/20 text-on-background'
+            }`}
+          >
+            {cat.label}
+          </button>
+        ))}
       </div>
+
+      {/* Posts */}
+      <div className="flex flex-col gap-6">
+        {filteredPosts.map((post) => (
+          <PostCard key={post.id} post={post} onLike={handleLike} />
+        ))}
+        {filteredPosts.length === 0 && (
+          <p className="text-center text-on-surface-variant py-12">No posts in this category yet.</p>
+        )}
+      </div>
+
+      <div className="h-20 md:h-0" />
+
+      {/* Right Sidebar is rendered here for layout reasons */}
+      <RightSidebar
+        suggestedUsers={suggested}
+        trendingTopics={trendingTopics}
+        onFollow={handleFollow}
+      />
     </div>
-  );
+  )
 }
