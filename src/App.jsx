@@ -10,6 +10,7 @@ import AdminRoute from '@/components/layout/AdminRoute';
 import Feed from '@/pages/Feed';
 import Leaderboard from '@/pages/Leaderboard';
 import Profile from '@/pages/Profile';
+import EditProfile from '@/pages/EditProfile';
 import AdMarketplace from '@/pages/AdMarketplace';
 import Admin from '@/pages/Admin';
 import Staking from '@/pages/Staking';
@@ -74,8 +75,9 @@ const AuthenticatedApp = () => {
       <Route element={<AppLayout />}>
         <Route path="/"                element={<Feed />}         />
         <Route path="/leaderboard"     element={<Leaderboard />}  />
-        <Route path="/profile"         element={<Profile />}      />
-        <Route path="/profile/:userId" element={<Profile />}      />
+        <Route path="/profile"          element={<Profile />}      />
+        <Route path="/profile/edit"     element={<EditProfile />}  />
+        <Route path="/profile/:userId"  element={<Profile />}      />
         <Route path="/staking"         element={<Staking />}      />
         <Route path="/ads"             element={<AdMarketplace />}/>
       </Route>

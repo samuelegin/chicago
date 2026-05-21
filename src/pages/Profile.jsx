@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { UserProfileService, PostService } from '@/api/services';
 import { useAuth } from '@/lib/AuthContext';
 import { useTheme } from 'next-themes';
+import { useNavigate } from 'react-router-dom';
 import { Loader2, Sun, Moon } from 'lucide-react';
 import PostCard from '@/components/feed/PostCard';
 import StakingPanel from '@/components/staking/StakingPanel';
@@ -134,6 +135,7 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState('posts');
   const { user }                  = useAuth();
   const { theme, setTheme }       = useTheme();
+  const navigate                  = useNavigate();
 
   const pathParts    = window.location.pathname.split('/');
   const viewUserId   = pathParts[2] || null;
@@ -294,6 +296,7 @@ export default function Profile() {
             {/* CTA button */}
             {isOwnProfile ? (
               <button className="w-full py-3 rounded-xl transition-all active:scale-95 profile-glass"
+                      onClick={() => navigate('/profile/edit')}
                       style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13,
                                fontWeight: 700, color: '#ffffff', letterSpacing: '0.05em',
                                boxShadow: '0 0 20px rgba(255,225,109,0.05)' }}>
