@@ -81,70 +81,60 @@ export default function Feed() {
 
   return (
     <div className="flex h-full overflow-hidden">
+      <div className="flex-1 overflow-hidden">
+        <div className="mx-auto grid w-full max-w-[1060px] gap-5 px-4 py-7 sm:px-5 lg:px-6 xl:px-8 xl:grid-cols-[minmax(0,760px)_260px]">
+          <div className="space-y-6">
+            <WhoToFollow users={topUsers} />
 
-      {/* ── Centered feed column ── */}
-      <div className="flex-1 flex justify-center px-4 sm:px-5 lg:px-6 py-6 overflow-y-auto">
-        <div className="w-full max-w-[580px] space-y-6">
+            <CreatePost
+              userProfile={userProfile}
+              onPostCreated={() => queryClient.invalidateQueries({ queryKey: ['posts'] })}
+            />
 
-          <WhoToFollow users={topUsers} />
+            <FeedFilters
+              activeCategory={activeCategory}
+              onCategoryChange={setActiveCategory}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+            />
 
-          <CreatePost
-            userProfile={userProfile}
-            onPostCreated={() => queryClient.invalidateQueries({ queryKey: ['posts'] })}
-          />
+            {isLoading ? (
+              <div className="space-y-4">
+                {[1,2,3].map(i => <SkeletonCard key={i} />)}
+              </div>
+            ) : posts.length === 0 ? (
+              <div className="glass-card rounded-2xl py-16 text-center">
+                <p className="text-sm font-bold" style={{ color: '#e5e2e1', fontFamily: 'Sora, sans-serif' }}>
+                  No posts yet
+                </p>
+                <p className="text-xs mt-1" style={{ color: '#999077', fontFamily: 'JetBrains Mono, monospace' }}>
+                  Be the first to post
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {posts.map((post, i) => (
+                  <motion.div
+                    key={post.id}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.04, duration: 0.25 }}
+                  >
+                    <PostCard
+                      post={post}
+                      authorProfile={profileMap[post.author_id]}
+                      currentUserId={userProfile?.user_id}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
 
-          <FeedFilters
-            activeCategory={activeCategory}
-            onCategoryChange={setActiveCategory}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-          />
-
-          {isLoading ? (
-            <div className="space-y-4">
-              {[1,2,3].map(i => <SkeletonCard key={i} />)}
-            </div>
-          ) : posts.length === 0 ? (
-            <div
-              className="glass-card rounded-2xl py-16 text-center"
-            >
-              <p
-                className="text-sm font-bold"
-                style={{ color: '#e5e2e1', fontFamily: 'Sora, sans-serif' }}
-              >
-                No posts yet
-              </p>
-              <p
-                className="text-xs mt-1"
-                style={{ color: '#999077', fontFamily: 'JetBrains Mono, monospace' }}
-              >
-                Be the first to post
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {posts.map((post, i) => (
-                <motion.div
-                  key={post.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.04, duration: 0.25 }}
-                >
-                  <PostCard
-                    post={post}
-                    authorProfile={profileMap[post.author_id]}
-                    currentUserId={userProfile?.user_id}
-                  />
-                </motion.div>
-              ))}
-            </div>
-          )}
+          <div className="hidden lg:block">
+            <RightSidebar topUsers={topUsers} currentUser={userProfile} />
+          </div>
         </div>
-      </div>
-
-      {/* ── Right sidebar (desktop only) ── */}
-      <div className="hidden lg:block">
-        <RightSidebar topUsers={topUsers} currentUser={userProfile} />
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Heart, MessageCircle, Share2, TrendingUp, MoreHorizontal, X, Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -129,12 +130,178 @@ function RankBadge({ rank }) {
   );
 }
 
+function CommentModal({ isOpen, onClose, post, comments, currentUserId, authorProfile }) {
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return createPortal(
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 z-[999] flex items-center justify-center px-4 py-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        <div
+          className="absolute inset-0"
+          style={{ background: 'rgba(0, 0, 0, 0.74)', backdropFilter: 'blur(10px)' }}
+          onClick={onClose}
+        />
+
+        <motion.div
+          className="relative z-10 flex w-full max-w-[1180px] max-h-[92vh] overflow-hidden rounded-[32px] bg-slate-950/95 shadow-[0_24px_120px_rgba(0,0,0,0.45)]"
+          initial={{ opacity: 0, scale: 0.98, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.98, y: 20 }}
+          transition={{ duration: 0.22, ease: 'easeOut' }}
+          onClick={(event) => event.stopPropagation()}
+          style={{ border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <div className="hidden w-2/5 border-r border-white/5 md:flex flex-col bg-slate-900">
+            <div className="sticky top-0 flex h-full flex-col overflow-hidden">
+              <div className="relative flex-1 overflow-hidden bg-black">
+                {post.image_url ? (
+                  <img
+                    src={post.image_url}
+                    alt={post.content || post.author_name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center bg-slate-800 text-slate-400">
+                    <span className="text-sm font-medium">No media available</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3 border-t border-white/5 px-6 py-5">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Post</p>
+                  <p className="mt-3 text-base font-semibold text-white" style={{ fontFamily: 'Sora, sans-serif' }}>
+                    {post.content || 'No caption provided.'}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-400">
+                    {post.category || 'General'}
+                  </span>
+                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-400">
+                    {post.likes_count?.toLocaleString() || 0} likes
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-1 flex-col overflow-hidden bg-slate-950">
+            <div className="flex items-center justify-between gap-4 border-b border-white/10 px-5 py-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-11 w-11 rounded-full bg-gradient-to-br from-amber-400 via-cyan-400 to-violet-500 p-[1px]">
+                  <div className="h-full w-full rounded-full bg-slate-950 flex items-center justify-center text-white text-sm font-bold">
+                    {(authorProfile?.username || '?')[0].toUpperCase()}
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-white" style={{ fontFamily: 'Sora, sans-serif' }}>
+                    {authorProfile?.username || 'Unknown'}
+                  </p>
+                  <p className="truncate text-xs text-slate-400" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                    {formatDistanceToNow(new Date(post.created_date || Date.now()), { addSuffix: true })}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-slate-300 transition hover:bg-white/10"
+              >
+                <X className="h-4 w-4" strokeWidth={2} />
+              </button>
+            </div>
+
+            <div className="flex flex-1 flex-col overflow-hidden">
+              <div className="overflow-y-auto px-5 py-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <div className="mb-4 rounded-3xl border border-white/10 bg-slate-900/95 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+                  <p className="text-sm font-medium text-slate-300" style={{ fontFamily: 'Geist, sans-serif' }}>
+                    {post.content || 'No caption available.'}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-3 text-[12px] text-slate-500">
+                    <span>{post.comments_count || 0} comments</span>
+                    <span>{post.likes_count?.toLocaleString() || 0} likes</span>
+                    <span>{post.category || 'General'}</span>
+                  </div>
+                </div>
+
+                {comments.length === 0 ? (
+                  <div className="rounded-3xl border border-dashed border-white/10 bg-slate-900/90 p-8 text-center text-sm text-slate-500">
+                    No comments yet. Start the conversation.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {comments.map(comment => (
+                      <div
+                        key={comment.id}
+                        className="rounded-3xl border border-white/10 bg-slate-900/90 p-4"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-sm font-semibold text-slate-100">
+                            {(comment.author_name || '?')[0].toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 text-sm">
+                              <span className="font-semibold text-white" style={{ fontFamily: 'Sora, sans-serif' }}>
+                                {comment.author_name}
+                              </span>
+                              <span className="text-xs text-slate-500" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                                {formatDistanceToNow(new Date(comment.created_date || Date.now()), { addSuffix: true })}
+                              </span>
+                            </div>
+                            <p className="mt-2 text-sm leading-6 text-slate-300" style={{ fontFamily: 'Geist, sans-serif' }}>
+                              {comment.content}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-white/10 bg-slate-950/95 px-5 py-4">
+                <CommentInput postId={post.id} currentUserId={currentUserId} authorProfile={authorProfile} />
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>,
+    document.body,
+  );
+}
+
 export default function PostCard({ post, authorProfile, currentUserId }) {
   const [liked,        setLiked]        = useState(false);
   const [localLikes,   setLocalLikes]   = useState(post.likes_count || 0);
   const [burst,        setBurst]        = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [hovered,      setHovered]      = useState(false);
+
+  useEffect(() => {
+    if (showComments) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+    document.body.style.overflow = '';
+    return undefined;
+  }, [showComments]);
 
   const { data: comments = [] } = useQuery({
     queryKey: ['postComments', post.id],
@@ -177,57 +344,50 @@ export default function PostCard({ post, authorProfile, currentUserId }) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className="glass-card rounded-2xl overflow-hidden"
+      className="glass-card rounded-[32px] overflow-hidden transition-transform duration-300"
       style={{
-        transition: 'box-shadow 0.25s ease, border-color 0.25s ease',
-        boxShadow: hovered ? '0 0 40px rgba(255,255,255,0.03)' : 'none',
+        transform: hovered ? 'translateY(-3px)' : 'none',
+        boxShadow: hovered ? '0 28px 90px rgba(0,0,0,0.22)' : '0 1px 14px rgba(0,0,0,0.08)',
+        borderColor: hovered ? 'rgba(255,215,0,0.18)' : 'rgba(255,255,255,0.08)',
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
       {/* Trending banner */}
-      <div
-        className="flex items-center gap-1.5 px-4 py-1.5 border-b"
-        style={{
-          background: 'linear-gradient(90deg, rgba(255,215,0,0.08) 0%, rgba(255,215,0,0.02) 100%)',
-          borderBottomColor: 'rgba(255,215,0,0.15)',
-        }}
-      >
-        <TrendingUp className="w-3 h-3" style={{ color: '#ffd700' }} strokeWidth={2.5} />
-        <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: '#ffd700', fontFamily: 'JetBrains Mono, monospace' }}>
+      <div className="flex items-center gap-2 px-4 py-3 sm:px-6 border-b border-white/10 bg-gradient-to-r from-amber-500/10 to-transparent">
+        <TrendingUp className="w-4 h-4 text-amber-300" strokeWidth={2.5} />
+        <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-200" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
           Trending TA
         </span>
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3">
-        <Link to={`/profile/${post.author_id}`} className="flex items-center gap-2.5 min-w-0">
-          <Avatar name={post.author_name} avatar={post.author_avatar} rank={rank} size={36} />
+      <div className="flex items-center justify-between gap-4 px-4 py-5 sm:px-6">
+        <Link to={`/profile/${post.author_id}`} className="flex items-center gap-3 min-w-0">
+          <Avatar name={post.author_name} avatar={post.author_avatar} rank={rank} size={40} />
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <p className="text-[13px] font-bold leading-tight text-white" style={{ fontFamily: 'Sora, sans-serif' }}>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="truncate text-sm font-bold text-white" style={{ fontFamily: 'Sora, sans-serif' }}>
                 {post.author_name || 'Anonymous'}
               </p>
               {rank && <RankBadge rank={rank} />}
             </div>
-            <div className="flex items-center gap-1 mt-0.5">
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
               {post.category && (
-                <span className="text-[11px] capitalize font-mono-label" style={{ color: '#999077' }}>
+                <span className="capitalize font-mono-label" style={{ color: '#999077' }}>
                   {post.category}
                 </span>
               )}
-              <span className="text-[11px]" style={{ color: '#4d4732' }}>·</span>
-              <span className="text-[11px] font-mono-label" style={{ color: '#999077' }}>
+              <span className="text-slate-500">·</span>
+              <span className="font-mono-label" style={{ color: '#999077' }}>
                 {formatDistanceToNow(new Date(post.created_date || Date.now()), { addSuffix: true })}
               </span>
             </div>
           </div>
         </Link>
         <button
-          className="p-1 rounded-full transition-colors ml-2 shrink-0"
-          style={{ color: 'rgba(208,198,171,0.4)' }}
-          onMouseEnter={e => e.currentTarget.style.color = '#e5e2e1'}
-          onMouseLeave={e => e.currentTarget.style.color = 'rgba(208,198,171,0.4)'}
+          className="p-2 rounded-full text-slate-400 transition-colors hover:text-white hover:bg-white/5"
+          type="button"
         >
           <MoreHorizontal className="w-4 h-4" strokeWidth={2} />
         </button>
@@ -235,8 +395,8 @@ export default function PostCard({ post, authorProfile, currentUserId }) {
 
       {/* Content */}
       {post.content && (
-        <div className="px-4 pb-3">
-          <p className="text-[13px] leading-relaxed" style={{ color: '#e5e2e1', fontFamily: 'Geist, sans-serif' }}>
+        <div className="px-4 pb-4 sm:px-6">
+          <p className="text-[14px] leading-7 text-slate-200" style={{ fontFamily: 'Geist, sans-serif' }}>
             {post.content}
           </p>
         </div>
@@ -244,18 +404,12 @@ export default function PostCard({ post, authorProfile, currentUserId }) {
 
       {/* Image */}
       {post.image_url && (
-        <div className="relative" onDoubleClick={like}>
-          <div
-            className="overflow-hidden"
-            style={{ border: '1px solid rgba(255,255,255,0.06)', borderLeft: 'none', borderRight: 'none' }}
-          >
+        <div className="relative px-4 pb-4 sm:px-6" onDoubleClick={like}>
+          <div className="overflow-hidden rounded-[28px] border border-white/10 aspect-[16/9] bg-slate-950">
             <img
               src={post.image_url}
               alt=""
-              className="w-full object-cover transition-transform duration-700"
-              style={{ maxHeight: 220 }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+              className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
             />
           </div>
           <AnimatePresence>
@@ -266,7 +420,7 @@ export default function PostCard({ post, authorProfile, currentUserId }) {
                 transition={{ duration: 0.65, ease: 'easeOut' }}
                 className="absolute inset-0 flex items-center justify-center pointer-events-none"
               >
-                <Heart className="w-24 h-24 fill-white text-white drop-shadow-lg" />
+                <Heart className="w-24 h-24 fill-white text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.18)]" />
               </motion.div>
             )}
           </AnimatePresence>
@@ -305,164 +459,60 @@ export default function PostCard({ post, authorProfile, currentUserId }) {
       )}
 
       {/* Divider */}
-      <div className="mx-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }} />
+      <div className="mx-4 sm:mx-6" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
 
       {/* Action bar */}
-      <div className="px-3 py-2 flex items-center gap-0.5">
+      <div className="px-4 py-4 sm:px-6 flex flex-wrap items-center gap-3">
         <motion.button
-          whileTap={{ scale: 0.8 }}
+          whileTap={{ scale: 0.9 }}
           onClick={like}
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl transition-colors group"
-          style={{ color: liked ? '#f87171' : 'rgba(208,198,171,0.6)' }}
-          onMouseEnter={e => !liked && (e.currentTarget.style.background = 'rgba(248,113,113,0.08)')}
-          onMouseLeave={e => !liked && (e.currentTarget.style.background = 'transparent')}
+          className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 transition duration-200"
+          style={{
+            color: liked ? '#f87171' : 'rgba(208,198,171,0.72)',
+            background: liked ? 'rgba(248,113,113,0.1)' : 'rgba(255,255,255,0.02)',
+          }}
         >
-          <motion.div animate={liked ? { scale: [1, 1.4, 1] } : {}} transition={{ duration: 0.3 }}>
+          <motion.div animate={liked ? { scale: [1, 1.25, 1] } : {}} transition={{ duration: 0.35 }}>
             <Heart
               strokeWidth={liked ? 0 : 1.8}
-              className={`w-[18px] h-[18px] transition-all ${liked ? 'fill-red-400 text-red-400' : ''}`}
+              className={`w-4 h-4 ${liked ? 'fill-red-400 text-red-400' : 'text-slate-300'}`}
             />
           </motion.div>
-          {localLikes > 0 && (
-            <span className="text-[12px] font-bold font-mono-label">{localLikes.toLocaleString()}</span>
-          )}
+          <span className="text-[12px] font-bold font-mono-label">{localLikes.toLocaleString()}</span>
         </motion.button>
 
         <button
+          type="button"
           onClick={() => setShowComments(prev => !prev)}
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl transition-all"
+          className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 transition duration-200"
           style={{
-            color: showComments ? 'rgba(0,238,252,0.9)' : 'rgba(208,198,171,0.6)',
-            background: showComments ? 'rgba(0,238,252,0.08)' : 'transparent',
+            color: showComments ? '#00eeff' : 'rgba(208,198,171,0.72)',
+            background: showComments ? 'rgba(0,238,252,0.09)' : 'rgba(255,255,255,0.02)',
           }}
-          onMouseEnter={e => !showComments && (e.currentTarget.style.background = 'rgba(0,238,252,0.06)')}
-          onMouseLeave={e => !showComments && (e.currentTarget.style.background = 'transparent')}
         >
-          <MessageCircle strokeWidth={1.8} className="w-[18px] h-[18px]" />
-          {post.comments_count > 0 && (
-            <span className="text-[12px] font-bold font-mono-label">{post.comments_count}</span>
-          )}
+          <MessageCircle strokeWidth={1.8} className="w-4 h-4" />
+          <span className="text-[12px] font-bold font-mono-label">{post.comments_count || 0}</span>
         </button>
 
         <motion.button
-          whileTap={{ scale: 0.8 }}
+          whileTap={{ scale: 0.95 }}
           onClick={handleShare}
-          className="ml-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl transition-all group"
-          style={{ color: 'rgba(208,198,171,0.6)' }}
-          onMouseEnter={e => {
-            e.currentTarget.style.color = '#ffd700';
-            e.currentTarget.style.background = 'rgba(255,215,0,0.06)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.color = 'rgba(208,198,171,0.6)';
-            e.currentTarget.style.background = 'transparent';
-          }}
+          className="ml-auto inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-slate-300 transition duration-200 hover:text-amber-300 hover:bg-amber-400/10"
+          type="button"
         >
-          <Share2 strokeWidth={1.8} className="w-[18px] h-[18px]" />
+          <Share2 strokeWidth={1.8} className="w-4 h-4" />
           <span className="text-[12px] font-bold font-mono-label">Share</span>
         </motion.button>
       </div>
 
-      {/* Comments bottom sheet — portal-style, slides up from very bottom */}
-      <AnimatePresence>
-        {showComments && (
-          <motion.div
-            className="fixed inset-0 z-[999]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            {/* Backdrop */}
-            <div
-              className="absolute inset-0"
-              style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
-              onClick={() => setShowComments(false)}
-            />
-
-            {/* Sheet — slides from absolute bottom */}
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 300, damping: 32 }}
-              className="absolute inset-x-0 bottom-0 flex flex-col rounded-t-3xl overflow-hidden"
-              style={{
-                height: '75vh',
-                background: 'rgba(14,14,14,0.97)',
-                backdropFilter: 'blur(20px)',
-                borderTop: '1px solid rgba(255,255,255,0.1)',
-                boxShadow: '0 -16px 60px rgba(0,238,252,0.08)',
-              }}
-              onClick={e => e.stopPropagation()}
-            >
-              {/* Drag handle */}
-              <div className="flex justify-center pt-3 pb-1 shrink-0">
-                <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.2)' }} />
-              </div>
-
-              {/* Header */}
-              <div
-                className="flex items-center justify-between px-5 py-3 shrink-0"
-                style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
-              >
-                <div>
-                  <p className="text-[15px] font-bold text-white" style={{ fontFamily: 'Sora, sans-serif' }}>
-                    Comments
-                  </p>
-                  <p className="text-[11px] mt-0.5" style={{ color: '#999077', fontFamily: 'JetBrains Mono, monospace' }}>
-                    {post.comments_count || comments.length} total
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowComments(false)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
-                  style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(208,198,171,0.7)' }}
-                >
-                  <X className="w-4 h-4" strokeWidth={2} />
-                </button>
-              </div>
-
-              {/* Comments list — scrollable middle */}
-              <div className="flex-1 overflow-y-auto">
-                {comments.length === 0 ? (
-                  <div className="px-5 py-10 text-center">
-                    <MessageCircle className="w-8 h-8 mx-auto mb-3 opacity-20" style={{ color: '#999077' }} />
-                    <p className="text-sm" style={{ color: '#999077', fontFamily: 'Geist, sans-serif' }}>
-                      No comments yet. Be first!
-                    </p>
-                  </div>
-                ) : (
-                  comments.map(comment => (
-                    <div
-                      key={comment.id}
-                      className="flex gap-3 px-5 py-3.5"
-                      style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                    >
-                      <div
-                        className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-xs font-bold mt-0.5"
-                        style={{ background: 'rgba(255,215,0,0.12)', color: '#ffd700', fontFamily: 'Sora, sans-serif' }}
-                      >
-                        {(comment.author_name || '?')[0].toUpperCase()}
-                      </div>
-                      <div>
-                        <span className="text-[13px] font-bold text-white" style={{ fontFamily: 'Sora, sans-serif' }}>
-                          {comment.author_name}
-                        </span>
-                        <p className="text-[13px] mt-0.5 leading-snug" style={{ color: '#d0c6ab', fontFamily: 'Geist, sans-serif' }}>
-                          {comment.content}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              {/* Comment input — pinned at bottom */}
-              <CommentInput postId={post.id} currentUserId={currentUserId} authorProfile={authorProfile} />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <CommentModal
+        isOpen={showComments}
+        onClose={() => setShowComments(false)}
+        post={post}
+        comments={comments}
+        currentUserId={currentUserId}
+        authorProfile={authorProfile}
+      />
     </motion.article>
   );
 }
