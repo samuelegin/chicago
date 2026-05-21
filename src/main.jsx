@@ -14,9 +14,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </ThemeProvider>
 )
 
-// Register the service worker only in production builds.
-// In development the SW causes aggressive caching and stale UI — avoid registering it.
-if (import.meta.env && import.meta.env.PROD && 'serviceWorker' in navigator) {
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/service-worker.js')
       .then((registration) => {
@@ -25,18 +23,5 @@ if (import.meta.env && import.meta.env.PROD && 'serviceWorker' in navigator) {
       .catch((error) => {
         console.warn('Service Worker registration failed:', error);
       });
-  });
-} else if ('serviceWorker' in navigator) {
-  // Unregister any previously installed SW when running in dev to avoid stale caches.
-  window.addEventListener('load', async () => {
-    try {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      for (const r of regs) {
-        await r.unregister();
-        console.log('Unregistered service worker (dev):', r.scope);
-      }
-    } catch (err) {
-      /* ignore */
-    }
   });
 }

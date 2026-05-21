@@ -4,8 +4,7 @@ const CACHE_NAME = 'chicago-social-' + CACHE_VERSION;
 
 // Only pre-cache truly static assets that never change filename
 const PRECACHE_ASSETS = [
-  // Do not pre-cache the root HTML ('/') to avoid serving a stale index
-  // during development or immediately after deploys. Keep static assets.
+  '/',
   '/manifest.json',
   '/logo.jpg',
 ];

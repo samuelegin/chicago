@@ -3,49 +3,137 @@ import { useQuery } from '@tanstack/react-query';
 import { UserProfileService, PostService } from '@/api/services';
 import { useAuth } from '@/lib/AuthContext';
 import { useTheme } from 'next-themes';
-import { Loader2, Copy, Check, Sun, Moon } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Loader2, Sun, Moon } from 'lucide-react';
 import PostCard from '@/components/feed/PostCard';
 import StakingPanel from '@/components/staking/StakingPanel';
-import CISDisplay from '@/components/shared/CISDisplay';
-import StakingBadge from '@/components/shared/StakingBadge';
-import RankBadge from '@/components/shared/RankBadge';
-import { truncateWallet, getRankFromScore } from '@/lib/constants';
-import { toast } from 'sonner';
+import { getRankFromScore, RANKS } from '@/lib/constants';
 
-function Avatar({ name, avatar, size = 80 }) {
+// ─── Design tokens from stitch ────────────────────────────────────────────────
+// Fonts: Sora (headlines), Geist (body), JetBrains Mono (labels/meta)
+// Colors: Electric Gold (#e9c400 / #ffe16d), Cyber Cyan (#00dbe9 / #7df4ff)
+// Surfaces: glass-panel = backdrop-blur-12px + rgba(255,255,255,0.03) + 1px border
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TIER_CONFIG = {
+  og:      { label: 'CHICAGO OG', color: '#c084fc', glow: 'rgba(192,132,252,0.3)' },
+  diamond: { label: 'DIAMOND',    color: '#22d3ee', glow: 'rgba(34,211,238,0.3)'  },
+  gold:    { label: 'PLATINUM',   color: '#e9c400', glow: 'rgba(233,196,0,0.3)'   },
+  silver:  { label: 'GOLD',       color: '#fbbf24', glow: 'rgba(251,191,36,0.3)'  },
+  bronze:  { label: 'BRONZE',     color: '#d97706', glow: 'rgba(217,119,6,0.3)'   },
+};
+
+function getStakingBoostLabel(clt) {
+  if (clt >= 1000) return '+50% BOOST';
+  if (clt >= 500)  return '+25% BOOST';
+  if (clt >= 100)  return '+10% BOOST';
+  return null;
+}
+
+function formatK(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (n >= 1000)    return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  return n.toLocaleString();
+}
+
+// ── Avatar with gold gradient ring ───────────────────────────────────────────
+function Avatar({ name, avatar, size = 128 }) {
   return (
-    <div className="rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center"
-         style={{ width: size, height: size }}>
-      {avatar
-        ? <img src={avatar} alt={name} className="w-full h-full object-cover" />
-        : <span className="font-semibold text-muted-foreground select-none" style={{ fontSize: size * 0.36 }}>
-            {(name || '?')[0].toUpperCase()}
-          </span>
-      }
+    <div
+      className="rounded-full p-[3px] shrink-0"
+      style={{
+        background:  'linear-gradient(135deg, #e9c400, #7df4ff, #ffe16d)',
+        boxShadow:   '0 0 30px rgba(233,196,0,0.25)',
+        width: size + 6, height: size + 6,
+      }}
+    >
+      <div className="rounded-full overflow-hidden flex items-center justify-center bg-[#050505]"
+           style={{ width: size, height: size }}>
+        {avatar
+          ? <img src={avatar} alt={name} className="w-full h-full object-cover" />
+          : <span style={{ fontSize: size * 0.36, fontWeight: 800, color: '#e9c400',
+                           fontFamily: 'Sora, sans-serif' }}>
+              {(name || '?')[0].toUpperCase()}
+            </span>
+        }
+      </div>
     </div>
   );
 }
 
-function StatCol({ value, label }) {
+// ── CIS liquid progress bar ───────────────────────────────────────────────────
+function CISCard({ score, rank }) {
+  const safeRank = RANKS[rank] ? rank : 'bronze';          // guard undefined rank
+  const cfg      = RANKS[safeRank];
+  const rankKeys = Object.keys(RANKS);
+  const idx      = rankKeys.indexOf(safeRank);
+  const next     = idx < rankKeys.length - 1 ? RANKS[rankKeys[idx + 1]] : null;
+  const pct      = next && next.minScore > cfg.minScore
+    ? Math.min(((score - cfg.minScore) / (next.minScore - cfg.minScore)) * 100, 100)
+    : 100;
+
   return (
-    <div className="flex flex-col items-center gap-0.5">
-      <span className="text-sm font-semibold text-foreground">{value}</span>
-      <span className="text-xs text-muted-foreground">{label}</span>
-    </div>
+    <section
+      className="rounded-2xl p-6 mb-8 relative overflow-hidden group"
+      style={{
+        background:    'rgba(255,255,255,0.03)',
+        backdropFilter:'blur(12px)',
+        border:        '1px solid rgba(255,255,255,0.08)',
+        borderTop:     '1px solid rgba(233,196,0,0.15)',
+      }}
+    >
+      {/* Hover shimmer */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#e9c400]/5 to-transparent
+                      opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+      <div className="flex justify-between items-end mb-4">
+        <h2 style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12,
+                     fontWeight: 500, letterSpacing: '0.1em', color: '#d0c6ab',
+                     textTransform: 'uppercase' }}>
+          Influence Score
+        </h2>
+        <span style={{ fontFamily: 'Sora, sans-serif', fontSize: 24,
+                       fontWeight: 700, color: '#ffe16d' }}>
+          {score.toLocaleString()}
+        </span>
+      </div>
+
+      {/* Liquid progress bar */}
+      <div className="h-3 rounded-full overflow-hidden mb-3 relative"
+           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="h-full rounded-full relative overflow-hidden"
+             style={{
+               width: `${pct}%`,
+               background: 'linear-gradient(90deg, #e9c400, #ffe16d)',
+               boxShadow:  '0 0 15px rgba(255,225,109,0.4)',
+               transition: 'width 0.8s ease',
+             }}>
+          {/* Liquid shimmer wave */}
+          <div className="absolute inset-0"
+               style={{
+                 background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)',
+                 animation:  'wave 2s infinite linear',
+               }} />
+        </div>
+      </div>
+
+      <div className="flex justify-between items-center"
+           style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11,
+                    fontWeight: 500, color: '#999077' }}>
+        <span style={{ color: '#e9c400', fontWeight: 700 }}>
+          {TIER_CONFIG[safeRank]?.label || safeRank.toUpperCase()}
+        </span>
+        {next && <span>{next.label.toUpperCase()} — {next.minScore.toLocaleString()}</span>}
+      </div>
+    </section>
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
 export default function Profile() {
-  const [profile,        setProfile]        = useState(null);
-  const [copied,         setCopied]         = useState(false);
-  const [activeTab,      setActiveTab]      = useState('posts');
-  const [avatarOffset,   setAvatarOffset]   = useState(0);
-  const [dragStartX,     setDragStartX]     = useState(null);
-  const [dragBaseOffset, setDragBaseOffset] = useState(0);
-  const [isMobile,       setIsMobile]       = useState(false);
-  const { user } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const [profile,   setProfile]   = useState(null);
+  const [activeTab, setActiveTab] = useState('posts');
+  const { user }                  = useAuth();
+  const { theme, setTheme }       = useTheme();
 
   const pathParts    = window.location.pathname.split('/');
   const viewUserId   = pathParts[2] || null;
@@ -69,182 +157,257 @@ export default function Profile() {
     load();
   }, [viewUserId, user]);
 
-  useEffect(() => {
-    const updateMobile = () => setIsMobile(window.innerWidth < 768);
-    updateMobile();
-    window.addEventListener('resize', updateMobile);
-    return () => window.removeEventListener('resize', updateMobile);
-  }, []);
-
-  const handleAvatarPointerDown = (event) => {
-    if (!isMobile) return;
-    setDragStartX(event.clientX);
-    setDragBaseOffset(avatarOffset);
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-
-  const handleAvatarPointerMove = (event) => {
-    if (!isMobile || dragStartX === null) return;
-    const delta = event.clientX - dragStartX;
-    setAvatarOffset(Math.max(-40, Math.min(40, dragBaseOffset + delta)));
-  };
-
-  const handleAvatarPointerUp = () => {
-    setDragStartX(null);
-  };
-
   const { data: userPosts = [] } = useQuery({
     queryKey: ['userPosts', profile?.user_id],
     queryFn:  () => PostService.filter({ author_id: profile.user_id }, '-created_date', 20),
     enabled:  !!profile?.user_id,
   });
 
-  const handleCopy = () => {
-    if (!profile?.wallet_address) return;
-    navigator.clipboard.writeText(profile.wallet_address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   if (!profile) return (
     <div className="flex justify-center py-24">
-      <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+      <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#e9c400' }} />
     </div>
   );
 
-  const rank = profile.rank || getRankFromScore(profile.cis_score || 0);
+  const rank      = profile.rank || getRankFromScore(profile.cis_score || 0);
+  const tierCfg   = TIER_CONFIG[rank] || TIER_CONFIG.bronze;
+  const boostLbl  = getStakingBoostLabel(profile.clt_staked || 0);
 
   const TABS = [
-    { value: 'posts',   label: 'Posts'   },
-    { value: 'staking', label: 'Staking', show: isOwnProfile },
-  ].filter(t => t.show !== false);
+    { value: 'posts',   label: `Posts (${userPosts.length})` },
+    { value: 'staking', label: 'Staking', ownOnly: true },
+  ].filter(t => !t.ownOnly || isOwnProfile);
 
   return (
-    <div className="max-w-[720px] mx-auto px-4 py-6 space-y-6">
+    <>
+      {/* ── Stitch design system fonts + wave animation ── */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+        @keyframes wave {
+          0%   { transform: translateX(-100%); }
+          100% { transform: translateX(100%);  }
+        }
+        .profile-glass {
+          background:     rgba(255,255,255,0.03);
+          backdrop-filter: blur(12px);
+          border:         1px solid rgba(255,255,255,0.08);
+        }
+        .active-tab-glow {
+          box-shadow: 0 0 15px rgba(233,196,0,0.4);
+        }
+      `}</style>
 
-      {/* Profile card */}
-      <div className="relative overflow-hidden rounded-[28px] border border-border/70 bg-gradient-to-br from-primary/5 via-card to-primary/5 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.08)]">
-        <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-sky-300/20 blur-3xl" />
-        <div className="absolute -left-16 bottom-10 h-36 w-36 rounded-full bg-violet-200/20 blur-3xl" />
+      {/* ── Page background — void black + mesh gradient (from stitch) ── */}
+      <div className="min-h-screen"
+           style={{
+             background: `
+               radial-gradient(at 0% 0%, rgba(87,0,201,0.12) 0px, transparent 50%),
+               radial-gradient(at 100% 100%, rgba(0,222,233,0.08) 0px, transparent 50%),
+               #050505
+             `,
+           }}>
 
-        {/* Top row: avatar + stats */}
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between mb-6">
-          <div className="flex flex-col items-center gap-2 md:items-start">
-            <div
-              className="story-ring overflow-hidden rounded-full border border-border/70 bg-card p-1 shadow-sm touch-pan-y"
-              style={{
-                transform: `translateX(${avatarOffset}px)`,
-                transition: dragStartX === null ? 'transform 0.25s ease-out' : 'none',
-                cursor: isMobile ? 'grab' : 'default',
-              }}
-              onPointerDown={handleAvatarPointerDown}
-              onPointerMove={handleAvatarPointerMove}
-              onPointerUp={handleAvatarPointerUp}
-              onPointerCancel={handleAvatarPointerUp}
-            >
-              <div className="story-ring-inner">
-                <Avatar name={profile.username} avatar={profile.avatar_url} size={80} />
-              </div>
-            </div>
-            <p className="mt-1 text-[11px] text-muted-foreground md:hidden">Drag the avatar left or right</p>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-3 mb-3">
-              <p className="text-base font-semibold truncate text-center sm:text-left">{profile.username}</p>
-              <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
-                {!isOwnProfile ? (
-                  <button className="text-xs font-semibold bg-primary text-white rounded-md px-4 py-1.5 whitespace-nowrap">
-                    Follow
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                  className="p-2 rounded-lg border border-border text-foreground hover:bg-secondary transition-colors"
-                >
-                  {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
+        <div className="max-w-[480px] mx-auto px-4 pt-6 pb-32">
 
-            {/* Stats row */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 bg-card/80 rounded-3xl border border-border/70 p-4 shadow-inner">
-              <StatCol value={(profile.posts_count || 0).toLocaleString()}     label="posts"     />
-              <StatCol value={(profile.followers_count || 0).toLocaleString()} label="followers" />
-              <StatCol value={(profile.following_count || 0).toLocaleString()} label="following" />
-              <StatCol value={(profile.clt_staked || 0).toLocaleString()}     label="CLT staked" />
-              <StatCol value={(profile.daily_streak || 0) + 'd'}                 label="streak"   />
-            </div>
-          </div>
-        </div>
-
-        {/* Bio / display area */}
-        <div className="space-y-3 mb-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            {rank !== 'bronze' && <RankBadge rank={rank} size="xs" />}
-            <StakingBadge amount={profile.clt_staked || 0} />
-          </div>
-          {profile.bio && <p className="text-sm text-foreground leading-relaxed">{profile.bio}</p>}
-          {profile.wallet_address && (
-            <button onClick={handleCopy} className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/90 px-4 py-2 text-xs font-medium text-muted-foreground shadow-sm transition hover:bg-muted">
-              <span className="font-mono">{truncateWallet(profile.wallet_address)}</span>
-              {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
-            </button>
-          )}
-        </div>
-
-        {/* CIS progress */}
-        <div className="pt-4 border-t border-border/70">
-          <CISDisplay score={profile.cis_score || 0} />
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="bg-card/90 border border-border/70 rounded-[28px] overflow-hidden shadow-sm">
-        <div className="flex gap-2 p-3 bg-muted/50">
-          {TABS.map(t => (
+          {/* ── Dark mode toggle — top right ─────────────────────────────── */}
+          <div className="flex justify-end mb-6">
             <button
-              key={t.value}
-              onClick={() => setActiveTab(t.value)}
-              className={`flex-1 rounded-full px-4 py-2 text-xs font-semibold transition-all ${
-                activeTab === t.value
-                  ? 'bg-foreground text-white shadow-sm'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="p-2 rounded-lg transition-all"
+              style={{
+                background:  'rgba(255,255,255,0.05)',
+                border:      '1px solid rgba(255,255,255,0.1)',
+                color:       '#d0c6ab',
+              }}
+              aria-label="Toggle dark mode"
             >
-              {t.label}
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
-          ))}
-        </div>
+          </div>
 
-        {activeTab === 'posts' && (
-          <div>
-            {userPosts.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-sm font-semibold">No posts yet</p>
-                <p className="text-xs text-muted-foreground mt-1">Share something with the community</p>
+          {/* ── Profile section ────────────────────────────────────────────
+              Matches stitch layout exactly:
+              - Centered avatar with gold/cyan gradient ring
+              - Display name (Sora bold)
+              - @username (JetBrains Mono)
+              - Tier chip + Boost chip (glass pills)
+              - Edit Profile / Follow button (glass)
+          ─────────────────────────────────────────────────────────────── */}
+          <section className="flex flex-col items-center mb-8">
+
+            {/* Avatar ring */}
+            <div className="relative mb-6">
+              <Avatar name={profile.username} avatar={profile.avatar_url} size={112} />
+              {/* Verified dot */}
+              <div className="absolute -bottom-1 -right-1 p-1.5 rounded-full border-2"
+                   style={{ background: '#00dbe9', borderColor: '#050505',
+                            boxShadow: '0 0 12px rgba(0,222,233,0.5)' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round"/>
+                </svg>
               </div>
+            </div>
+
+            {/* Name */}
+            <h1 className="mb-1"
+                style={{ fontFamily: 'Sora, sans-serif', fontSize: 28,
+                         fontWeight: 700, color: '#ffffff', letterSpacing: '-0.02em' }}>
+              {profile.display_name || profile.username}
+            </h1>
+
+            {/* @handle */}
+            <p className="mb-4"
+               style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13,
+                        fontWeight: 500, color: '#d0c6ab' }}>
+              @{profile.username}
+            </p>
+
+            {/* Tier + Boost chips */}
+            <div className="flex gap-2 mb-6">
+              <span className="px-3 py-1 rounded-full profile-glass"
+                    style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11,
+                             fontWeight: 500, letterSpacing: '0.08em',
+                             color: tierCfg.color,
+                             border: `1px solid ${tierCfg.color}33`,
+                             boxShadow: `0 0 12px ${tierCfg.glow}` }}>
+                {tierCfg.label}
+              </span>
+              {boostLbl && (
+                <span className="px-3 py-1 rounded-full profile-glass"
+                      style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11,
+                               fontWeight: 500, letterSpacing: '0.08em',
+                               color: '#00dbe9', border: '1px solid rgba(0,222,233,0.2)' }}>
+                  {boostLbl}
+                </span>
+              )}
+            </div>
+
+            {/* Bio */}
+            {profile.bio && (
+              <p className="text-center mb-5 max-w-xs"
+                 style={{ fontFamily: 'Geist, system-ui, sans-serif', fontSize: 14,
+                          color: '#d0c6ab', lineHeight: 1.6 }}>
+                {profile.bio}
+              </p>
+            )}
+
+            {/* CTA button */}
+            {isOwnProfile ? (
+              <button className="w-full py-3 rounded-xl transition-all active:scale-95 profile-glass"
+                      style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13,
+                               fontWeight: 700, color: '#ffffff', letterSpacing: '0.05em',
+                               boxShadow: '0 0 20px rgba(255,225,109,0.05)' }}>
+                Edit Profile
+              </button>
             ) : (
-              <div className="space-y-4 px-3 py-4">
-                {userPosts.map(post => (
+              <button className="w-full py-3 rounded-xl transition-all active:scale-95"
+                      style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13,
+                               fontWeight: 700, color: '#000',
+                               background:  'linear-gradient(135deg, #e9c400, #ffe16d)',
+                               boxShadow:   '0 0 20px rgba(233,196,0,0.35)' }}>
+                Follow
+              </button>
+            )}
+          </section>
+
+          {/* ── Stats row — matches stitch border-y layout ── */}
+          <section className="flex items-center justify-between mb-8 py-6"
+                   style={{ borderTop: '1px solid rgba(255,255,255,0.06)',
+                            borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            {[
+              { value: formatK(profile.posts_count     || 0), label: 'POSTS'     },
+              { value: formatK(profile.followers_count || 0), label: 'FOLLOWERS' },
+              { value: formatK(profile.following_count || 0), label: 'FOLLOWING' },
+              { value: formatK(profile.clt_staked      || 0), label: 'CLT',
+                color: '#00dbe9' },
+            ].map((s, i, arr) => (
+              <React.Fragment key={s.label}>
+                <div className="text-center flex-1">
+                  <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 22,
+                                fontWeight: 700, color: s.color || '#ffffff' }}>
+                    {s.value}
+                  </div>
+                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10,
+                                fontWeight: 500, letterSpacing: '0.1em', color: '#999077',
+                                marginTop: 2 }}>
+                    {s.label}
+                  </div>
+                </div>
+                {i < arr.length - 1 && (
+                  <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.08)' }} />
+                )}
+              </React.Fragment>
+            ))}
+          </section>
+
+          {/* ── CIS Influence Score card ── */}
+          <CISCard score={profile.cis_score || 0} rank={rank} />
+
+          {/* ── Tab bar — stitch underline + glow style ── */}
+          <nav className="flex mb-6"
+               style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            {TABS.map(t => (
+              <button
+                key={t.value}
+                onClick={() => setActiveTab(t.value)}
+                className="flex-1 py-4 text-center relative transition-all"
+                style={{
+                  fontFamily:    'JetBrains Mono, monospace',
+                  fontSize:       13,
+                  fontWeight:     500,
+                  letterSpacing: '0.04em',
+                  color:   activeTab === t.value ? '#e9c400' : 'rgba(208,198,171,0.5)',
+                  borderBottom: activeTab === t.value
+                    ? '2px solid #e9c400' : '2px solid transparent',
+                }}
+              >
+                {t.label}
+                {/* Glow blur under active tab */}
+                {activeTab === t.value && (
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1"
+                       style={{ background: '#e9c400', filter: 'blur(3px)', opacity: 0.7 }} />
+                )}
+              </button>
+            ))}
+          </nav>
+
+          {/* ── Posts tab ── */}
+          {activeTab === 'posts' && (
+            <div className="space-y-4">
+              {userPosts.length === 0 ? (
+                <div className="text-center py-16 profile-glass rounded-2xl">
+                  <p style={{ fontFamily: 'Sora, sans-serif', fontWeight: 600,
+                              color: '#e5e2e1' }}>
+                    No posts yet
+                  </p>
+                  <p style={{ fontFamily: 'Geist, system-ui, sans-serif', fontSize: 13,
+                              color: '#999077', marginTop: 6 }}>
+                    Share something with the community
+                  </p>
+                </div>
+              ) : (
+                userPosts.map(post => (
                   <PostCard
                     key={post.id}
                     post={post}
                     authorProfile={profile}
                     currentUserId={profile.user_id}
                   />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                ))
+              )}
+            </div>
+          )}
 
-        {activeTab === 'staking' && isOwnProfile && (
-          <div className="p-4">
-            <StakingPanel profile={profile} onStakeUpdate={() => setProfile(p => ({ ...p }))} />
-          </div>
-        )}
+          {/* ── Staking tab ── */}
+          {activeTab === 'staking' && isOwnProfile && (
+            <StakingPanel
+              profile={profile}
+              onStakeUpdate={() => setProfile(p => ({ ...p }))}
+            />
+          )}
+
+        </div>
       </div>
-    </div>
+    </>
   );
 }
