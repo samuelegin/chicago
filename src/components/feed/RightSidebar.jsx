@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Zap } from 'lucide-react';
+import { Trophy, Zap, TrendingUp, Hash, Radio, Users } from 'lucide-react';
 
 const RANK_RING = {
   bronze:  'from-amber-600 to-amber-400',
@@ -41,11 +41,24 @@ function Avatar({ name, avatar, size = 32, rank }) {
   );
 }
 
+const TRENDING_TOPICS = [
+  { label: 'SOL', value: '+8.2%' },
+  { label: 'ALEX', value: '+12.0%' },
+  { label: 'Farcaster', value: '1.3k posts' },
+];
+
+const HASHTAGS = ['#web3', '#influence', '#socialfi', '#NFTs', '#crypto'];
+
+const LIVE_SPACES = [
+  { title: 'Market Pulse Room', host: 'Nova', status: 'Live' },
+  { title: 'NFT Drop Watch', host: 'MintHouse', status: '3m' },
+];
+
 const MEDAL = ['🥇', '🥈', '🥉'];
 
 export default function RightSidebar({ topUsers = [], currentUser }) {
   return (
-    <aside className="hidden xl:flex flex-col w-[260px] shrink-0 h-screen overflow-y-auto py-6 px-4 gap-5 sticky top-0">
+    <aside className="hidden lg:flex flex-col w-[280px] shrink-0 h-screen overflow-y-auto py-6 px-4 gap-5 sticky top-0">
 
       {/* Suggestions */}
       <div className="bg-card border border-border rounded-xl p-4" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
@@ -77,6 +90,74 @@ export default function RightSidebar({ topUsers = [], currentUser }) {
           )}
         </div>
       </div>
+
+      {/* Trending topics */}
+      <div className="bg-card border border-border rounded-xl p-4" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+        <div className="flex items-center gap-2 mb-3 text-[11px] font-bold uppercase tracking-[0.24em] text-muted-foreground">
+          <TrendingUp className="w-3.5 h-3.5 text-amber-500" strokeWidth={2.2} />
+          Trending
+        </div>
+        <div className="space-y-3">
+          {TRENDING_TOPICS.map((topic) => (
+            <div key={topic.label} className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/80 px-3 py-3">
+              <p className="text-sm font-semibold text-white">{topic.label}</p>
+              <span className="text-[11px] text-slate-400">{topic.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Hashtags */}
+      <div className="bg-card border border-border rounded-xl p-4" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+        <div className="flex items-center gap-2 mb-3 text-[11px] font-bold uppercase tracking-[0.24em] text-muted-foreground">
+          <Hash className="w-3.5 h-3.5 text-amber-500" strokeWidth={2.2} />
+          Hashtags
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {HASHTAGS.map((tag) => (
+            <span key={tag} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-slate-200">
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Live spaces */}
+      <div className="bg-card border border-border rounded-xl p-4" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+        <div className="flex items-center gap-2 mb-3 text-[11px] font-bold uppercase tracking-[0.24em] text-muted-foreground">
+          <Radio className="w-3.5 h-3.5 text-amber-500" strokeWidth={2.2} />
+          Live Spaces
+        </div>
+        <div className="space-y-3">
+          {LIVE_SPACES.map((space) => (
+            <div key={space.title} className="rounded-2xl border border-white/10 bg-slate-950/80 p-3">
+              <p className="text-sm font-semibold text-white">{space.title}</p>
+              <p className="text-[11px] text-slate-400">{space.host} · {space.status}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Recommended creators */}
+      {topUsers.length > 0 && (
+        <div className="bg-card border border-border rounded-xl p-4" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+          <div className="flex items-center gap-2 mb-3 text-[11px] font-bold uppercase tracking-[0.24em] text-muted-foreground">
+            <Users className="w-3.5 h-3.5 text-amber-500" strokeWidth={2.2} />
+            Recommended
+          </div>
+          <div className="space-y-3">
+            {topUsers.slice(0, 3).map((user) => (
+              <Link key={user.id} to={`/profile/${user.user_id}`} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/85 px-3 py-3 transition hover:border-amber-300">
+                <Avatar name={user.username} avatar={user.avatar_url} size={34} rank={user.rank} />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-white">{user.username}</p>
+                  <p className="text-[11px] text-slate-400">{RANK_LABEL[user.rank] || 'Creator'}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Top Influence leaderboard */}
       {topUsers.length > 0 && (
