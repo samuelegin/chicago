@@ -115,6 +115,8 @@ function CommentInput({ postId, currentUserId, authorProfile }) {
     </div>
   );
 }
+
+function RankBadge({ rank }) {
   const meta = RANK_META[rank];
   if (!meta) return null;
   return (
@@ -206,7 +208,7 @@ export default function PostCard({ post, authorProfile, currentUserId }) {
               <p className="text-[13px] font-bold leading-tight text-white" style={{ fontFamily: 'Sora, sans-serif' }}>
                 {post.author_name || 'Anonymous'}
               </p>
-              {rank && <RankPill rank={rank} />}
+              {rank && <RankBadge rank={rank} />}
             </div>
             <div className="flex items-center gap-1 mt-0.5">
               {post.category && (
