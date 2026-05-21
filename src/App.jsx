@@ -21,7 +21,7 @@ export default function App() {
     <BrowserRouter>
       <div className="bg-background text-on-background font-body-md overflow-x-hidden selection:bg-primary-container selection:text-on-primary-fixed min-h-screen">
         <TopBar walletConnected={walletConnected} onConnectWallet={handleConnectWallet} />
-        <main className="max-w-container-max mx-auto flex gap-gutter px-4 md:px-20 py-gutter relative min-h-screen">
+        <main className="max-w-container-max mx-auto flex gap-gutter px-4 md:px-20 py-gutter relative min-h-screen pt-24 md:pt-28">
           <LeftSidebar />
           <Routes>
             <Route path="/" element={<Feed />} />

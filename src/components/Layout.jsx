@@ -17,7 +17,7 @@ export function Icon({ name, className = '', filled = false }) {
 // ─── TopBar ──────────────────────────────────────────────────
 export function TopBar({ walletConnected, onConnectWallet }) {
   return (
-    <header className="w-full top-0 sticky z-50 flex justify-between items-center px-4 md:px-20 py-4 bg-background border-b-4 border-on-background">
+    <header className="w-full top-0 fixed z-50 flex justify-between items-center px-4 md:px-20 py-4 bg-background border-b-4 border-on-background">
       <div className="flex items-center gap-3">
         <img src="/favicon.jpg" alt="Chicago" className="w-8 h-8 object-cover rounded-full border-2 border-primary-container" />
         <span style={{ fontFamily: "'Bebas Neue', sans-serif" }} className="text-[2rem] md:text-[2.8rem] text-primary-container tracking-widest leading-none">

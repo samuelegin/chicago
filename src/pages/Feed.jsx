@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Icon, RightSidebar } from '../components/Layout'
 import PostCard from '../components/PostCard'
 import {
@@ -8,18 +8,163 @@ import {
   suggestedUsers,
   trendingTopics,
 } from '../data/mockData'
-// BACKEND: replace mock imports above with:
-//   import api from '../services/api'
-//   useEffect(() => { api.getFeedPosts(activeFilter).then(setPosts) }, [activeFilter])
+
+// ── GIF Keyboard ─────────────────────────────────────────────
+const GIF_CATEGORIES = ['trending', 'reactions', 'memes', 'crypto', 'hype', 'lol']
+const SAMPLE_GIFS = [
+  'https://media.giphy.com/media/l0HlvtIPzPdt2usKs/giphy.gif',
+  'https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif',
+  'https://media.giphy.com/media/xT9IgG50Lg7rusOmKs/giphy.gif',
+  'https://media.giphy.com/media/3o7abAHdYvZdBNnGZq/giphy.gif',
+  'https://media.giphy.com/media/l4Ki2obCyAQS5WhFe/giphy.gif',
+  'https://media.giphy.com/media/26BRzQS5HXcEWM7du/giphy.gif',
+  'https://media.giphy.com/media/3oFzmkkwfOGQlTYmUo/giphy.gif',
+  'https://media.giphy.com/media/xT9IgDECMFSwwFnkms/giphy.gif',
+  'https://media.giphy.com/media/26BRrSvJUa0crqw4E/giphy.gif',
+]
+
+function GifKeyboard({ onSelect, onClose }) {
+  const [activeTab, setActiveTab] = useState('trending')
+  const [search, setSearch] = useState('')
+  return (
+    <div className="absolute bottom-full mb-2 left-0 w-80 bg-surface-container border-2 border-on-background neo-shadow z-50 p-3">
+      <div className="flex justify-between items-center mb-2">
+        <span className="font-bold text-xs uppercase tracking-widest text-primary-container">GIFs</span>
+        <button onClick={onClose} className="text-on-surface-variant hover:text-on-background">
+          <Icon name="close" className="text-[18px]" />
+        </button>
+      </div>
+      <input
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder="Search GIFs…"
+        className="w-full bg-background border border-on-background/20 px-3 py-1.5 text-xs mb-2 focus:outline-none focus:border-primary-container text-on-surface"
+      />
+      <div className="flex gap-1 overflow-x-auto pb-1 mb-2 no-scrollbar">
+        {GIF_CATEGORIES.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setActiveTab(cat)}
+            className={`shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase border transition-colors ${
+              activeTab === cat
+                ? 'bg-primary-container text-on-primary-fixed border-on-background'
+                : 'border-on-background/20 text-on-surface-variant hover:bg-primary-container/10'
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-1 max-h-48 overflow-y-auto">
+        {SAMPLE_GIFS.map((gif, i) => (
+          <button
+            key={i}
+            onClick={() => { onSelect(gif); onClose() }}
+            className="aspect-square overflow-hidden border border-on-background/10 hover:border-primary-container transition-colors"
+          >
+            <img src={gif} alt="gif" className="w-full h-full object-cover" />
+          </button>
+        ))}
+      </div>
+      <p className="text-[9px] text-on-surface-variant mt-2 text-center">Powered by GIPHY</p>
+    </div>
+  )
+}
+
+// ── Poll Creator ──────────────────────────────────────────────
+function PollCreator({ onAdd, onClose }) {
+  const [question, setQuestion] = useState('')
+  const [options, setOptions] = useState(['', ''])
+  const [duration, setDuration] = useState('1 day')
+
+  const addOption = () => options.length < 4 && setOptions([...options, ''])
+  const removeOption = (i) => options.length > 2 && setOptions(options.filter((_, idx) => idx !== i))
+  const updateOption = (i, val) => setOptions(options.map((o, idx) => idx === i ? val : o))
+
+  const handleAdd = () => {
+    if (!question.trim() || options.filter(o => o.trim()).length < 2) return
+    onAdd({ question, options: options.filter(o => o.trim()), duration })
+    onClose()
+  }
+
+  return (
+    <div className="mt-3 bg-background border-2 border-primary-container p-4 relative">
+      <div className="flex justify-between items-center mb-3">
+        <span className="font-bold text-sm uppercase tracking-widest text-primary-container flex items-center gap-2">
+          <Icon name="poll" className="text-[18px]" /> Create Poll
+        </span>
+        <button onClick={onClose} className="text-on-surface-variant hover:text-on-background">
+          <Icon name="close" className="text-[16px]" />
+        </button>
+      </div>
+      <input
+        value={question}
+        onChange={e => setQuestion(e.target.value)}
+        placeholder="Ask a question…"
+        className="w-full bg-surface-container border border-on-background/20 px-3 py-2 text-sm mb-3 focus:outline-none focus:border-primary-container text-on-surface"
+      />
+      <div className="flex flex-col gap-2 mb-3">
+        {options.map((opt, i) => (
+          <div key={i} className="flex gap-2">
+            <input
+              value={opt}
+              onChange={e => updateOption(i, e.target.value)}
+              placeholder={`Option ${i + 1}`}
+              className="flex-1 bg-surface-container border border-on-background/20 px-3 py-1.5 text-sm focus:outline-none focus:border-primary-container text-on-surface"
+            />
+            {options.length > 2 && (
+              <button onClick={() => removeOption(i)} className="text-on-surface-variant hover:text-red-500">
+                <Icon name="remove_circle" className="text-[18px]" />
+              </button>
+            )}
+          </div>
+        ))}
+        {options.length < 4 && (
+          <button
+            onClick={addOption}
+            className="flex items-center gap-1 text-primary-container text-xs font-bold hover:underline self-start"
+          >
+            <Icon name="add_circle" className="text-[16px]" /> Add option
+          </button>
+        )}
+      </div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-on-surface-variant font-bold">Duration:</span>
+          <select
+            value={duration}
+            onChange={e => setDuration(e.target.value)}
+            className="bg-surface-container border border-on-background/20 text-xs px-2 py-1 text-on-surface focus:outline-none"
+          >
+            {['1 hour', '6 hours', '12 hours', '1 day', '3 days', '7 days'].map(d => (
+              <option key={d}>{d}</option>
+            ))}
+          </select>
+        </div>
+        <button
+          onClick={handleAdd}
+          className="px-4 py-1.5 bg-primary-container text-on-primary-fixed font-bold text-xs border border-on-background neo-border neo-shadow-sm active:scale-95 transition-all"
+        >
+          Add Poll
+        </button>
+      </div>
+    </div>
+  )
+}
 
 export default function Feed() {
   const [posts, setPosts] = useState(feedPosts)
   const [activeFilter, setActiveFilter] = useState('general')
   const [suggested, setSuggested] = useState(suggestedUsers)
   const [postContent, setPostContent] = useState('')
+  const [selectedFiles, setSelectedFiles] = useState([])
+  const [selectedGifs, setSelectedGifs] = useState([])
+  const [poll, setPoll] = useState(null)
+  const [showGifKeyboard, setShowGifKeyboard] = useState(false)
+  const [showPollCreator, setShowPollCreator] = useState(false)
+  const fileInputRef = useRef(null)
 
   const handleLike = (postId) => {
-    // BACKEND: await api.likePost(postId)
     setPosts((prev) =>
       prev.map((p) =>
         p.id === postId
@@ -30,20 +175,29 @@ export default function Feed() {
   }
 
   const handleFollow = (userId) => {
-    // BACKEND: await api.followUser(userId)
     setSuggested((prev) =>
       prev.map((u) => (u.id === userId ? { ...u, following: !u.following } : u))
     )
   }
 
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files)
+    const previews = files.map(f => ({ name: f.name, url: URL.createObjectURL(f) }))
+    setSelectedFiles(prev => [...prev, ...previews])
+    e.target.value = ''
+  }
+
+  const removeFile = (i) => setSelectedFiles(prev => prev.filter((_, idx) => idx !== i))
+  const removeGif = (i) => setSelectedGifs(prev => prev.filter((_, idx) => idx !== i))
+
   const handlePost = () => {
-    if (!postContent.trim()) return
-    // BACKEND: await api.createPost({ content: postContent, category: activeFilter })
+    if (!postContent.trim() && selectedFiles.length === 0 && selectedGifs.length === 0 && !poll) return
     const newPost = {
       id: `p_${Date.now()}`,
       author: currentUser,
       content: postContent,
-      images: [],
+      images: [...selectedGifs, ...selectedFiles.map(f => f.url)],
+      poll: poll || null,
       likes: 0,
       comments: 0,
       shares: 0,
@@ -54,6 +208,11 @@ export default function Feed() {
     }
     setPosts([newPost, ...posts])
     setPostContent('')
+    setSelectedFiles([])
+    setSelectedGifs([])
+    setPoll(null)
+    setShowGifKeyboard(false)
+    setShowPollCreator(false)
   }
 
   const filteredPosts =
@@ -63,6 +222,16 @@ export default function Feed() {
 
   return (
     <div className="flex-1 lg:ml-[300px] lg:mr-[340px] max-w-2xl w-full flex flex-col gap-4 lg:gap-8 min-w-0">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,video/*,.gif,.pdf,.doc,.docx"
+        multiple
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
       {/* Compose Box */}
       <section className="bg-surface-container border border-on-background/10 lg:neo-border lg:neo-shadow p-3 lg:p-6">
         <div className="flex gap-3">
@@ -74,11 +243,102 @@ export default function Feed() {
               className="w-full bg-background border border-on-background/15 lg:neo-border p-2 lg:p-4 text-sm lg:text-body-md focus:outline-none min-h-[70px] lg:min-h-[100px] resize-none placeholder:text-on-surface-variant text-on-surface"
               placeholder="What's on your mind?"
             />
-            <div className="flex justify-between items-center mt-2 lg:mt-4">
-              <div className="flex gap-2 lg:gap-4 text-on-surface-variant">
-                {['image', 'gif_box', 'poll', 'sentiment_satisfied'].map((icon) => (
-                  <Icon key={icon} name={icon} className="cursor-pointer hover:text-primary-container text-[18px] lg:text-[24px]" />
+
+            {/* Selected files preview */}
+            {selectedFiles.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {selectedFiles.map((f, i) => (
+                  <div key={i} className="relative group">
+                    {f.url.match(/\.(mp4|webm)$/i) ? (
+                      <video src={f.url} className="w-20 h-20 object-cover border border-on-background/20" />
+                    ) : (
+                      <img src={f.url} alt={f.name} className="w-20 h-20 object-cover border border-on-background/20" />
+                    )}
+                    <button
+                      onClick={() => removeFile(i)}
+                      className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
+                    >✕</button>
+                  </div>
                 ))}
+              </div>
+            )}
+
+            {/* Selected GIFs preview */}
+            {selectedGifs.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {selectedGifs.map((g, i) => (
+                  <div key={i} className="relative group">
+                    <img src={g} alt="gif" className="w-20 h-20 object-cover border border-primary-container/40" />
+                    <span className="absolute bottom-0 left-0 bg-primary-container text-on-primary-fixed text-[8px] font-bold px-1">GIF</span>
+                    <button
+                      onClick={() => removeGif(i)}
+                      className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
+                    >✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Poll preview */}
+            {poll && (
+              <div className="mt-3 bg-background border border-primary-container/40 p-3">
+                <div className="flex justify-between items-start mb-2">
+                  <p className="font-bold text-sm text-on-background">{poll.question}</p>
+                  <button onClick={() => setPoll(null)} className="text-on-surface-variant hover:text-red-500 ml-2">
+                    <Icon name="close" className="text-[16px]" />
+                  </button>
+                </div>
+                {poll.options.map((opt, i) => (
+                  <div key={i} className="flex items-center gap-2 mb-1">
+                    <div className="w-3 h-3 border-2 border-on-background/40 rounded-full" />
+                    <span className="text-xs text-on-surface-variant">{opt}</span>
+                  </div>
+                ))}
+                <p className="text-[10px] text-primary-container mt-1 font-mono">⏱ {poll.duration}</p>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center mt-2 lg:mt-4 relative">
+              <div className="flex gap-2 lg:gap-4 text-on-surface-variant relative">
+                {/* Image/File icon */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Attach image or file"
+                  className="hover:text-primary-container transition-colors"
+                >
+                  <Icon name="image" className="cursor-pointer text-[18px] lg:text-[24px]" />
+                </button>
+
+                {/* GIF icon */}
+                <div className="relative">
+                  <button
+                    onClick={() => { setShowGifKeyboard(v => !v); setShowPollCreator(false) }}
+                    title="Add GIF"
+                    className={`hover:text-primary-container transition-colors ${showGifKeyboard ? 'text-primary-container' : ''}`}
+                  >
+                    <Icon name="gif_box" className="cursor-pointer text-[18px] lg:text-[24px]" />
+                  </button>
+                  {showGifKeyboard && (
+                    <GifKeyboard
+                      onSelect={(gif) => setSelectedGifs(prev => [...prev, gif])}
+                      onClose={() => setShowGifKeyboard(false)}
+                    />
+                  )}
+                </div>
+
+                {/* Poll icon */}
+                <button
+                  onClick={() => { setShowPollCreator(v => !v); setShowGifKeyboard(false) }}
+                  title="Create poll"
+                  className={`hover:text-primary-container transition-colors ${showPollCreator ? 'text-primary-container' : ''}`}
+                >
+                  <Icon name="poll" className="cursor-pointer text-[18px] lg:text-[24px]" />
+                </button>
+
+                {/* Emoji icon */}
+                <button title="Emoji" className="hover:text-primary-container transition-colors">
+                  <Icon name="sentiment_satisfied" className="cursor-pointer text-[18px] lg:text-[24px]" />
+                </button>
               </div>
               <button
                 onClick={handlePost}
@@ -87,6 +347,14 @@ export default function Feed() {
                 Post
               </button>
             </div>
+
+            {/* Poll creator (inline below toolbar) */}
+            {showPollCreator && !poll && (
+              <PollCreator
+                onAdd={(p) => { setPoll(p); setShowPollCreator(false) }}
+                onClose={() => setShowPollCreator(false)}
+              />
+            )}
           </div>
         </div>
       </section>
