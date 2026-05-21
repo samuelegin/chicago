@@ -298,7 +298,8 @@ function handleUpdateUser(id, body) {
 // Post handlers
 function handleListPosts(params) {
   const category = params.get('category');
-  const sort = params.get('sort') || '-created_date';
+   const author_id = params.get('author_id');
+   const sort = params.get('sort') || '-created_date';
   const limit = parseInt(params.get('limit')) || 50;
 
   let posts = [...mockDataStore.posts];
@@ -306,6 +307,10 @@ function handleListPosts(params) {
   if (category) {
     posts = posts.filter(p => p.category === category);
   }
+ 
+    if (author_id) {
+      posts = posts.filter(p => p.author_id === author_id);
+    }
 
   if (sort) {
     const field = sort.replace('-', '');
