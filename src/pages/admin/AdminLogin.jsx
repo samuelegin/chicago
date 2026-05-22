@@ -54,7 +54,7 @@ export function AdminButton({ children, onClick, type = 'button', loading, disab
   return (
     <button
       type={type} onClick={onClick} disabled={disabled || loading}
-      style={{ boxShadow: '4px 4px 0px 0px #1a1c1c' }}
+      style={{ boxShadow: '4px 4px 0px 0px var(--neo-border-color)' }}
       className={`${base} ${variants[variant]} ${(disabled || loading) ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
     >
       {loading
@@ -107,13 +107,13 @@ export default function AdminLogin() {
 
   return (
     <AdminShell>
-      <main className="w-full max-w-[460px]" style={{ boxShadow: '8px 8px 0px 0px #1a1c1c' }}>
+      <main className="w-full max-w-[460px]" style={{ boxShadow: '8px 8px 0px 0px var(--neo-border-color)' }}>
         <div className="bg-surface border-4 border-on-background p-8 flex flex-col gap-6">
 
           {/* Brand */}
           <div className="flex flex-col items-center gap-3 text-center">
             <div className="w-16 h-16 bg-primary-container border-4 border-on-background flex items-center justify-center"
-              style={{ boxShadow: '4px 4px 0px 0px #1a1c1c' }}>
+              style={{ boxShadow: '4px 4px 0px 0px var(--neo-border-color)' }}>
               <span className="material-symbols-outlined text-[32px] text-on-primary-container"
                 style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
             </div>

@@ -109,10 +109,10 @@ export default function AdminRegister() {
   if (tokenValid === false) {
     return (
       <AdminShell>
-        <main className="w-full max-w-[420px]" style={{ boxShadow: '8px 8px 0px 0px #1a1c1c' }}>
+        <main className="w-full max-w-[420px]" style={{ boxShadow: '8px 8px 0px 0px var(--neo-border-color)' }}>
           <div className="bg-surface border-4 border-on-background p-8 flex flex-col items-center gap-5 text-center">
             <div className="w-16 h-16 bg-error-container border-4 border-on-background flex items-center justify-center"
-              style={{ boxShadow: '4px 4px 0px 0px #1a1c1c' }}>
+              style={{ boxShadow: '4px 4px 0px 0px var(--neo-border-color)' }}>
               <span className="material-symbols-outlined text-[32px] text-on-error-container"
                 style={{ fontVariationSettings: "'FILL' 1" }}>block</span>
             </div>
@@ -132,7 +132,7 @@ export default function AdminRegister() {
 
   return (
     <AdminShell>
-      <main className="w-full max-w-[500px]" style={{ boxShadow: '8px 8px 0px 0px #1a1c1c' }}>
+      <main className="w-full max-w-[500px]" style={{ boxShadow: '8px 8px 0px 0px var(--neo-border-color)' }}>
         <div className="bg-surface border-4 border-on-background p-8 flex flex-col gap-6">
 
           {/* Header */}

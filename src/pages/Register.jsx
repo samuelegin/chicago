@@ -44,7 +44,7 @@ function FormButton({ children, onClick, type = 'button', loading, loadingText =
   return (
     <button
       type={type} onClick={onClick} disabled={disabled || loading}
-      style={{ boxShadow: '4px 4px 0px 0px #1a1c1c' }}
+      style={{ boxShadow: '4px 4px 0px 0px var(--neo-border-color)' }}
       className={`${base} ${variants[variant]} ${className}`}
     >
       {loading
@@ -136,7 +136,7 @@ function StepIndicator({ current, total }) {
         <div key={i} className="flex items-center">
           <div className={`w-8 h-8 border-4 border-on-background flex items-center justify-center font-bold text-[11px] transition-all
             ${i < current ? 'bg-on-background text-surface' : i === current ? 'bg-primary-container text-on-primary-fixed' : 'bg-surface text-on-surface-variant'}`}
-            style={i <= current ? { boxShadow: '2px 2px 0px 0px #1a1c1c' } : {}}>
+            style={i <= current ? { boxShadow: '2px 2px 0px 0px var(--neo-border-color)' } : {}}>
             {i < current
               ? <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>
               : i + 1}
@@ -219,7 +219,7 @@ export default function Register() {
     <div className="min-h-screen bg-surface-bright flex items-center justify-center p-4 py-8 relative overflow-hidden">
       <BgDecorations />
 
-      <div className="w-full max-w-[520px]" style={{ boxShadow: '8px 8px 0px 0px #1a1c1c' }}>
+      <div className="w-full max-w-[520px]" style={{ boxShadow: '8px 8px 0px 0px var(--neo-border-color)' }}>
         <div className="bg-surface border-4 border-on-background flex flex-col">
 
           {/* ── Header strip ── */}
@@ -382,7 +382,7 @@ export default function Register() {
                     </span>
                     <button type="button"
                       className="py-2 px-4 border-4 border-on-background bg-surface font-bold text-[11px] uppercase tracking-widest hover:bg-surface-container transition-all flex items-center gap-2"
-                      style={{ boxShadow: '2px 2px 0px 0px #1a1c1c' }}>
+                      style={{ boxShadow: '2px 2px 0px 0px var(--neo-border-color)' }}>
                       <span className="material-symbols-outlined text-[16px]">upload</span>
                       Upload
                     </button>
@@ -429,7 +429,7 @@ export default function Register() {
             <div className="p-8 flex flex-col items-center gap-6 text-center">
               {/* Gold success box */}
               <div className="w-24 h-24 bg-primary-container border-4 border-on-background flex items-center justify-center"
-                style={{ boxShadow: '6px 6px 0px 0px #1a1c1c' }}>
+                style={{ boxShadow: '6px 6px 0px 0px var(--neo-border-color)' }}>
                 <span className="material-symbols-outlined text-[48px] text-on-primary-fixed"
                   style={{ fontVariationSettings: "'FILL' 1" }}>
                   check_circle

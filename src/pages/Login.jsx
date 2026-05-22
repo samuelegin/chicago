@@ -35,7 +35,7 @@ function FormButton({ children, type = 'button', loading, disabled, className = 
   return (
     <button
       type={type} disabled={disabled || loading}
-      style={{ boxShadow: '4px 4px 0px 0px #1a1c1c' }}
+      style={{ boxShadow: '4px 4px 0px 0px var(--neo-border-color)' }}
       className={`w-full py-4 border-4 border-on-background font-bold uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-3 active:translate-x-[2px] active:translate-y-[2px] bg-primary-container text-on-primary-fixed hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
     >
       {loading
@@ -110,7 +110,7 @@ export default function Login() {
     <div className="min-h-screen bg-surface-bright flex items-center justify-center p-4 relative overflow-hidden">
       <BgDecorations />
 
-      <div className="w-full max-w-[480px]" style={{ boxShadow: '8px 8px 0px 0px #1a1c1c' }}>
+      <div className="w-full max-w-[480px]" style={{ boxShadow: '8px 8px 0px 0px var(--neo-border-color)' }}>
         <div className="bg-surface border-4 border-on-background flex flex-col">
 
           {/* ── Header strip ── */}
@@ -221,7 +221,7 @@ export default function Login() {
 
                 <button
                   type="button"
-                  style={{ boxShadow: '4px 4px 0px 0px #1a1c1c' }}
+                  style={{ boxShadow: '4px 4px 0px 0px var(--neo-border-color)' }}
                   className="w-full py-4 border-4 border-on-background font-bold uppercase tracking-widest text-sm bg-surface text-on-surface hover:bg-surface-container transition-all flex items-center justify-center gap-3 active:translate-x-[2px] active:translate-y-[2px]"
                 >
                   <svg width="20" height="20" viewBox="0 0 40 40" fill="none">

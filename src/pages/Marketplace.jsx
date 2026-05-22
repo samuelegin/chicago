@@ -49,7 +49,7 @@ export default function Marketplace() {
 
         {/* ── Campaign Creation Form ── */}
         <div className="lg:col-span-7 flex flex-col gap-4 lg:gap-6">
-          <div className="bg-white border border-on-background/10 lg:border-4 lg:border-on-surface p-5 lg:p-8 lg:shadow-[8px_8px_0px_0px_rgba(26,28,28,1)]">
+          <div className="bg-surface border border-on-background/10 lg:border-4 lg:border-on-surface p-5 lg:p-8 neo-shadow">
 
             {/* Form Title */}
             <div className="flex items-center gap-2 mb-5 lg:mb-6">
@@ -73,7 +73,7 @@ export default function Marketplace() {
                       className={`px-3 py-1.5 lg:px-4 lg:py-2 font-bold uppercase text-[10px] lg:text-[14px] lg:tracking-[0.05em] border-2 transition-colors ${
                         selectedCategory === cat
                           ? 'bg-primary text-on-primary border-on-surface'
-                          : 'bg-white text-on-surface border-on-surface hover:bg-surface-container'
+                          : 'bg-surface text-on-surface border-on-surface hover:bg-surface-container'
                       }`}
                     >
                       {cat}
@@ -114,7 +114,7 @@ export default function Marketplace() {
                   <select
                     value={paymentMethod}
                     onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="w-full border-2 lg:border-4 border-on-surface bg-white p-2 lg:p-3 font-medium text-sm lg:text-base focus:ring-0 focus:outline-none focus:border-primary"
+                    className="w-full border-2 lg:border-4 border-on-surface bg-surface p-2 lg:p-3 font-medium text-sm lg:text-base focus:ring-0 focus:outline-none focus:border-primary"
                   >
                     <option value="ETH">Pay with ETH</option>
                     <option value="CLT">Pay with CLT</option>
@@ -131,7 +131,7 @@ export default function Marketplace() {
                   <input
                     type="text"
                     placeholder="Enter campaign name"
-                    className="w-full border-2 lg:border-4 border-on-surface bg-white p-2 lg:p-3 text-sm lg:text-base focus:ring-0 focus:outline-none focus:border-primary"
+                    className="w-full border-2 lg:border-4 border-on-surface bg-surface p-2 lg:p-3 text-sm lg:text-base focus:ring-0 focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div>
@@ -141,7 +141,7 @@ export default function Marketplace() {
                   <input
                     type="url"
                     placeholder="https://your-project.xyz"
-                    className="w-full border-2 lg:border-4 border-on-surface bg-white p-2 lg:p-3 text-sm lg:text-base focus:ring-0 focus:outline-none focus:border-primary"
+                    className="w-full border-2 lg:border-4 border-on-surface bg-surface p-2 lg:p-3 text-sm lg:text-base focus:ring-0 focus:outline-none focus:border-primary"
                   />
                 </div>
               </div>
@@ -154,7 +154,7 @@ export default function Marketplace() {
                 <textarea
                   placeholder="Describe your campaign mission..."
                   rows={3}
-                  className="w-full border-2 lg:border-4 border-on-surface bg-white p-2 lg:p-3 text-sm lg:text-base focus:ring-0 focus:outline-none focus:border-primary resize-none"
+                  className="w-full border-2 lg:border-4 border-on-surface bg-surface p-2 lg:p-3 text-sm lg:text-base focus:ring-0 focus:outline-none focus:border-primary resize-none"
                 />
               </div>
 
@@ -218,7 +218,7 @@ export default function Marketplace() {
                         <span className="font-bold text-sm lg:text-[18px]">{p.label}</span>
                       </div>
                       {p.badge && (
-                        <span className="font-bold bg-on-surface text-white px-2 py-0.5 uppercase text-[9px] lg:text-[12px]">
+                        <span className="font-bold bg-on-surface text-inverse-on-surface px-2 py-0.5 uppercase text-[9px] lg:text-[12px]">
                           {p.badge}
                         </span>
                       )}
@@ -228,7 +228,7 @@ export default function Marketplace() {
               </div>
 
               {/* Pricing Summary & Submit */}
-              <div className="mt-2 p-4 lg:p-6 bg-on-surface text-white flex flex-col md:flex-row md:items-center justify-between gap-3 lg:gap-4">
+              <div className="mt-2 p-4 lg:p-6 bg-on-surface text-inverse-on-surface flex flex-col md:flex-row md:items-center justify-between gap-3 lg:gap-4">
                 <div>
                   <p className="font-bold uppercase text-[10px] lg:text-[14px] text-primary-fixed-dim lg:tracking-[0.05em]">
                     Final Pricing
@@ -256,7 +256,7 @@ export default function Marketplace() {
           <div>
             <div className="flex items-center justify-between mb-3 lg:mb-4">
               <h3 className="font-extrabold uppercase text-sm lg:text-[24px] lg:leading-[32px]">Management</h3>
-              <span className="font-bold bg-on-surface-variant text-white px-2 lg:px-3 py-0.5 lg:py-1 text-[9px] lg:text-[14px] uppercase">
+              <span className="font-bold bg-on-surface-variant text-inverse-on-surface px-2 lg:px-3 py-0.5 lg:py-1 text-[9px] lg:text-[14px] uppercase">
                 {campaigns.filter(c => c.status === 'active').length} Active
               </span>
             </div>
@@ -265,7 +265,7 @@ export default function Marketplace() {
               {campaigns.map((camp) => (
                 <div
                   key={camp.id}
-                  className="bg-white border border-on-background/10 lg:border-4 lg:border-on-surface lg:shadow-[8px_8px_0px_0px_rgba(26,28,28,1)] flex flex-col group overflow-hidden"
+                  className="bg-surface border border-on-background/10 lg:border-4 lg:border-on-surface neo-shadow flex flex-col group overflow-hidden"
                 >
                   {/* Campaign Image */}
                   <div className="relative overflow-hidden h-36 lg:h-52 bg-primary-container">
@@ -313,10 +313,10 @@ export default function Marketplace() {
 
                     {/* Actions */}
                     <div className="flex gap-2">
-                      <button className="flex-1 bg-on-surface text-white py-2 lg:py-3 font-bold uppercase text-[10px] lg:text-[14px] border-2 border-on-surface hover:bg-white hover:text-on-surface transition-colors">
+                      <button className="flex-1 bg-on-surface text-inverse-on-surface py-2 lg:py-3 font-bold uppercase text-[10px] lg:text-[14px] border-2 border-on-surface hover:bg-surface hover:text-on-surface transition-colors">
                         Edit Ad
                       </button>
-                      <button className="aspect-square w-9 lg:w-12 bg-white border-2 border-on-surface flex items-center justify-center hover:bg-error/10 hover:border-error transition-colors">
+                      <button className="aspect-square w-9 lg:w-12 bg-surface border-2 border-on-surface flex items-center justify-center hover:bg-error/10 hover:border-error transition-colors">
                         <span className="material-symbols-outlined text-sm lg:text-base">pause</span>
                       </button>
                     </div>
@@ -327,7 +327,7 @@ export default function Marketplace() {
           </div>
 
           {/* Network Insights */}
-          <div className="bg-primary-container border border-on-background/10 lg:border-4 lg:border-on-surface p-5 lg:p-8 lg:shadow-[8px_8px_0px_0px_rgba(26,28,28,1)] relative overflow-hidden">
+          <div className="bg-primary-container border border-on-background/10 lg:border-4 lg:border-on-surface p-5 lg:p-8 lg:neo-shadow relative overflow-hidden">
             <div className="relative z-10">
               <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-4 lg:mb-6">
                 <div>
@@ -339,11 +339,11 @@ export default function Marketplace() {
                   </p>
                 </div>
                 <div className="flex gap-2 lg:gap-4 shrink-0">
-                  <div className="bg-white border-2 lg:border-4 border-on-surface p-3 lg:p-4 text-center">
+                  <div className="bg-surface border-2 lg:border-4 border-on-surface p-3 lg:p-4 text-center">
                     <div className="font-bold uppercase text-[9px] lg:text-[14px] opacity-60">Avg. CTR</div>
                     <div className="font-extrabold text-xl lg:text-[40px] lg:leading-[48px]">3.2%</div>
                   </div>
-                  <div className="bg-white border-2 lg:border-4 border-on-surface p-3 lg:p-4 text-center">
+                  <div className="bg-surface border-2 lg:border-4 border-on-surface p-3 lg:p-4 text-center">
                     <div className="font-bold uppercase text-[9px] lg:text-[14px] opacity-60">Reach</div>
                     <div className="font-extrabold text-xl lg:text-[40px] lg:leading-[48px]">2.8M</div>
                   </div>
@@ -358,7 +358,7 @@ export default function Marketplace() {
                   { label: 'Active Campaigns', value: stats.activeCampaigns },
                   { label: 'Total Volume', value: stats.totalVolume },
                 ].map((s) => (
-                  <div key={s.label} className="bg-white border-2 lg:border-4 border-on-surface p-3 lg:p-4">
+                  <div key={s.label} className="bg-surface border-2 lg:border-4 border-on-surface p-3 lg:p-4">
                     <p className="font-bold uppercase text-[9px] lg:text-[14px] opacity-60">{s.label}</p>
                     <p className="font-extrabold text-lg lg:text-[24px]">{s.value}</p>
                   </div>

@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { navLinks, footerLinks } from '../data/mockData'
+import { useTheme } from '../context/ThemeContext'
 
 // ─── Icon ────────────────────────────────────────────────────
 export function Icon({ name, className = '', filled = false }) {
@@ -16,6 +17,7 @@ export function Icon({ name, className = '', filled = false }) {
 
 // ─── TopBar ──────────────────────────────────────────────────
 export function TopBar({ walletConnected, onConnectWallet }) {
+  const { dark, toggle } = useTheme()
   return (
     <header className="w-full top-0 fixed z-50 flex justify-between items-center px-4 md:px-20 py-4 bg-background border-b-4 border-on-background">
       <div className="flex items-center gap-3">
@@ -25,16 +27,13 @@ export function TopBar({ walletConnected, onConnectWallet }) {
         </span>
       </div>
       <div className="flex items-center gap-2 md:gap-4">
-        {/* Dark mode toggle — UI only, not yet implemented */}
         <button
-          title="Dark mode (coming soon)"
+          title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+          onClick={toggle}
           className="flex items-center justify-center w-9 h-9 border border-on-background/20 lg:neo-border bg-surface-container text-on-surface-variant hover:bg-primary-container/10 hover:text-primary-container transition-all active:scale-95"
-          onClick={() => {}}
         >
-          <Icon name="dark_mode" className="text-[20px]" />
+          <Icon name={dark ? 'light_mode' : 'dark_mode'} className="text-[20px]" />
         </button>
-
-        {/* Connect Wallet — visible on ALL screen sizes */}
         <button
           onClick={onConnectWallet}
           className="flex items-center gap-2 px-3 md:px-6 py-2 bg-primary-container text-on-primary-fixed font-bold border border-on-background/20 lg:neo-border lg:neo-shadow-sm active:scale-95 transition-all text-sm md:text-base"
@@ -84,7 +83,7 @@ export function BottomNav() {
           end={link.path === '/'}
           className={({ isActive }) =>
             isActive
-              ? 'flex flex-col items-center justify-center bg-primary-container text-on-primary-fixed border-2 border-on-background p-2 transition-transform active:scale-90 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
+              ? 'flex flex-col items-center justify-center bg-primary-container text-on-primary-fixed border-2 border-on-background p-2 transition-transform active:scale-90 neo-shadow-sm'
               : 'flex flex-col items-center justify-center text-on-background p-2 hover:bg-primary-container/10 transition-transform active:scale-90'
           }
         >
@@ -117,7 +116,7 @@ export function RightSidebar({ suggestedUsers, trendingTopics, onFollow }) {
               </div>
               <button
                 onClick={() => onFollow(user.id)}
-                className="px-4 py-1 bg-white text-black font-bold neo-border neo-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all text-xs"
+                className="px-4 py-1 bg-surface text-on-surface font-bold neo-border neo-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all text-xs"
               >
                 {user.following ? 'Following' : 'Follow'}
               </button>

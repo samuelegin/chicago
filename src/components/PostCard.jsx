@@ -41,7 +41,7 @@ function EmojiPicker({ textareaRef, onClose }) {
   return (
     <div
       ref={pickerRef}
-      className="absolute bottom-full mb-2 left-0 z-50 bg-surface-container border-2 border-on-background shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-72 p-3 select-none"
+      className="absolute bottom-full mb-2 left-0 z-50 bg-surface-container border-2 border-on-background neo-shadow-sm w-72 p-3 select-none"
       onMouseDown={e => e.preventDefault()}
     >
       {/* Tabs */}

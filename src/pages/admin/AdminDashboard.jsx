@@ -20,7 +20,7 @@ function StatCard({ icon, label, value, badge, gold }) {
   return (
     <div
       className="bg-surface border-4 border-on-background flex flex-col gap-3 p-6 transition-all hover:-translate-y-px hover:-translate-x-px"
-      style={{ boxShadow: gold ? '6px 6px 0px 0px #d4af37' : '6px 6px 0px 0px #1a1c1c' }}
+      style={{ boxShadow: gold ? '6px 6px 0px 0px #d4af37' : '6px 6px 0px 0px var(--neo-border-color)' }}
     >
       <div className="flex items-center justify-between">
         <div className={`w-10 h-10 border-4 border-on-background flex items-center justify-center ${gold ? 'bg-primary-container' : 'bg-surface-container'}`}>
@@ -57,7 +57,7 @@ function InviteModal({ onClose }) {
   return (
     <div className="fixed inset-0 z-50 bg-on-background/60 flex items-center justify-center p-4" onClick={onClose}>
       <div className="w-full max-w-[420px] bg-surface border-4 border-on-background p-8 flex flex-col gap-5"
-        style={{ boxShadow: '8px 8px 0px 0px #1a1c1c' }}
+        style={{ boxShadow: '8px 8px 0px 0px var(--neo-border-color)' }}
         onClick={e => e.stopPropagation()}>
         <div className="flex items-start justify-between">
           <div>
@@ -99,7 +99,7 @@ function IdleWarning({ countdown, onStay, onLogout }) {
   return (
     <div className="fixed inset-0 z-50 bg-on-background/70 flex items-center justify-center p-4">
       <div className="w-full max-w-[400px] bg-surface border-4 border-on-background p-8 flex flex-col items-center gap-5 text-center"
-        style={{ boxShadow: '8px 8px 0px 0px #1a1c1c' }}>
+        style={{ boxShadow: '8px 8px 0px 0px var(--neo-border-color)' }}>
         <div className="w-14 h-14 bg-primary-fixed border-4 border-on-background flex items-center justify-center">
           <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>timer</span>
         </div>
@@ -108,8 +108,8 @@ function IdleWarning({ countdown, onStay, onLogout }) {
           <p className="text-sm text-on-surface-variant mt-1">Auto-logout in <strong className="text-error">{countdown}s</strong> due to inactivity</p>
         </div>
         <div className="flex gap-3 w-full">
-          <button onClick={onStay} className="flex-1 py-3 bg-primary-container text-on-primary-fixed font-bold uppercase text-sm border-4 border-on-background" style={{ boxShadow: '3px 3px 0px 0px #1a1c1c' }}>Stay Logged In</button>
-          <button onClick={onLogout} className="flex-1 py-3 bg-surface text-on-surface font-bold uppercase text-sm border-4 border-on-background" style={{ boxShadow: '3px 3px 0px 0px #1a1c1c' }}>Log Out</button>
+          <button onClick={onStay} className="flex-1 py-3 bg-primary-container text-on-primary-fixed font-bold uppercase text-sm border-4 border-on-background" style={{ boxShadow: '3px 3px 0px 0px var(--neo-border-color)' }}>Stay Logged In</button>
+          <button onClick={onLogout} className="flex-1 py-3 bg-surface text-on-surface font-bold uppercase text-sm border-4 border-on-background" style={{ boxShadow: '3px 3px 0px 0px var(--neo-border-color)' }}>Log Out</button>
         </div>
       </div>
     </div>
@@ -124,7 +124,7 @@ function NavItem({ icon, label, active, onClick, badge }) {
         ${active
           ? 'bg-primary-container text-on-primary-fixed border-r-4 border-on-background font-extrabold'
           : 'text-on-surface hover:bg-surface-container-high hover:translate-x-1 font-medium'}`}
-      style={active ? { boxShadow: 'inset -4px 0 0 0 #1a1c1c' } : {}}
+      style={active ? { boxShadow: 'inset -4px 0 0 0 var(--neo-border-color)' } : {}}
     >
       <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: active ? "'FILL' 1" : "'FILL' 0" }}>{icon}</span>
       <span className="text-[15px] tracking-tight flex-1">{label}</span>
@@ -175,7 +175,7 @@ function Overview({ onInvite }) {
       {/* Two-col lower */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Admin management */}
-        <div className="bg-surface border-4 border-on-background p-6 flex flex-col gap-4" style={{ boxShadow: '4px 4px 0px 0px #1a1c1c' }}>
+        <div className="bg-surface border-4 border-on-background p-6 flex flex-col gap-4" style={{ boxShadow: '4px 4px 0px 0px var(--neo-border-color)' }}>
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-primary-container text-[22px]" style={{ fontVariationSettings: "'FILL' 1" }}>manage_accounts</span>
             <h2 className="font-extrabold text-[15px] uppercase tracking-tight">Admin Management</h2>
@@ -185,14 +185,14 @@ function Overview({ onInvite }) {
           </p>
           <button onClick={onInvite}
             className="flex items-center justify-center gap-2 py-3 bg-primary-container text-on-primary-fixed font-bold text-[12px] uppercase tracking-widest border-4 border-on-background hover:brightness-105 transition-all"
-            style={{ boxShadow: '3px 3px 0px 0px #1a1c1c' }}>
+            style={{ boxShadow: '3px 3px 0px 0px var(--neo-border-color)' }}>
             <span className="material-symbols-outlined text-[16px]">person_add</span>
             Invite a New Admin
           </button>
         </div>
 
         {/* Security log */}
-        <div className="bg-surface border-4 border-on-background p-6 flex flex-col gap-4" style={{ boxShadow: '4px 4px 0px 0px #1a1c1c' }}>
+        <div className="bg-surface border-4 border-on-background p-6 flex flex-col gap-4" style={{ boxShadow: '4px 4px 0px 0px var(--neo-border-color)' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="material-symbols-outlined text-primary-container text-[22px]" style={{ fontVariationSettings: "'FILL' 1" }}>security</span>
@@ -290,7 +290,7 @@ function UserManagement() {
             <button key={f} onClick={() => setFilter(f)}
               className={`px-4 py-3 border-4 border-on-background font-bold text-[11px] uppercase tracking-widest transition-all
                 ${filter === f ? 'bg-on-background text-surface' : 'bg-surface text-on-surface hover:bg-surface-container'}`}
-              style={filter === f ? { boxShadow: '3px 3px 0px 0px #d4af37' } : { boxShadow: '3px 3px 0px 0px #1a1c1c' }}>
+              style={filter === f ? { boxShadow: '3px 3px 0px 0px #d4af37' } : { boxShadow: '3px 3px 0px 0px var(--neo-border-color)' }}>
               {f}
             </button>
           ))}
@@ -298,7 +298,7 @@ function UserManagement() {
       </div>
 
       {/* Table */}
-      <div className="border-4 border-on-background overflow-x-auto" style={{ boxShadow: '6px 6px 0px 0px #1a1c1c' }}>
+      <div className="border-4 border-on-background overflow-x-auto" style={{ boxShadow: '6px 6px 0px 0px var(--neo-border-color)' }}>
         <table className="w-full">
           <thead>
             <tr className="bg-on-background text-surface border-b-4 border-on-background">
@@ -392,7 +392,7 @@ function AdManager() {
       </div>
 
       {/* Campaigns table */}
-      <div className="xl:col-span-2 border-4 border-on-background" style={{ boxShadow: '6px 6px 0px 0px #1a1c1c' }}>
+      <div className="xl:col-span-2 border-4 border-on-background" style={{ boxShadow: '6px 6px 0px 0px var(--neo-border-color)' }}>
         <div className="px-6 py-4 border-b-4 border-on-background bg-surface flex items-center justify-between">
           <h3 className="font-extrabold text-[15px] uppercase tracking-tight">Active Campaigns</h3>
           <div className="flex gap-2">
@@ -467,7 +467,7 @@ function AdManager() {
           </div>
           <button
             className="w-full py-4 bg-primary-container text-on-primary-fixed font-bold uppercase tracking-widest text-sm border-4 border-on-background hover:brightness-105 transition-all"
-            style={{ boxShadow: '4px 4px 0px 0px #1a1c1c' }}>
+            style={{ boxShadow: '4px 4px 0px 0px var(--neo-border-color)' }}>
             Publish Ad
           </button>
           <p className="text-center text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Ads reviewed within 24 hours</p>
@@ -492,7 +492,7 @@ function AdminTeam({ onInvite }) {
         <p className="text-[12px] text-on-surface-variant font-medium">{admins.length} active admins on this platform</p>
         <button onClick={onInvite}
           className="flex items-center gap-2 px-5 py-3 bg-primary-container text-on-primary-fixed font-bold text-[11px] uppercase tracking-widest border-4 border-on-background hover:brightness-105 transition-all"
-          style={{ boxShadow: '3px 3px 0px 0px #1a1c1c' }}>
+          style={{ boxShadow: '3px 3px 0px 0px var(--neo-border-color)' }}>
           <span className="material-symbols-outlined text-[16px]">person_add</span>
           Invite Admin
         </button>
@@ -500,7 +500,7 @@ function AdminTeam({ onInvite }) {
       <div className="flex flex-col gap-4">
         {admins.map((a, i) => (
           <div key={i} className="bg-surface border-4 border-on-background p-6 flex items-center gap-5"
-            style={{ boxShadow: '4px 4px 0px 0px #1a1c1c' }}>
+            style={{ boxShadow: '4px 4px 0px 0px var(--neo-border-color)' }}>
             <div className="relative shrink-0">
               <div className="w-12 h-12 bg-primary-container border-4 border-on-background flex items-center justify-center font-extrabold text-[13px] text-on-primary-fixed">
                 {a.name.split(' ').map(n => n[0]).join('').slice(0,2)}
@@ -584,7 +584,7 @@ export default function AdminDashboard() {
           <div className="px-6 py-6 border-b-4 border-on-background">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-primary-container border-4 border-on-background flex items-center justify-center"
-                style={{ boxShadow: '3px 3px 0px 0px #1a1c1c' }}>
+                style={{ boxShadow: '3px 3px 0px 0px var(--neo-border-color)' }}>
                 <span className="material-symbols-outlined text-[18px] text-on-primary-fixed" style={{ fontVariationSettings: "'FILL' 1" }}>shield</span>
               </div>
               <div>
@@ -646,7 +646,7 @@ export default function AdminDashboard() {
             {/* Invite (desktop) */}
             <button onClick={() => setShowInvite(true)}
               className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary-container text-on-primary-fixed font-bold text-[11px] uppercase tracking-wider border-2 border-on-background hover:brightness-105 transition-all"
-              style={{ boxShadow: '2px 2px 0px 0px #1a1c1c' }}>
+              style={{ boxShadow: '2px 2px 0px 0px var(--neo-border-color)' }}>
               <span className="material-symbols-outlined text-[16px]">person_add</span>
               Invite Admin
             </button>

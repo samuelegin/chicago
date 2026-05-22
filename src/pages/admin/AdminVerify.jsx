@@ -65,14 +65,14 @@ export default function AdminVerify() {
 
   return (
     <AdminShell>
-      <main className="w-full max-w-[440px]" style={{ boxShadow: '8px 8px 0px 0px #1a1c1c' }}>
+      <main className="w-full max-w-[440px]" style={{ boxShadow: '8px 8px 0px 0px var(--neo-border-color)' }}>
         <div className="bg-surface border-4 border-on-background p-8 flex flex-col gap-6">
 
           {/* Header */}
           <div className="flex flex-col items-center gap-3 text-center">
             <div className={`w-16 h-16 border-4 border-on-background flex items-center justify-center transition-colors duration-500
               ${success ? 'bg-green-400' : 'bg-primary-container'}`}
-              style={{ boxShadow: '4px 4px 0px 0px #1a1c1c' }}>
+              style={{ boxShadow: '4px 4px 0px 0px var(--neo-border-color)' }}>
               <span className="material-symbols-outlined text-[32px] text-on-primary-container"
                 style={{ fontVariationSettings: "'FILL' 1" }}>
                 {success ? 'check_circle' : 'verified_user'}
