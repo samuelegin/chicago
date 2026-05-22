@@ -65,8 +65,8 @@ export default function AdminVerify() {
 
   return (
     <AdminShell>
-      <main className="w-full max-w-[440px]" style={{ boxShadow: '8px 8px 0px 0px var(--neo-border-color)' }}>
-        <div className="bg-surface border-4 border-on-background p-8 flex flex-col gap-6">
+      <main className="w-full max-w-[440px]">
+        <div className="bg-surface border-[4px] border-on-background p-8 flex flex-col gap-6" style={{ boxShadow: '8px 8px 0px 0px #000' }}>
 
           {/* Header */}
           <div className="flex flex-col items-center gap-3 text-center">
@@ -111,7 +111,7 @@ export default function AdminVerify() {
 
           {/* OTP inputs */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-            <div className="flex justify-between gap-2">
+            <div className="grid grid-cols-6 gap-2 w-full">
               {digits.map((d, i) => (
                 <input
                   key={i}
@@ -121,7 +121,7 @@ export default function AdminVerify() {
                   onChange={e => handleDigit(i, e.target.value)}
                   onKeyDown={e => handleKeyDown(i, e)}
                   onFocus={e => e.target.select()}
-                  className={`flex-1 aspect-square text-center font-extrabold text-[24px] border-4 bg-surface focus:outline-none transition-all
+                  className={`w-full aspect-square text-center font-extrabold text-[20px] border-[3px] bg-surface focus:outline-none transition-all min-w-0
                     ${d ? 'border-primary-container bg-primary-container/5' : 'border-on-background focus:border-primary-container'}`}
                 />
               ))}
