@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { Icon } from '../components/Layout'
 import { currentUser, feedPosts, leaderboardMyStats } from '../data/mockData'
+import { useAuth } from '../context/AuthContext'
 
 // Referral code derived from user id (in production, comes from backend)
 const REFERRAL_CODE = 'CHI-' + currentUser.id.replace('u_', '').padStart(6, '0') + '-X9K2'
@@ -23,12 +24,19 @@ const nextTier = TIER_THRESHOLDS[TIER_THRESHOLDS.indexOf(currentTier) + 1]
 export default function Profile() {
   const [user] = useState(currentUser)
   const [copied, setCopied] = useState(false)
+  const { logout } = useAuth()
+  const navigate = useNavigate()
   const userPosts = feedPosts.filter((p) => p.author.id === user.id)
 
   const handleCopy = () => {
     navigator.clipboard.writeText(REFERRAL_LINK).catch(() => {})
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
   }
 
   return (
@@ -42,13 +50,22 @@ export default function Profile() {
             <div className="-mt-10 lg:-mt-16 w-16 h-16 lg:w-24 lg:h-24 border-2 border-on-background/20 lg:neo-border overflow-hidden">
               <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
             </div>
-            <NavLink
-              to="/profile/edit"
-              className="flex items-center gap-1 lg:gap-2 px-3 lg:px-4 py-1.5 lg:py-2 border border-on-background/15 lg:neo-border bg-background font-bold text-[11px] lg:text-[12px] uppercase hover:bg-primary-container/10 transition-colors mt-2"
-            >
-              <Icon name="edit" className="text-[14px] lg:text-[16px]" />
-              Edit Profile
-            </NavLink>
+            <div className="flex items-center gap-2 mt-2">
+              <NavLink
+                to="/profile/edit"
+                className="flex items-center gap-1 lg:gap-2 px-3 lg:px-4 py-1.5 lg:py-2 border border-on-background/15 lg:neo-border bg-background font-bold text-[11px] lg:text-[12px] uppercase hover:bg-primary-container/10 transition-colors"
+              >
+                <Icon name="edit" className="text-[14px] lg:text-[16px]" />
+                Edit Profile
+              </NavLink>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-1 lg:gap-2 px-3 lg:px-4 py-1.5 lg:py-2 border border-on-background/15 lg:neo-border bg-background font-bold text-[11px] lg:text-[12px] uppercase hover:bg-error/10 hover:border-error hover:text-error transition-colors"
+              >
+                <Icon name="logout" className="text-[14px] lg:text-[16px]" />
+                <span className="hidden sm:inline">Log Out</span>
+              </button>
+            </div>
           </div>
 
           <h1 className="font-extrabold uppercase tracking-tight leading-none text-[20px] lg:text-[28px] mb-1">{user.name}</h1>
