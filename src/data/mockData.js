@@ -352,3 +352,28 @@ export const navLinks = [
 // ─── FOOTER LINKS ─────────────────────────────────────────────
 // Static — no endpoint needed
 export const footerLinks = ['Privacy', 'Terms', 'Ads', 'Cookies']
+
+// ─── MOCK AUTH CREDENTIALS ────────────────────────────────────
+// DEV ONLY — swap for real API auth before deploying
+export const mockUsers = [
+  {
+    id: 'u_001',
+    email: 'user@chicago.io',
+    password: 'Chicago2025!',
+    role: 'user',
+    name: 'Jordan Neo',
+    handle: '@jordan_neo.eth',
+    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCG8rIH4Dxn2mNYlShmTd6eVt8zq_1mPZy00yVqedHW548TBXBtirL-qRN8CvBR85cOt5CCx7z1CCKVTZ-WQ0JSslAn-29TrVvHrC18PLRLQdUa2VBoyu7j0S9lzk3VhYPQI-CmGUrRHbhDoCmFM9EM99s-lWavGg1B962TVZTtxIj6D3VMuMUZxHlEYovyLerMC4a3gvfOwSXq3rZHZGzTxUsrhKOPFk1-vh2CH7qb6v-6Iv0s6NfYl_d8qEroRvJmmFtav3xt41B4',
+  },
+]
+
+export const mockAdmins = [
+  {
+    id: 'admin_001',
+    email: 'admin@chicago.io',
+    password: 'AdminChicago#99',
+    role: 'admin',
+    name: 'Chicago Admin',
+    handle: '@admin',
+  },
+]

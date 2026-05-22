@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import { TopBar, LeftSidebar, BottomNav } from './components/Layout'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -11,9 +12,6 @@ import Profile from './pages/Profile'
 import EditProfile from './pages/EditProfile'
 import UserProfile from './pages/UserProfile'
 
-// ── Admin pages (secret slug: /portal-ax92-v1) ───────────────
-// ⚠️  Never link to these paths from any public-facing page.
-// ⚠️  Change the slug to something unique before deploying.
 import AdminLogin    from './pages/admin/AdminLogin'
 import AdminVerify   from './pages/admin/AdminVerify'
 import AdminRegister from './pages/admin/AdminRegister'
@@ -21,11 +19,27 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 
 const ADMIN_SLUG = '/portal-ax92-v1'
 
-// ── Wrapper: hides app shell on admin routes ─────────────────
+// ── Route guard: requires logged-in user ─────────────────────
+function ProtectedRoute({ children }) {
+  const { user } = useAuth()
+  const { pathname } = useLocation()
+  if (!user) return <Navigate to="/login" state={{ from: pathname }} replace />
+  return children
+}
+
+// ── Route guard: requires admin role ─────────────────────────
+function AdminRoute({ children }) {
+  const { user, isAdmin } = useAuth()
+  if (!user) return <Navigate to="/login" replace />
+  if (!isAdmin) return <Navigate to="/" replace />
+  return children
+}
+
+// ── App shell (hides nav on auth/admin routes) ────────────────
 function AppShell({ walletConnected, onConnectWallet, children }) {
   const { pathname } = useLocation()
-  const isAdmin = pathname.startsWith(ADMIN_SLUG) || pathname === '/login' || pathname === '/register'
-  if (isAdmin) return <>{children}</>
+  const isAuthOrAdmin = pathname.startsWith(ADMIN_SLUG) || pathname === '/login' || pathname === '/register'
+  if (isAuthOrAdmin) return <>{children}</>
   return (
     <div className="bg-background text-on-background font-body-md overflow-x-hidden selection:bg-primary-container selection:text-on-primary-fixed min-h-screen">
       <TopBar walletConnected={walletConnected} onConnectWallet={onConnectWallet} />
@@ -41,39 +55,44 @@ function AppShell({ walletConnected, onConnectWallet, children }) {
   )
 }
 
-export default function App() {
+function AppRoutes() {
   const [walletConnected, setWalletConnected] = useState(false)
-  const handleConnectWallet = () => setWalletConnected(v => !v)
 
   return (
+    <AppShell walletConnected={walletConnected} onConnectWallet={() => setWalletConnected(v => !v)}>
+      <Routes>
+        {/* ── Auth (public) ── */}
+        <Route path="/login"    element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        {/* ── Protected user routes ── */}
+        <Route path="/"                element={<ProtectedRoute><Feed /></ProtectedRoute>} />
+        <Route path="/leaderboard"     element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+        <Route path="/staking"         element={<ProtectedRoute><Staking /></ProtectedRoute>} />
+        <Route path="/marketplace"     element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
+        <Route path="/profile"         element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/profile/edit"    element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+        <Route path="/profile/:userId" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+
+        {/* ── Admin routes ── */}
+        <Route path={`${ADMIN_SLUG}`}           element={<AdminLogin />} />
+        <Route path={`${ADMIN_SLUG}/verify`}    element={<AdminVerify />} />
+        <Route path={`${ADMIN_SLUG}/register`}  element={<AdminRegister />} />
+        <Route path={`${ADMIN_SLUG}/dashboard`} element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+
+        {/* ── Fallback ── */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AppShell>
+  )
+}
+
+export default function App() {
+  return (
     <BrowserRouter>
-      <AppShell walletConnected={walletConnected} onConnectWallet={handleConnectWallet}>
-        <Routes>
-          {/* ── Auth routes (no app shell) ── */}
-          <Route path="/login"           element={<Login />} />
-          <Route path="/register"        element={<Register />} />
-
-          {/* ── Public app routes ── */}
-          <Route path="/"                element={<Feed />} />
-          <Route path="/leaderboard"     element={<Leaderboard />} />
-          <Route path="/staking"         element={<Staking />} />
-          <Route path="/marketplace"     element={<Marketplace />} />
-          <Route path="/profile"         element={<Profile />} />
-          <Route path="/profile/edit"    element={<EditProfile />} />
-          <Route path="/profile/:userId" element={<UserProfile />} />
-
-          {/* ── Admin routes (secret slug, no nav chrome) ──
-               Phase 3: Login  → /portal-ax92-v1
-               Phase 3: 2FA    → /portal-ax92-v1/verify
-               Phase 2: Invite → /portal-ax92-v1/register?token=TOKEN
-               Phase 4: Dash   → /portal-ax92-v1/dashboard
-               Change ADMIN_SLUG before deploying!           */}
-          <Route path={`${ADMIN_SLUG}`}             element={<AdminLogin />} />
-          <Route path={`${ADMIN_SLUG}/verify`}      element={<AdminVerify />} />
-          <Route path={`${ADMIN_SLUG}/register`}    element={<AdminRegister />} />
-          <Route path={`${ADMIN_SLUG}/dashboard`}   element={<AdminDashboard />} />
-        </Routes>
-      </AppShell>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
     </BrowserRouter>
   )
 }

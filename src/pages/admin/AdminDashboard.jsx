@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import { AdminAlert, AdminButton, AdminInput } from './AdminLogin'
 
 // ── Idle logout ───────────────────────────────────────────────
@@ -534,6 +535,7 @@ function AdminTeam({ onInvite }) {
 // ── DASHBOARD ─────────────────────────────────────────────────
 export default function AdminDashboard() {
   const navigate               = useNavigate()
+  const { logout: authLogout } = useAuth()
   const [activeTab, setActiveTab]       = useState('overview')
   const [showInvite, setShowInvite]     = useState(false)
   const [idleWarning, setIdleWarning]   = useState(false)
@@ -542,8 +544,8 @@ export default function AdminDashboard() {
   const countdownRef = useRef(null)
 
   const logout = () => {
-    sessionStorage.clear()
-    navigate('/portal-ax92-v1')
+    authLogout()
+    navigate('/login')
   }
 
   useIdleLogout(14 * 60 * 1000, () => {
