@@ -1,59 +1,80 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-// ── Shared Input ──────────────────────────────────────────────
-function FormInput({ label, id, type = 'text', placeholder, value, onChange, disabled, error, rightSlot }) {
+// ── Neo-Brutalist shared primitives ──────────────────────────
+function NeoInput({ id, label, type = 'text', placeholder, value, onChange, disabled }) {
+  const [focused, setFocused] = useState(false)
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={id} className="font-bold text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+      <label
+        htmlFor={id}
+        className="font-bold text-[11px] uppercase tracking-[0.12em] text-on-surface"
+      >
         {label}
       </label>
-      <div className="relative">
-        <input
-          id={id} type={type} placeholder={placeholder}
-          value={value} onChange={onChange} disabled={disabled}
-          className={`w-full bg-surface border-4 p-4 font-body-md text-on-surface focus:ring-0 focus:outline-none transition-all placeholder:text-on-surface-variant/40
-            ${error ? 'border-error' : 'border-on-background focus:border-primary-container'}
-            ${disabled ? 'cursor-not-allowed opacity-60 bg-surface-container' : ''}`}
-        />
-        {rightSlot && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2">{rightSlot}</div>
-        )}
-      </div>
-      {error && (
-        <span className="flex items-center gap-1 text-error font-bold text-[12px]">
-          <span className="material-symbols-outlined text-[14px]">error</span>
-          {error}
-        </span>
-      )}
+      <input
+        id={id}
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={{
+          boxShadow: focused
+            ? '4px 4px 0px 0px #d4af37'
+            : '4px 4px 0px 0px #000000',
+        }}
+        className="w-full px-6 py-4 border-[3px] border-on-surface bg-surface text-on-surface
+          placeholder:text-on-surface-variant/50 focus:ring-0 focus:outline-none focus:border-primary
+          transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+      />
     </div>
   )
 }
 
-function FormButton({ children, type = 'button', loading, disabled, className = '' }) {
+function NeoButton({ children, onClick, type = 'button', loading, disabled, variant = 'primary' }) {
+  const base = 'w-full py-4 px-6 border-[3px] border-on-surface font-bold uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-3 active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed'
+  const variants = {
+    primary: 'bg-primary-container text-on-primary-container',
+    outline: 'bg-surface text-on-surface hover:bg-surface-container',
+  }
   return (
     <button
-      type={type} disabled={disabled || loading}
-      style={{ boxShadow: '4px 4px 0px 0px var(--neo-border-color)' }}
-      className={`w-full py-4 border-4 border-on-background font-bold uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-3 active:translate-x-[2px] active:translate-y-[2px] bg-primary-container text-on-primary-fixed hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      type={type}
+      onClick={onClick}
+      disabled={disabled || loading}
+      style={{ boxShadow: '4px 4px 0px 0px #000000' }}
+      className={`${base} ${variants[variant]}`}
     >
-      {loading
-        ? <><div className="w-5 h-5 border-4 border-current border-t-transparent animate-spin" /><span>Signing in…</span></>
-        : children}
+      {loading ? (
+        <>
+          <div className="w-5 h-5 border-[3px] border-current border-t-transparent animate-spin" />
+          <span>Sending…</span>
+        </>
+      ) : children}
     </button>
   )
 }
 
-function Alert({ message }) {
+function Toast({ message, onClose }) {
   return (
-    <div className="flex items-center gap-3 border-4 border-error bg-error-container text-on-error-container p-4">
-      <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
-      <p className="font-bold text-sm">{message}</p>
+    <div
+      className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-on-surface text-surface px-6 py-4 border-[3px] border-on-surface"
+      style={{ boxShadow: '4px 4px 0px 0px #d4af37' }}
+    >
+      <span className="material-symbols-outlined text-[18px]">info</span>
+      <span className="font-bold text-sm uppercase tracking-wide">{message}</span>
+      <button onClick={onClose} className="ml-2 opacity-60 hover:opacity-100 transition-opacity">
+        <span className="material-symbols-outlined text-[18px]">close</span>
+      </button>
     </div>
   )
 }
 
+// ── Background decorations ────────────────────────────────────
 function BgDecorations() {
   return (
     <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden">
@@ -68,199 +89,195 @@ function BgDecorations() {
 // ── LOGIN PAGE ────────────────────────────────────────────────
 export default function Login() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { requestMagicLink } = useAuth()
 
-  // 'user' | 'admin'  — user is default
-  const [mode, setMode] = useState('user')
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
-  const [showPw, setShowPw]     = useState(false)
-  const [loading, setLoading]   = useState(false)
-  const [error, setError]       = useState('')
+  const [email, setEmail]   = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError]   = useState('')
+  const [toast, setToast]   = useState('')
 
-  const handleTabSwitch = (next) => {
-    setMode(next)
-    setEmail('')
-    setPassword('')
-    setError('')
+  const showToast = (msg) => {
+    setToast(msg)
+    setTimeout(() => setToast(''), 4000)
   }
 
-  const handleSubmit = async (e) => {
+  const handleMagicLink = async (e) => {
     e.preventDefault()
     setError('')
-    if (!email || !password) { setError('Please fill in all fields.'); return }
+    if (!email.trim()) { setError('Please enter your email address.'); return }
+    if (!/\S+@\S+\.\S+/.test(email)) { setError('Please enter a valid email address.'); return }
     setLoading(true)
     try {
-      const session = await login(email, password, mode === 'admin')
-      if (session.role === 'admin') {
-        navigate('/portal-ax92-v1/dashboard')
-      } else {
-        navigate('/')
-      }
+      await requestMagicLink(email)
+      // Navigate to check-email screen passing the email so it can display it
+      navigate('/check-email', { state: { email } })
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
-  const isAdmin = mode === 'admin'
+  const handleGoogle = () => {
+    showToast('OAuth not configured in demo')
+  }
 
   return (
-    <div className="min-h-screen bg-surface-bright flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-surface flex overflow-hidden relative">
       <BgDecorations />
 
-      <div className="w-full max-w-[480px]" style={{ boxShadow: '8px 8px 0px 0px var(--neo-border-color)' }}>
-        <div className="bg-surface border-4 border-on-background flex flex-col">
+      {toast && <Toast message={toast} onClose={() => setToast('')} />}
 
-          {/* ── Header strip ── */}
-          <div className="bg-on-background px-8 py-5 flex items-center justify-between">
-            <span className="font-extrabold text-[22px] uppercase tracking-tight leading-none text-surface">
+      {/* ── Left Brand Panel (desktop only) ── */}
+      <section className="hidden lg:block w-1/2 h-screen relative bg-surface-container-low overflow-hidden border-r-[4px] border-on-surface">
+        <img
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKjd-2PiSLgA0CXQVrGqatQWZ9RvvckptvkLGlwiOYVmWtTbHvoW_ec4kKbndHB0wvlulCCZWhPBwkiAKle3sGQ3fNGEap4uEjz4pdWEePfxgu16EGllOSHSGMejqq91-gytD_7yr_umrxgMxSM65fIYwss9w6iXv6Os8SkglBu-ToSDAycgLttT5ZN66m0yzib36IOl0X-wpZRPYo7Vfe3FZj1WL1qDsuk-i7cmItAcsMYEdfKcm2zT0rsrZq29eC6cbTN-5uoPxI"
+          alt="Chicago Brand"
+          className="w-full h-full object-cover scale-110"
+          style={{ transition: 'transform 0.1s ease-out' }}
+        />
+        {/* Brand overlay card */}
+        <div
+          className="absolute bottom-16 left-16 right-16 p-8 bg-white/10 backdrop-blur-md border border-white/20"
+          style={{ boxShadow: '8px 8px 0px 0px rgba(0,0,0,0.8)' }}
+        >
+          <h2 className="font-extrabold text-[40px] uppercase tracking-tight leading-none text-white mb-3">
+            Chicago
+          </h2>
+          <p className="text-white/90 font-medium text-[16px] leading-relaxed">
+            The next architectural era of decentralized social networking.
+          </p>
+        </div>
+        {/* Top brand mark */}
+        <div className="absolute top-8 left-8">
+          <div
+            className="bg-primary-container px-4 py-2 border-[3px] border-on-surface"
+            style={{ boxShadow: '4px 4px 0px 0px #000' }}
+          >
+            <span className="font-extrabold text-[18px] uppercase tracking-widest text-on-primary-container">
               Chicago
             </span>
-            <div className="flex gap-1.5">
-              <div className="w-3 h-3 bg-surface/20" />
-              <div className="w-3 h-3 bg-primary-container" />
-              <div className="w-3 h-3 bg-surface/20" />
+          </div>
+        </div>
+      </section>
+
+      {/* ── Right Form Panel ── */}
+      <section className="w-full lg:w-1/2 h-screen flex items-center justify-center overflow-y-auto px-6 md:px-16 py-12 bg-surface">
+        <div className="w-full max-w-[480px] flex flex-col items-center">
+
+          {/* Mobile brand mark */}
+          <div className="lg:hidden mb-8 self-start">
+            <div
+              className="bg-primary-container px-4 py-2 border-[3px] border-on-surface"
+              style={{ boxShadow: '4px 4px 0px 0px #000' }}
+            >
+              <span className="font-extrabold text-[18px] uppercase tracking-widest text-on-primary-container">
+                Chicago
+              </span>
             </div>
           </div>
 
-          {/* ── Mode Tabs ── */}
-          <div className="flex border-b-4 border-on-background">
+          {/* Brand icon + heading */}
+          <div className="mb-8 text-center">
+            <div className="mb-6 flex justify-center">
+              <div
+                className="w-16 h-16 bg-primary-container border-[3px] border-on-surface flex items-center justify-center"
+                style={{ boxShadow: '4px 4px 0px 0px #000' }}
+              >
+                <span
+                  className="material-symbols-outlined text-on-primary-container text-4xl"
+                  style={{ fontVariationSettings: "'FILL' 1" }}
+                >
+                  architecture
+                </span>
+              </div>
+            </div>
+            <h1 className="font-extrabold text-[32px] md:text-[40px] uppercase tracking-tight leading-none text-on-surface mb-2">
+              Welcome back
+            </h1>
+            <p className="text-on-surface-variant font-medium text-[16px]">
+              Sign in to your Chicago account
+            </p>
+          </div>
+
+          {/* Google OAuth button */}
+          <div className="w-full mb-6">
             <button
               type="button"
-              onClick={() => handleTabSwitch('user')}
-              className={`flex-1 py-3 font-bold uppercase text-[11px] tracking-[0.12em] transition-colors border-r-4 border-on-background ${
-                !isAdmin
-                  ? 'bg-primary-container text-on-primary-fixed'
-                  : 'bg-surface text-on-surface-variant hover:bg-surface-container'
-              }`}
+              onClick={handleGoogle}
+              style={{ boxShadow: '4px 4px 0px 0px #000' }}
+              className="w-full flex items-center justify-center gap-4 bg-surface border-[3px] border-on-surface py-4 px-6 transition-all hover:bg-surface-container active:translate-x-[2px] active:translate-y-[2px] group"
             >
-              <span className="material-symbols-outlined text-[14px] align-middle mr-1">person</span>
-              User Login
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTabSwitch('admin')}
-              className={`flex-1 py-3 font-bold uppercase text-[11px] tracking-[0.12em] transition-colors ${
-                isAdmin
-                  ? 'bg-on-background text-surface'
-                  : 'bg-surface text-on-surface-variant hover:bg-surface-container'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[14px] align-middle mr-1">shield</span>
-              Admin
+              <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+              <span className="font-bold text-[13px] uppercase tracking-[0.1em] text-on-surface">
+                Continue with Google
+              </span>
             </button>
           </div>
 
-          {/* ── Body ── */}
-          <div className="p-8 flex flex-col gap-6">
+          {/* Divider */}
+          <div className="w-full flex items-center mb-6">
+            <div className="flex-grow h-[3px] bg-on-surface" />
+            <span className="px-4 font-bold text-[11px] uppercase tracking-[0.1em] text-on-surface-variant bg-surface">
+              or sign in with email
+            </span>
+            <div className="flex-grow h-[3px] bg-on-surface" />
+          </div>
 
-            {/* Title */}
-            <div className="flex flex-col gap-1">
-              <h1 className="font-extrabold text-[32px] uppercase tracking-tight leading-none text-on-surface">
-                {isAdmin ? (
-                  <>Admin<br /><span className="text-primary-container" style={{ WebkitTextStroke: '2px #1a1c1c' }}>Portal</span></>
-                ) : (
-                  <>Welcome<br /><span className="text-primary-container" style={{ WebkitTextStroke: '2px #1a1c1c' }}>Back</span></>
-                )}
-              </h1>
-              <p className="text-sm text-on-surface-variant font-medium mt-1">
-                {isAdmin
-                  ? 'Restricted access. Authorised personnel only.'
-                  : 'Sign in to your Chicago Web3 account'}
-              </p>
-            </div>
+          {/* Magic Link Form */}
+          <form onSubmit={handleMagicLink} className="w-full flex flex-col gap-5">
+            <NeoInput
+              id="email"
+              label="Email Address"
+              type="email"
+              placeholder="name@company.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              disabled={loading}
+            />
 
-            {isAdmin && (
-              <div className="flex items-center gap-3 border-4 border-on-background bg-surface-container p-3">
-                <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
-                <span className="font-bold text-[11px] uppercase tracking-wider">Restricted Area</span>
+            {error && (
+              <div className="flex items-center gap-3 border-[3px] border-error bg-error-container text-on-error-container p-4">
+                <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
+                <p className="font-bold text-sm">{error}</p>
               </div>
             )}
 
-            {error && <Alert message={error} />}
+            <NeoButton type="submit" loading={loading}>
+              <span className="material-symbols-outlined text-[18px]">send</span>
+              Send Magic Link
+            </NeoButton>
+          </form>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-              <FormInput
-                id="email" label="Email Address" type="email"
-                placeholder={isAdmin ? 'admin@chicago.io' : 'you@chicago.io'}
-                value={email} onChange={e => setEmail(e.target.value)}
-              />
-              <FormInput
-                id="password" label="Password"
-                type={showPw ? 'text' : 'password'}
-                placeholder="••••••••••••"
-                value={password} onChange={e => setPassword(e.target.value)}
-                rightSlot={
-                  <button type="button" onClick={() => setShowPw(v => !v)}
-                    className="text-on-surface-variant hover:text-on-surface transition-colors">
-                    <span className="material-symbols-outlined text-[22px]">
-                      {showPw ? 'visibility_off' : 'visibility'}
-                    </span>
-                  </button>
-                }
-              />
-
-              <FormButton type="submit" loading={loading}>
-                <span className="material-symbols-outlined text-[18px]">
-                  {isAdmin ? 'shield' : 'login'}
-                </span>
-                {isAdmin ? 'Access Portal' : 'Sign In'}
-              </FormButton>
-            </form>
-
-            {!isAdmin && (
-              <>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-[3px] bg-on-background" />
-                  <span className="font-bold text-[10px] uppercase tracking-[0.18em] text-on-surface-variant">or continue with</span>
-                  <div className="flex-1 h-[3px] bg-on-background" />
-                </div>
-
-                <button
-                  type="button"
-                  style={{ boxShadow: '4px 4px 0px 0px var(--neo-border-color)' }}
-                  className="w-full py-4 border-4 border-on-background font-bold uppercase tracking-widest text-sm bg-surface text-on-surface hover:bg-surface-container transition-all flex items-center justify-center gap-3 active:translate-x-[2px] active:translate-y-[2px]"
-                >
-                  <svg width="20" height="20" viewBox="0 0 40 40" fill="none">
-                    <rect width="40" height="40" fill="#d4af37"/>
-                    <path d="M8 14h24v2H8zM8 19h24v2H8zM8 24h16v2H8z" fill="#1a1c1c"/>
-                  </svg>
-                  Connect Wallet
-                </button>
-
-                <p className="text-center text-sm text-on-surface-variant font-medium">
-                  New to Chicago?{' '}
-                  <Link to="/register"
-                    className="font-bold text-on-surface border-b-2 border-primary-container hover:text-primary transition-colors">
-                    Create an account
-                  </Link>
-                </p>
-              </>
-            )}
-
+          {/* Info hint */}
+          <div className="mt-6 w-full p-4 border-[2px] border-dotted border-on-surface-variant flex items-start gap-4">
+            <span className="material-symbols-outlined text-primary text-[20px] flex-shrink-0">info</span>
+            <p className="text-on-surface-variant font-medium text-[14px] leading-relaxed">
+              No password needed. We'll email you a secure link to sign in instantly.
+            </p>
           </div>
 
-          {/* ── Footer strip ── */}
-          <div className="border-t-4 border-on-background px-8 py-4 flex items-center justify-between bg-surface-container-low">
-            <span className="font-bold text-[9px] uppercase tracking-[0.18em] text-on-surface-variant">
-              {isAdmin ? 'Admin · Chicago Web3' : 'Secure · Chicago Web3'}
-            </span>
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[16px] text-on-surface-variant"
-                style={{ fontVariationSettings: "'FILL' 1" }}>
-                lock
-              </span>
-              <span className="font-bold text-[9px] uppercase tracking-[0.12em] text-on-surface-variant">
-                SSL Encrypted
-              </span>
-            </div>
+          {/* Footer links */}
+          <div className="mt-10 flex gap-6">
+            <a href="#" className="font-bold text-[12px] uppercase tracking-wider text-on-surface-variant hover:text-primary transition-colors border-b-2 border-transparent hover:border-primary">
+              Privacy Policy
+            </a>
+            <a href="#" className="font-bold text-[12px] uppercase tracking-wider text-on-surface-variant hover:text-primary transition-colors border-b-2 border-transparent hover:border-primary">
+              Terms of Service
+            </a>
           </div>
+
+          <p className="mt-6 text-center text-[12px] font-medium text-on-surface-variant/70 leading-relaxed max-w-[90%]">
+            New to Chicago? Enter your email above — we'll create your account automatically.
+          </p>
 
         </div>
-      </div>
+      </section>
     </div>
   )
 }

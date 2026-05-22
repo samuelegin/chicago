@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AdminShell, AdminButton, AdminAlert } from './AdminLogin'
+import { AdminShell, AdminButton, AdminAlert } from './AdminShared'
 
 export default function AdminVerify() {
   const navigate  = useNavigate()

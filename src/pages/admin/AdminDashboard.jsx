@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { AdminAlert, AdminButton, AdminInput } from './AdminLogin'
+import { AdminAlert, AdminButton, AdminInput } from './AdminShared'
 
 // ── Idle logout ───────────────────────────────────────────────
 function useIdleLogout(timeoutMs = 14 * 60 * 1000, onTrigger) {

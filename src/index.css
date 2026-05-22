@@ -4,8 +4,8 @@
 
 /* ── Light mode tokens (default) ───────────────────────────── */
 :root {
-  --color-background:                #ffffff;
-  --color-surface:                   #ffffff;
+  --color-background:                #f9f9f9;
+  --color-surface:                   #f9f9f9;
   --color-surface-bright:            #f9f9f9;
   --color-surface-dim:               #dadada;
   --color-surface-variant:           #e2e2e2;
@@ -51,8 +51,8 @@
   --color-inverse-surface:           #2f3131;
   --color-inverse-on-surface:        #f1f1f1;
   --color-surface-tint:              #735c00;
-  --neo-border-color:                #000000;
-  --neo-shadow-color:                rgba(0,0,0,1);
+  --neo-border-color:                #1a1c1c;
+  --neo-shadow-color:                rgba(26,28,28,1);
 }
 
 /* ── Dark mode tokens ───────────────────────────────────────── */
@@ -85,18 +85,6 @@
   --color-on-secondary:              #303030;
   --color-secondary-container:       #474747;
   --color-on-secondary-container:    #e2e2e2;
-  --color-secondary-fixed:           #e2e2e2;
-  --color-secondary-fixed-dim:       #c6c6c6;
-  --color-on-secondary-fixed:        #1b1b1b;
-  --color-on-secondary-fixed-variant:#474747;
-  --color-tertiary:                  #c6c6c7;
-  --color-on-tertiary:               #2d2f2f;
-  --color-tertiary-container:        #454747;
-  --color-on-tertiary-container:     #e2e2e2;
-  --color-tertiary-fixed:            #e2e2e2;
-  --color-tertiary-fixed-dim:        #c6c6c7;
-  --color-on-tertiary-fixed:         #1a1c1c;
-  --color-on-tertiary-fixed-variant: #454747;
   --color-error:                     #ffb4ab;
   --color-on-error:                  #690005;
   --color-error-container:           #93000a;
@@ -105,10 +93,10 @@
   --color-inverse-on-surface:        #2f3131;
   --color-surface-tint:              #e9c349;
   --neo-border-color:                #e2e2e2;
-  --neo-shadow-color:                rgba(226,226,226,0.6);
+  --neo-shadow-color:                rgba(226,226,226,0.7);
 }
 
-/* ── Map CSS vars → Tailwind via bg/text utilities ─────────── */
+/* ── Base ───────────────────────────────────────────────────── */
 @layer base {
   .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -126,6 +114,15 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-on-background);
+    transition: background-color 0.2s ease, color 0.2s ease;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   *:focus-visible {
     outline: 2px solid var(--color-primary-container);
     outline-offset: 2px;
@@ -136,19 +133,20 @@
     color: #241a00;
   }
 
-  body {
-    background-color: var(--color-background);
-    color: var(--color-on-background);
-    transition: background-color 0.2s ease, color 0.2s ease;
-  }
+  /* Sharp corners everywhere — Neo-Brutalist rule */
+  * { border-radius: 0 !important; }
 }
 
+/* ── Utilities ──────────────────────────────────────────────── */
 @layer utilities {
   .neo-shadow {
     box-shadow: 6px 6px 0px 0px var(--neo-shadow-color);
   }
   .neo-shadow-sm {
     box-shadow: 4px 4px 0px 0px var(--neo-shadow-color);
+  }
+  .neo-shadow-lg {
+    box-shadow: 8px 8px 0px 0px var(--neo-shadow-color);
   }
   .neo-shadow-gold {
     box-shadow: 6px 6px 0px 0px rgba(212, 175, 55, 1);
@@ -159,6 +157,9 @@
   .neo-border {
     border: 3px solid var(--neo-border-color);
   }
+  .neo-border-4 {
+    border: 4px solid var(--neo-border-color);
+  }
   .neo-border-gold {
     border: 3px solid #d4af37;
   }
@@ -166,13 +167,15 @@
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }
 
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: var(--color-surface-container); }
-::-webkit-scrollbar-thumb { background: var(--color-primary-container); border: 2px solid var(--color-surface); }
-
-* { border-radius: 0 !important; }
-
-button:active {
+/* ── Button press interaction ───────────────────────────────── */
+button:active:not(:disabled) {
   transform: translate(2px, 2px);
-  box-shadow: none !important;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-surface-container); }
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary-container);
+  border: 2px solid var(--color-surface);
 }

@@ -3,24 +3,28 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { TopBar, LeftSidebar, BottomNav } from './components/Layout'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import Feed from './pages/Feed'
+
+// Pages
+import Login      from './pages/Login'
+import CheckEmail from './pages/CheckEmail'
+import Feed       from './pages/Feed'
 import Leaderboard from './pages/Leaderboard'
-import Staking from './pages/Staking'
+import Staking    from './pages/Staking'
 import Marketplace from './pages/Marketplace'
-import Profile from './pages/Profile'
+import Profile    from './pages/Profile'
 import EditProfile from './pages/EditProfile'
 import UserProfile from './pages/UserProfile'
 
-import AdminLogin    from './pages/admin/AdminLogin'
-import AdminVerify   from './pages/admin/AdminVerify'
-import AdminRegister from './pages/admin/AdminRegister'
+// Admin pages (hidden path — not linked from user-facing UI)
+import AdminLogin     from './pages/admin/AdminLogin'
+import AdminVerify    from './pages/admin/AdminVerify'
+import AdminRegister  from './pages/admin/AdminRegister'
 import AdminDashboard from './pages/admin/AdminDashboard'
 
+// The admin path is deliberately obscure and not exposed in the UI
 const ADMIN_SLUG = '/portal-ax92-v1'
 
-// ── Route guard: requires logged-in user ─────────────────────
+// ── Route guards ─────────────────────────────────────────────
 function ProtectedRoute({ children }) {
   const { user } = useAuth()
   const { pathname } = useLocation()
@@ -28,7 +32,6 @@ function ProtectedRoute({ children }) {
   return children
 }
 
-// ── Route guard: requires admin role ─────────────────────────
 function AdminRoute({ children }) {
   const { user, isAdmin } = useAuth()
   if (!user) return <Navigate to="/login" replace />
@@ -36,10 +39,12 @@ function AdminRoute({ children }) {
   return children
 }
 
-// ── App shell (hides nav on auth/admin routes) ────────────────
+// ── App shell — hides nav on auth / admin routes ─────────────
+const AUTH_PATHS = ['/login', '/check-email']
+
 function AppShell({ walletConnected, onConnectWallet, children }) {
   const { pathname } = useLocation()
-  const isAuthOrAdmin = pathname.startsWith(ADMIN_SLUG) || pathname === '/login' || pathname === '/register'
+  const isAuthOrAdmin = pathname.startsWith(ADMIN_SLUG) || AUTH_PATHS.includes(pathname)
   if (isAuthOrAdmin) return <>{children}</>
   return (
     <div className="bg-background text-on-background font-body-md overflow-x-hidden selection:bg-primary-container selection:text-on-primary-fixed min-h-screen">
@@ -63,8 +68,8 @@ function AppRoutes() {
     <AppShell walletConnected={walletConnected} onConnectWallet={() => setWalletConnected(v => !v)}>
       <Routes>
         {/* ── Auth (public) ── */}
-        <Route path="/login"    element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login"       element={<Login />} />
+        <Route path="/check-email" element={<CheckEmail />} />
 
         {/* ── Protected user routes ── */}
         <Route path="/"                element={<ProtectedRoute><Feed /></ProtectedRoute>} />
@@ -75,7 +80,7 @@ function AppRoutes() {
         <Route path="/profile/edit"    element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
         <Route path="/profile/:userId" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
 
-        {/* ── Admin routes ── */}
+        {/* ── Admin routes (hidden — own path, not linked in user UI) ── */}
         <Route path={`${ADMIN_SLUG}`}           element={<AdminLogin />} />
         <Route path={`${ADMIN_SLUG}/verify`}    element={<AdminVerify />} />
         <Route path={`${ADMIN_SLUG}/register`}  element={<AdminRegister />} />

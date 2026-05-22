@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { AdminShell, AdminInput, AdminButton, AdminAlert } from './AdminLogin'
+import { AdminShell, AdminButton, AdminAlert, AdminInput } from './AdminShared'
 
 // ── Password strength checker ─────────────────────────────────
 function getStrength(pw) {
