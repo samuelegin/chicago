@@ -20,6 +20,7 @@ import AdminLogin     from './pages/admin/AdminLogin'
 import AdminVerify    from './pages/admin/AdminVerify'
 import AdminRegister  from './pages/admin/AdminRegister'
 import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminSetup     from './pages/admin/AdminSetup'
 
 // The admin path is deliberately obscure and not exposed in the UI
 const ADMIN_SLUG = '/portal-ax92-v1'
@@ -82,6 +83,7 @@ function AppRoutes() {
 
         {/* ── Admin routes (hidden — own path, not linked in user UI) ── */}
         <Route path={`${ADMIN_SLUG}`}           element={<AdminLogin />} />
+        <Route path={`${ADMIN_SLUG}/setup`}     element={<AdminSetup />} />
         <Route path={`${ADMIN_SLUG}/verify`}    element={<AdminVerify />} />
         <Route path={`${ADMIN_SLUG}/register`}  element={<AdminRegister />} />
         <Route path={`${ADMIN_SLUG}/dashboard`} element={<AdminRoute><AdminDashboard /></AdminRoute>} />
