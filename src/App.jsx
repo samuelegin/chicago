@@ -14,6 +14,7 @@ import Marketplace from './pages/Marketplace'
 import Profile    from './pages/Profile'
 import EditProfile from './pages/EditProfile'
 import UserProfile from './pages/UserProfile'
+import CommentsPage from './pages/CommentsPage'
 
 // Admin pages (hidden path — not linked from user-facing UI)
 import AdminLogin     from './pages/admin/AdminLogin'
@@ -80,6 +81,7 @@ function AppRoutes() {
         <Route path="/profile"         element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/profile/edit"    element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
         <Route path="/profile/:userId" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+        <Route path="/comments"        element={<ProtectedRoute><CommentsPage /></ProtectedRoute>} />
 
         {/* ── Admin routes (hidden — own path, not linked in user UI) ── */}
         <Route path={`${ADMIN_SLUG}`}           element={<AdminLogin />} />

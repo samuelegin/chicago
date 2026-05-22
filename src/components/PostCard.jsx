@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { Icon } from './Layout'
 import { currentUser } from '../data/mockData'
 
+// Comments are handled by CommentsPage — see src/pages/CommentsPage.jsx
+
 // ── Emoji Data ────────────────────────────────────────────────
 const EMOJI_TABS = [
   { label: '😀', emojis: ['😀','😂','🤣','😅','😊','😍','🥰','😎','🤩','🥳','😭','😤','🤔','🤯','😱','🥺','😴','🤑','😈','🫡','🫠','😬','🙃','😏','😒'] },
@@ -164,34 +166,15 @@ function Comment({ comment, depth = 0 }) {
 // ── PostCard ──────────────────────────────────────────────────
 export default function PostCard({ post, onLike }) {
   const navigate = useNavigate()
-  const [showComments, setShowComments] = useState(false)
-  const [comments, setComments] = useState(post.comments_data ?? [])
-  const [commentCount, setCommentCount] = useState(post.comments ?? 0)
-  const [newComment, setNewComment] = useState('')
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
-  const commentInputRef = useRef(null)
+  const [commentCount] = useState(post.comments ?? 0)
 
   const handleAvatarClick = () => {
     if (post.author.id === currentUser.id) navigate('/profile')
     else navigate(`/profile/${post.author.id}`)
   }
 
-  const submitComment = () => {
-    if (!newComment.trim()) return
-    setComments(prev => [
-      ...prev,
-      {
-        id: `c_${Date.now()}`,
-        author: currentUser,
-        content: newComment,
-        likes: 0,
-        replies: [],
-        timestamp: 'just now',
-      }
-    ])
-    setCommentCount(n => n + 1)
-    setNewComment('')
-    setShowComments(true)
+  const openComments = () => {
+    navigate('/comments', { state: { post } })
   }
 
   return (
@@ -259,9 +242,9 @@ export default function PostCard({ post, onLike }) {
           </button>
           <button
             className="flex items-center gap-1.5 group transition-all"
-            onClick={() => setShowComments(v => !v)}
+            onClick={openComments}
           >
-            <Icon name="chat_bubble" className={`text-[18px] lg:text-[24px] transition-colors ${showComments ? 'text-primary-container' : 'text-on-surface-variant group-hover:text-primary-container'}`} />
+            <Icon name="chat_bubble" className="text-[18px] lg:text-[24px] text-on-surface-variant group-hover:text-primary-container transition-colors" />
             <span className="text-[11px] lg:text-[12px] text-on-surface-variant">{commentCount}</span>
           </button>
           <button className="flex items-center gap-1.5 group transition-all">
@@ -270,56 +253,6 @@ export default function PostCard({ post, onLike }) {
           </button>
         </div>
       </div>
-
-      {/* Comment Section */}
-      {showComments && (
-        <div className="mt-4 pt-4 border-t border-on-background/10">
-          {/* New comment input */}
-          <div className="flex gap-2 mb-4">
-            <img src={currentUser.avatar} alt="me" className="w-8 h-8 shrink-0 border border-on-background/20 object-cover" />
-            <div className="flex-1 relative">
-              <textarea
-                ref={commentInputRef}
-                value={newComment}
-                onChange={e => setNewComment(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment() } }}
-                placeholder="Write a comment…"
-                rows={2}
-                className="w-full bg-background border border-on-background/20 focus:border-primary-container focus:outline-none px-3 py-2 text-sm resize-none text-on-surface placeholder:text-on-surface-variant"
-              />
-              <div className="flex justify-between items-center mt-1">
-                <div className="relative">
-                  <button
-                    onClick={() => setShowEmojiPicker(v => !v)}
-                    className="hover:text-primary-container transition-colors text-on-surface-variant"
-                  >
-                    <Icon name="sentiment_satisfied" className="text-[20px]" />
-                  </button>
-                  {showEmojiPicker && (
-                    <EmojiPicker textareaRef={commentInputRef} onClose={() => setShowEmojiPicker(false)} />
-                  )}
-                </div>
-                <button
-                  onClick={submitComment}
-                  disabled={!newComment.trim()}
-                  className="px-4 py-1.5 text-xs font-bold bg-primary-container text-on-primary-fixed border border-on-background/20 disabled:opacity-40 hover:brightness-105 active:scale-95 transition-all"
-                >
-                  Comment
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Comments list */}
-          {comments.length > 0 ? (
-            <div className="flex flex-col gap-4">
-              {comments.map(comment => <Comment key={comment.id} comment={comment} depth={0} />)}
-            </div>
-          ) : (
-            <p className="text-center text-xs text-on-surface-variant py-4">No comments yet. Be the first!</p>
-          )}
-        </div>
-      )}
     </article>
   )
 }
