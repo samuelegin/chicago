@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { TopBar, LeftSidebar, BottomNav } from './components/Layout'
+import Login from './pages/Login'
+import Register from './pages/Register'
 import Feed from './pages/Feed'
 import Leaderboard from './pages/Leaderboard'
 import Staking from './pages/Staking'
@@ -22,7 +24,7 @@ const ADMIN_SLUG = '/portal-ax92-v1'
 // ── Wrapper: hides app shell on admin routes ─────────────────
 function AppShell({ walletConnected, onConnectWallet, children }) {
   const { pathname } = useLocation()
-  const isAdmin = pathname.startsWith(ADMIN_SLUG)
+  const isAdmin = pathname.startsWith(ADMIN_SLUG) || pathname === '/login' || pathname === '/register'
   if (isAdmin) return <>{children}</>
   return (
     <div className="bg-background text-on-background font-body-md overflow-x-hidden selection:bg-primary-container selection:text-on-primary-fixed min-h-screen">
@@ -47,6 +49,10 @@ export default function App() {
     <BrowserRouter>
       <AppShell walletConnected={walletConnected} onConnectWallet={handleConnectWallet}>
         <Routes>
+          {/* ── Auth routes (no app shell) ── */}
+          <Route path="/login"           element={<Login />} />
+          <Route path="/register"        element={<Register />} />
+
           {/* ── Public app routes ── */}
           <Route path="/"                element={<Feed />} />
           <Route path="/leaderboard"     element={<Leaderboard />} />
