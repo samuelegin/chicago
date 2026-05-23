@@ -1,175 +1,163 @@
 import { useState, useEffect } from 'react'
-import { ConnectButton } from '@rainbow-me/rainbowkit'
-import { useAccount } from 'wagmi'
 import { Icon } from '../components/Layout'
-import { getStakingInfo, stakeTokens, unstakeTokens, claimRewards } from '../services/api'
+import { useAuth } from '../context/AuthContext'
+import { getMyLeaderboardStats } from '../services/api'
+
+const TEAM_FINANCE_URL = 'https://www.team.finance/whitelabel'
+
+const BOOST_TIERS = [
+  { threshold: '< 100 CLT',   label: 'No Boost',   multiplier: 0,  icon: 'do_not_disturb_on' },
+  { threshold: '100+ CLT',    label: '+10% Boost',  multiplier: 10, icon: 'bolt' },
+  { threshold: '500+ CLT',    label: '+25% Boost',  multiplier: 25, icon: 'bolt' },
+  { threshold: '1,000+ CLT',  label: '+50% Boost',  multiplier: 50, icon: 'local_fire_department' },
+]
+
+const SCORE_WEIGHTS = [
+  { label: 'Social Reputation', value: 70, icon: 'groups', desc: 'Likes, posts & comments earned' },
+  { label: 'Staking Power',     value: 20, icon: 'toll',   desc: 'CLT staked on Team Finance' },
+  { label: 'Consistency',       value: 10, icon: 'repeat',  desc: 'Daily activity streak' },
+]
 
 export default function Staking() {
-  const [info, setInfo] = useState(null)
-  const [stakeAmount, setStakeAmount] = useState('')
-  const [selectedDuration, setSelectedDuration] = useState(null)
-  const { isConnected } = useAccount()
+  const { user: authUser } = useAuth()
+  const [myStats, setMyStats] = useState(null)
 
   useEffect(() => {
-    getStakingInfo().then(data => {
-      setInfo(data)
-      setSelectedDuration(data.durationBonuses?.[0] || null)
-    }).catch(() => {})
+    getMyLeaderboardStats().then(setMyStats).catch(() => {})
   }, [])
 
-  const handleStake = async () => {
-    if (!isConnected || !stakeAmount || !selectedDuration) return
-    try {
-      await stakeTokens(Number(stakeAmount), selectedDuration.days)
-      const updated = await getStakingInfo()
-      setInfo(updated)
-      setStakeAmount('')
-    } catch (err) {
-      console.error('Stake failed:', err)
-    }
-  }
-
-  if (!info) {
-    return (
-      <div className="flex-1 lg:ml-[300px] w-full max-w-5xl flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-[3px] border-on-background border-t-transparent animate-spin" />
-      </div>
-    )
-  }
+  const stakerStats = myStats?.stakers
 
   return (
-    <div className="flex-1 lg:ml-[300px] w-full max-w-5xl flex flex-col gap-4 lg:gap-8">
+    <div className="flex-1 lg:ml-[300px] w-full max-w-4xl flex flex-col gap-4 lg:gap-6">
+
       {/* Header */}
       <section className="border border-on-background/10 lg:neo-border lg:neo-shadow bg-surface-container p-4 lg:p-8">
-        <h1 className="text-[1.6rem] lg:text-display-lg font-extrabold uppercase leading-none mb-1 lg:mb-2">
-          CLT Staking
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary-container mb-1">CLT Staking</p>
+        <h1 className="text-[1.6rem] lg:text-display-lg font-extrabold uppercase tracking-tight leading-none mb-2">
+          Stake. Earn. Rank Up.
         </h1>
-        <p className="text-sm lg:text-headline-md text-on-surface-variant max-w-2xl">
-          Lock your CLT tokens to earn rewards and boost your influence score.
+        <p className="text-sm text-on-surface-variant max-w-xl">
+          Stake your CLT tokens on Team Finance to earn rewards and boost your influence score on Chicago.
+          Your staking activity is tracked here automatically.
         </p>
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-7 gap-4 lg:gap-8">
-        {/* Left: Stake Panel */}
-        <div className="lg:col-span-3 flex flex-col gap-4 lg:gap-6">
-          <section className="bg-surface-container border border-on-background/10 lg:neo-border lg:neo-shadow p-4 lg:p-6">
-            <h3 className="font-headline-md text-sm lg:text-headline-md uppercase mb-3 lg:mb-4">Your Stake</h3>
-            {!isConnected ? (
-              <>
-                <p className="text-sm lg:text-body-lg text-on-surface-variant mb-4 lg:mb-6">
-                  Your wallet is not currently connected. To view your rewards and stake CLT, please connect a compatible wallet.
-                </p>
-                <ConnectButton.Custom>
-                  {({ account, chain, openConnectModal, openAccountModal, mounted }) => {
-                    const connected = mounted && account
-                    return (
-                      <button
-                        type="button"
-                        onClick={connected ? openAccountModal : openConnectModal}
-                        className="w-full bg-primary text-on-primary font-bold border border-on-background/20 lg:border-4 lg:border-on-background px-6 lg:px-10 py-3 lg:py-4 text-sm lg:text-headline-md lg:neo-shadow active:translate-y-1 active:shadow-none transition-all uppercase"
-                      >
-                        {connected ? 'Manage Wallet' : 'Connect Wallet'}
-                      </button>
-                    )
-                  }}
-                </ConnectButton.Custom>
-                <div className="flex items-center gap-2 text-[11px] lg:text-[12px] text-on-surface-variant mt-3 lg:mt-4">
-                  <Icon name="info" />
-                  <span>Supports MetaMask, WalletConnect, Coinbase Wallet</span>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="flex justify-between mb-2">
-                  <span className="text-[11px] lg:text-[12px] uppercase text-on-surface-variant">Staked</span>
-                  <span className="font-bold text-sm lg:text-base">{currentUser.cltStaked.toLocaleString()} CLT</span>
-                </div>
-                <div className="flex justify-between mb-4 lg:mb-6">
-                  <span className="text-[11px] lg:text-[12px] uppercase text-on-surface-variant">APR</span>
-                  <span className="font-bold text-primary-container text-sm lg:text-base">{info.apr}%</span>
-                </div>
-                <input
-                  type="number"
-                  value={stakeAmount}
-                  onChange={(e) => setStakeAmount(e.target.value)}
-                  placeholder="Amount to stake"
-                  className="w-full border border-on-background/15 lg:neo-border bg-background p-2 lg:p-3 text-sm lg:text-body-md mb-3 lg:mb-4 focus:outline-none"
-                />
-                <div className="flex flex-col gap-2 mb-4 lg:mb-6">
-                  {info.durationBonuses.map((dur) => (
-                    <button
-                      key={dur.days}
-                      onClick={() => setSelectedDuration(dur)}
-                      className={`flex justify-between items-center p-2 lg:p-3 border border-on-background/15 lg:neo-border font-bold transition-colors text-sm ${
-                        selectedDuration.days === dur.days
-                          ? 'bg-primary-container text-on-primary-fixed'
-                          : 'bg-surface-container hover:bg-primary-container/20'
-                      }`}
-                    >
-                      <span>{dur.label} — {dur.description}</span>
-                      <span>{dur.bonus > 0 ? `+${dur.bonus}%` : 'Base'}</span>
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={handleStake}
-                  className="w-full bg-primary text-on-primary font-bold border border-on-background/20 lg:border-4 lg:border-on-background py-3 lg:py-4 text-sm lg:text-headline-md lg:neo-shadow active:translate-y-1 active:shadow-none transition-all uppercase"
-                >
-                  Stake CLT
-                </button>
-              </>
-            )}
-          </section>
-        </div>
-
-        {/* Right: Info Panels */}
-        <div className="lg:col-span-4 flex flex-col gap-4 lg:gap-6">
-          {/* Score Weights */}
-          <section className="bg-on-background text-surface border border-on-background/10 lg:neo-border lg:neo-shadow p-4 lg:p-6">
-            <h3 className="font-headline-md text-sm lg:text-headline-md uppercase mb-4 lg:mb-6 border-b-2 border-primary-container pb-2">
-              Score Weights
-            </h3>
-            <div className="flex flex-col gap-3 lg:gap-4">
-              {[
-                { label: 'Social Reputation', value: info.scoreWeights.socialReputation },
-                { label: 'Staking Power', value: info.scoreWeights.stakingPower },
-                { label: 'Consistency', value: info.scoreWeights.consistency },
-              ].map((w) => (
-                <div key={w.label} className="flex justify-between items-center">
-                  <span className="text-[11px] lg:text-[12px] uppercase font-bold">{w.label}</span>
-                  <span className="font-headline-md text-primary-container font-extrabold text-sm lg:text-base">{w.value}%</span>
-                </div>
-              ))}
+      {/* CTA Banner */}
+      <a
+        href={TEAM_FINANCE_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group block bg-on-background text-surface border-4 border-on-background p-5 lg:p-7 hover:bg-primary-container hover:text-on-primary-fixed transition-colors"
+        style={{ boxShadow: '4px 4px 0px 0px var(--neo-shadow-color)' }}
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">Stake on</p>
+            <p className="font-extrabold text-xl lg:text-2xl uppercase tracking-tight">Team Finance</p>
+            <p className="text-[12px] mt-1 opacity-70">team.finance/whitelabel</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="hidden sm:block text-[12px] font-bold uppercase tracking-wider opacity-70 group-hover:opacity-100">
+              Stake Now
+            </span>
+            <div className="w-10 h-10 border-2 border-current flex items-center justify-center group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform">
+              <Icon name="open_in_new" className="text-[20px]" />
             </div>
-            <p className="mt-4 lg:mt-6 italic text-[11px] lg:text-[12px] border-l-4 border-primary-container pl-3 lg:pl-4 text-surface/70">
-              Stake more to increase your staking power weight and climb the leaderboard faster.
-            </p>
-          </section>
-
-          {/* Amount Boosts */}
-          <section className="bg-surface-container border border-on-background/10 lg:neo-border lg:neo-shadow p-4 lg:p-6">
-            <h3 className="font-headline-md text-sm lg:text-headline-md uppercase mb-4 lg:mb-6 flex items-center gap-2">
-              <Icon name="bolt" filled />
-              Amount Boosts
-            </h3>
-            <div className="grid grid-cols-2 gap-2 lg:gap-3">
-              {info.amountBoosts.map((boost, i) => (
-                <div
-                  key={i}
-                  className={`border border-on-background/15 lg:neo-border p-3 lg:p-4 ${
-                    boost.multiplier >= 50
-                      ? 'bg-primary-container text-on-primary-fixed lg:neo-shadow-sm'
-                      : 'bg-background'
-                  }`}
-                >
-                  <p className="text-[10px] lg:text-[12px] uppercase font-bold text-on-surface-variant">{boost.threshold}</p>
-                  <p className="font-headline-md text-sm lg:text-headline-md mt-1">{boost.label}</p>
-                </div>
-              ))}
-            </div>
-          </section>
+          </div>
         </div>
-      </div>
+      </a>
+
+      {/* My Staking Stats */}
+      {stakerStats && (
+        <section
+          className="bg-surface border-4 border-on-background p-5 lg:p-6"
+          style={{ boxShadow: '4px 4px 0px 0px rgba(212,175,55,1)' }}
+        >
+          <h2 className="font-bold text-[11px] uppercase tracking-[0.14em] mb-5 pb-3 border-b-[3px] border-on-background text-on-surface">
+            Your Staking Stats
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: 'Rank',       value: `#${stakerStats.rank}`,                          icon: 'leaderboard' },
+              { label: 'Percentile', value: stakerStats.percentile,                           icon: 'percent' },
+              { label: 'CLT Staked', value: `${stakerStats.cltStaked?.toLocaleString()} CLT`, icon: 'toll' },
+              { label: 'APR',        value: `${stakerStats.apr}%`,                            icon: 'trending_up' },
+            ].map((stat) => (
+              <div key={stat.label} className="border-2 border-on-background/20 p-3 bg-surface-container flex flex-col gap-1">
+                <Icon name={stat.icon} className="text-[16px] text-primary-container" />
+                <p className="font-extrabold text-lg lg:text-2xl leading-none text-on-surface">{stat.value}</p>
+                <p className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* How points are calculated */}
+      <section
+        className="bg-surface border-4 border-on-background p-5 lg:p-6"
+        style={{ boxShadow: '4px 4px 0px 0px var(--neo-shadow-color)' }}
+      >
+        <h2 className="font-bold text-[11px] uppercase tracking-[0.14em] mb-5 pb-3 border-b-[3px] border-on-background text-on-surface">
+          How Your Score Is Calculated
+        </h2>
+        <div className="flex flex-col gap-3">
+          {SCORE_WEIGHTS.map((w) => (
+            <div key={w.label} className="flex items-center gap-4">
+              <div className="w-12 h-12 flex-shrink-0 bg-on-background text-surface flex items-center justify-center border-2 border-on-background">
+                <Icon name={w.icon} className="text-[20px]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-bold text-[13px] uppercase tracking-wide text-on-surface">{w.label}</span>
+                  <span className="font-extrabold text-primary-container text-base">{w.value}%</span>
+                </div>
+                <div className="h-2 bg-surface-container border border-on-background/20 overflow-hidden">
+                  <div
+                    className="h-full bg-primary-container transition-all"
+                    style={{ width: `${w.value}%` }}
+                  />
+                </div>
+                <p className="text-[11px] text-on-surface-variant mt-1">{w.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Boost Tiers */}
+      <section
+        className="bg-surface border-4 border-on-background p-5 lg:p-6"
+        style={{ boxShadow: '4px 4px 0px 0px var(--neo-shadow-color)' }}
+      >
+        <h2 className="font-bold text-[11px] uppercase tracking-[0.14em] mb-5 pb-3 border-b-[3px] border-on-background text-on-surface flex items-center gap-2">
+          <Icon name="bolt" className="text-primary-container" />
+          Staking Boost Tiers
+        </h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {BOOST_TIERS.map((tier, i) => (
+            <div
+              key={i}
+              className={`border-2 p-4 flex flex-col gap-2 ${
+                tier.multiplier >= 50
+                  ? 'border-primary-container bg-primary-container/10'
+                  : 'border-on-background/20 bg-surface-container'
+              }`}
+            >
+              <Icon
+                name={tier.icon}
+                className={`text-[22px] ${tier.multiplier >= 50 ? 'text-primary-container' : 'text-on-surface-variant'}`}
+              />
+              <p className="font-extrabold text-base text-on-surface leading-none">{tier.label}</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">{tier.threshold}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 text-[12px] text-on-surface-variant border-l-4 border-primary-container pl-3">
+          Staking more CLT unlocks higher score multipliers and climbs the leaderboard faster.
+        </p>
+      </section>
 
       <div className="h-20 md:h-0" />
     </div>
