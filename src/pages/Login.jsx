@@ -119,7 +119,7 @@ export default function Login() {
   }
 
   const handleGoogle = () => {
-    showToast('OAuth not configured in demo')
+    window.location.href = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/auth/google`
   }
 
   return (

@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Icon } from '../components/Layout'
-import { currentUser } from '../data/mockData'
+import { useAuth } from '../context/AuthContext'
+import { getComments, createComment as apiCreateComment } from '../services/api'
 
 // ── Emoji Data ────────────────────────────────────────────────
 const EMOJI_TABS = [
@@ -77,7 +78,7 @@ function ReplyInput({ parentName, onSubmit, onCancel }) {
 
   return (
     <div className="flex gap-2 items-start mt-2">
-      <img src={currentUser.avatar} alt="me" className="w-7 h-7 shrink-0 border border-on-background/20 object-cover mt-1" />
+      <img src={user?.avatar || "/favicon.jpg"} alt="me" className="w-7 h-7 shrink-0 border border-on-background/20 object-cover mt-1" />
       <div className="flex-1 relative">
         <textarea
           ref={ref}
@@ -232,18 +233,24 @@ function CommentThread({ comment, onReply }) {
 export default function CommentsPage() {
   const navigate  = useNavigate()
   const location  = useLocation()
+  const { user }  = useAuth()
 
   // Post data is passed via router state from PostCard
   const post = location.state?.post
 
-  const [comments,     setComments]     = useState(post?.comments_data ?? [])
+  const [comments,     setComments]     = useState([])
   const [commentCount, setCommentCount] = useState(post?.comments ?? 0)
   const [newComment,   setNewComment]   = useState('')
   const [showEmoji,    setShowEmoji]    = useState(false)
   const inputRef = useRef(null)
 
-  // Scroll to top on mount
-  useEffect(() => { window.scrollTo(0, 0) }, [])
+  // Fetch real comments on mount
+  useEffect(() => {
+    window.scrollTo(0, 0)
+    if (post?.id) {
+      getComments(post.id).then(setComments).catch(() => {})
+    }
+  }, [post?.id])
 
   if (!post) {
     return (
@@ -256,36 +263,45 @@ export default function CommentsPage() {
     )
   }
 
-  const submitComment = () => {
+  const submitComment = async () => {
     if (!newComment.trim()) return
-    const comment = {
+    const optimistic = {
       id: `c_${Date.now()}`,
-      author: currentUser,
+      author: user,
       content: newComment,
       likes: 0,
       replies: [],
       timestamp: 'just now',
     }
-    setComments(prev => [comment, ...prev])
+    setComments(prev => [optimistic, ...prev])
     setCommentCount(n => n + 1)
     setNewComment('')
+    try {
+      const saved = await apiCreateComment(post.id, newComment)
+      setComments(prev => prev.map(c => c.id === optimistic.id ? saved : c))
+    } catch {
+      // keep optimistic comment on failure
+    }
   }
 
-  const handleReply = (commentId, text) => {
+  const handleReply = async (commentId, text) => {
+    const optimistic = {
+      id: `r_${Date.now()}`,
+      author: user,
+      content: text,
+      likes: 0,
+      timestamp: 'just now',
+    }
     setComments(prev => prev.map(c =>
       c.id === commentId
-        ? {
-            ...c,
-            replies: [...(c.replies ?? []), {
-              id: `r_${Date.now()}`,
-              author: currentUser,
-              content: text,
-              likes: 0,
-              timestamp: 'just now',
-            }]
-          }
+        ? { ...c, replies: [...(c.replies ?? []), optimistic] }
         : c
     ))
+    try {
+      await apiCreateComment(post.id, text) // backend can accept parentId if supported
+    } catch {
+      // keep optimistic reply
+    }
   }
 
   return (
@@ -342,7 +358,7 @@ export default function CommentsPage() {
         <div className="mb-6 bg-surface-container border border-on-background/10 neo-border p-4">
           <p className="font-bold text-[11px] uppercase tracking-widest text-on-surface-variant mb-3">Write a comment</p>
           <div className="flex gap-3">
-            <img src={currentUser.avatar} alt="me" className="w-9 h-9 shrink-0 border border-on-background/20 object-cover" />
+            <img src={user?.avatar || "/favicon.jpg"} alt="me" className="w-9 h-9 shrink-0 border border-on-background/20 object-cover" />
             <div className="flex-1 relative">
               <textarea
                 ref={inputRef}

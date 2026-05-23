@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { marketplaceCampaigns, marketplacePricing, networkStats as mockNetworkStats } from '../data/mockData'
 import { getMarketplaceCampaigns, getMarketplacePricing, createCampaign, getNetworkStats } from '../services/api'
 
 const CATEGORIES = ['DeFi', 'NFT', 'Gaming', 'Infrastructure', 'Social', 'Other']
@@ -10,14 +9,14 @@ const PLACEMENTS = [
 ]
 
 export default function Marketplace() {
-  const [campaigns, setCampaigns] = useState(marketplaceCampaigns)
-  const [pricing, setPricing] = useState(marketplacePricing)
+  const [campaigns, setCampaigns] = useState([])
+  const [pricing, setPricing] = useState(null)
   const [selectedCategory, setSelectedCategory] = useState('DeFi')
   const [selectedPlacement, setSelectedPlacement] = useState('feed')
   const [paymentMethod, setPaymentMethod] = useState('ETH')
   const [dragOver, setDragOver] = useState(false)
   const [uploadedFile, setUploadedFile] = useState(null)
-  const [stats, setStats] = useState(mockNetworkStats)
+  const [stats, setStats] = useState(null)
   const [statsLoading, setStatsLoading] = useState(true)
   const [statsError, setStatsError] = useState(null)
   const [showCreateForm, setShowCreateForm] = useState(false)

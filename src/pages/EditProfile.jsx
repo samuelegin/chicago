@@ -1,18 +1,36 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { currentUser } from '../data/mockData'
+import { useAuth } from '../context/AuthContext'
+import { getCurrentUser, updateProfile } from '../services/api'
 
 export default function EditProfile() {
   const navigate = useNavigate()
+  const { user: authUser } = useAuth()
   const [form, setForm] = useState({
-    name: currentUser.name,
-    bio: currentUser.bio,
-    website: currentUser.website,
-    twitter: currentUser.twitter,
-    farcaster: currentUser.farcaster,
+    name: '',
+    bio: '',
+    website: '',
+    twitter: '',
+    farcaster: '',
   })
-  const [avatarPreview, setAvatarPreview] = useState(currentUser.avatar)
+  const [avatarPreview, setAvatarPreview] = useState('')
+  const [originalAvatar, setOriginalAvatar] = useState('')
+  const [saving, setSaving] = useState(false)
   const fileInputRef = useRef(null)
+
+  useEffect(() => {
+    getCurrentUser().then(u => {
+      setForm({ name: u.name || '', bio: u.bio || '', website: u.website || '', twitter: u.twitter || '', farcaster: u.farcaster || '' })
+      setAvatarPreview(u.avatar || '')
+      setOriginalAvatar(u.avatar || '')
+    }).catch(() => {
+      if (authUser) {
+        setForm({ name: authUser.name || '', bio: '', website: '', twitter: '', farcaster: '' })
+        setAvatarPreview(authUser.avatar || '')
+        setOriginalAvatar(authUser.avatar || '')
+      }
+    })
+  }, [authUser])
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
@@ -24,9 +42,16 @@ export default function EditProfile() {
     e.target.value = ''
   }
 
-  const handleSave = () => {
-    console.log('save profile', form, avatarPreview)
-    navigate('/profile')
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await updateProfile({ ...form, avatar: avatarPreview })
+      navigate('/profile')
+    } catch (err) {
+      console.error('Save failed:', err)
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -67,10 +92,10 @@ export default function EditProfile() {
               >
                 Change Photo
               </button>
-              {avatarPreview !== currentUser.avatar && (
+              {avatarPreview !== originalAvatar && (
                 <button
                   type="button"
-                  onClick={() => setAvatarPreview(currentUser.avatar)}
+                  onClick={() => setAvatarPreview(originalAvatar)}
                   className="text-[10px] text-on-surface-variant hover:text-error transition-colors underline self-start"
                 >
                   Remove new photo
@@ -115,7 +140,7 @@ export default function EditProfile() {
 
           <div className="flex gap-3 lg:gap-4 pt-3 lg:pt-4">
             <button
-              onClick={handleSave}
+              onClick={handleSave} disabled={saving}
               className="flex-1 py-3 lg:py-4 bg-primary-container text-on-primary-fixed font-bold border border-on-background/20 lg:neo-border lg:neo-shadow uppercase text-sm lg:text-headline-md active:translate-y-1 active:shadow-none transition-all"
             >
               Save Changes

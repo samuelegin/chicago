@@ -2,28 +2,29 @@
  * ============================================================
  *  CHICAGO WEB3 — API SERVICE
  * ============================================================
- *  When the backend is ready:
- *    1. Set VITE_API_BASE_URL in your .env file
- *    2. Replace mock imports in each component/page with
- *       the corresponding api.* call below
- *    3. Delete src/data/mockData.js
- *
- *  Example swap in Feed.jsx:
- *    BEFORE:
- *      import { feedPosts } from '../data/mockData'
- *      const [posts, setPosts] = useState(feedPosts)
- *
- *    AFTER:
- *      const [posts, setPosts] = useState([])
- *      useEffect(() => { api.getFeedPosts().then(setPosts) }, [])
+ *  Set VITE_API_BASE_URL in your .env file to point at the backend.
+ *  All requests automatically attach the stored auth token when present.
  * ============================================================
  */
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
+function getAuthHeaders() {
+  try {
+    const user = JSON.parse(localStorage.getItem('chicago_user') || 'null')
+    return user?.token ? { Authorization: `Bearer ${user.token}` } : {}
+  } catch {
+    return {}
+  }
+}
+
 async function request(path, options = {}) {
   const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+      ...options.headers,
+    },
     ...options,
   })
   if (!res.ok) throw new Error(`API error ${res.status}: ${path}`)
@@ -31,6 +32,14 @@ async function request(path, options = {}) {
 }
 
 // ─── AUTH ─────────────────────────────────────────────────────
+// POST /auth/magic-link  { email }
+export const requestMagicLink = (email) =>
+  request('/auth/magic-link', { method: 'POST', body: JSON.stringify({ email }) })
+
+// POST /auth/magic-link/verify  { token }
+export const verifyMagicLink = (token) =>
+  request('/auth/magic-link/verify', { method: 'POST', body: JSON.stringify({ token }) })
+
 // GET /auth/me
 export const getCurrentUser = () => request('/auth/me')
 
@@ -89,9 +98,9 @@ export const updateProfile = (payload) =>
   request('/users/me', { method: 'PATCH', body: JSON.stringify(payload) })
 
 // ─── LEADERBOARD ──────────────────────────────────────────────
-// GET /leaderboard?period=weekly
-export const getLeaderboard = (period = 'weekly') =>
-  request(`/leaderboard?period=${period}`)
+// GET /leaderboard?type=creators|stakers|rising|influence
+export const getLeaderboard = (type = 'creators') =>
+  request(`/leaderboard?type=${type}`)
 
 // GET /leaderboard/me
 export const getMyLeaderboardStats = () => request('/leaderboard/me')
@@ -132,7 +141,18 @@ export const createCampaign = (payload) =>
 // GET /network/stats
 export const getNetworkStats = () => request('/network/stats')
 
+// ─── ADMIN ────────────────────────────────────────────────────
+// POST /admin/auth/login  { email, password }
+export const adminLogin = (email, password) =>
+  request('/admin/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
+
+// POST /admin/auth/verify-2fa  { adminId, code }
+export const adminVerify2FA = (adminId, code) =>
+  request('/admin/auth/verify-2fa', { method: 'POST', body: JSON.stringify({ adminId, code }) })
+
 export default {
+  requestMagicLink,
+  verifyMagicLink,
   getCurrentUser,
   connectWallet,
   getFeedPosts,
@@ -159,4 +179,6 @@ export default {
   getMarketplacePricing,
   createCampaign,
   getNetworkStats,
+  adminLogin,
+  adminVerify2FA,
 }

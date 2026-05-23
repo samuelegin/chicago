@@ -1,35 +1,53 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { Icon } from '../components/Layout'
-import { currentUser, feedPosts, leaderboardMyStats } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
+import { getCurrentUser, getMyLeaderboardStats, getFeedPosts } from '../services/api'
 
 // Referral code derived from user id (in production, comes from backend)
-const REFERRAL_CODE = 'CHI-' + currentUser.id.replace('u_', '').padStart(6, '0') + '-X9K2'
-const REFERRAL_LINK = `https://chicago.web3/join?ref=${REFERRAL_CODE}`
-
 // Influence score config
 const INFLUENCE_MAX = 100000
-const INFLUENCE_SCORE = leaderboardMyStats.influence // 12,480
-const INFLUENCE_PCT = Math.min((INFLUENCE_SCORE / INFLUENCE_MAX) * 100, 100)
 const TIER_THRESHOLDS = [
   { label: 'Bronze',   min: 0,      max: 10000,  color: 'bg-amber-700' },
   { label: 'Silver',   min: 10000,  max: 30000,  color: 'bg-slate-400' },
   { label: 'Gold',     min: 30000,  max: 60000,  color: 'bg-primary-container' },
   { label: 'Diamond',  min: 60000,  max: 100000, color: 'bg-cyan-400' },
 ]
-const currentTier = TIER_THRESHOLDS.findLast((t) => INFLUENCE_SCORE >= t.min) || TIER_THRESHOLDS[0]
-const nextTier = TIER_THRESHOLDS[TIER_THRESHOLDS.indexOf(currentTier) + 1]
 
 export default function Profile() {
-  const [user] = useState(currentUser)
+  const [user, setUser] = useState(null)
+  const [myStats, setMyStats] = useState(null)
+  const [userPosts, setUserPosts] = useState([])
   const [copied, setCopied] = useState(false)
-  const { logout } = useAuth()
+  const { user: authUser, logout } = useAuth()
   const navigate = useNavigate()
-  const userPosts = feedPosts.filter((p) => p.author.id === user.id)
+
+  useEffect(() => {
+    getCurrentUser().then(setUser).catch(() => setUser(authUser))
+    getMyLeaderboardStats().then(setMyStats).catch(() => {})
+    getFeedPosts('general').then(posts => {
+      if (authUser?.id) setUserPosts(posts.filter(p => p.author.id === authUser.id))
+    }).catch(() => {})
+  }, [authUser])
+
+  const influenceScore = myStats?.influence?.score ?? 0
+  const influencePct = Math.min((influenceScore / INFLUENCE_MAX) * 100, 100)
+  const currentTier = TIER_THRESHOLDS.findLast((t) => influenceScore >= t.min) || TIER_THRESHOLDS[0]
+  const nextTier = TIER_THRESHOLDS[TIER_THRESHOLDS.indexOf(currentTier) + 1]
+
+  const referralCode = user?.id ? 'CHI-' + user.id.replace('u_', '').padStart(6, '0') + '-X9K2' : ''
+  const referralLink = referralCode ? `https://chicago.web3/join?ref=${referralCode}` : ''
+
+  if (!user) {
+    return (
+      <div className="flex-1 lg:ml-[300px] w-full max-w-3xl flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-[3px] border-on-background border-t-transparent animate-spin" />
+      </div>
+    )
+  }
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(REFERRAL_LINK).catch(() => {})
+    navigator.clipboard.writeText(referralLink).catch(() => {})
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -107,7 +125,7 @@ export default function Profile() {
           </h2>
           <div className="flex items-baseline gap-1">
             <span className="text-[22px] lg:text-[32px] font-extrabold text-primary-container leading-none">
-              {INFLUENCE_SCORE.toLocaleString()}
+              {influenceScore.toLocaleString()}
             </span>
             <span className="text-[10px] lg:text-[12px] text-on-surface-variant font-mono uppercase">
               / {(INFLUENCE_MAX / 1000).toFixed(0)}k
@@ -119,7 +137,7 @@ export default function Profile() {
         <div className="relative h-3 lg:h-4 bg-background border border-on-background/15 lg:neo-border overflow-hidden mb-2">
           <div
             className="h-full bg-primary-container transition-all duration-700"
-            style={{ width: `${INFLUENCE_PCT}%` }}
+            style={{ width: `${influencePct}%` }}
           />
           {/* Tier tick marks */}
           {TIER_THRESHOLDS.slice(1).map((t) => (
@@ -154,7 +172,7 @@ export default function Profile() {
           {nextTier && (
             <div className="text-right">
               <span className="text-[10px] lg:text-[11px] text-on-surface-variant font-mono">
-                +{(nextTier.min - INFLUENCE_SCORE).toLocaleString()} pts → <strong>{nextTier.label}</strong>
+                +{(nextTier.min - influenceScore).toLocaleString()} pts → <strong>{nextTier.label}</strong>
               </span>
             </div>
           )}
@@ -174,7 +192,7 @@ export default function Profile() {
         {/* Link box */}
         <div className="flex items-stretch gap-0 border border-on-background/15 lg:neo-border overflow-hidden">
           <div className="flex-1 bg-background px-3 py-2 lg:py-3 font-mono text-[11px] lg:text-[13px] text-on-surface-variant truncate select-all">
-            {REFERRAL_LINK}
+            {referralLink}
           </div>
           <button
             onClick={handleCopy}
@@ -192,7 +210,7 @@ export default function Profile() {
         {/* Referral code */}
         <div className="flex items-center gap-2 mt-2 lg:mt-3">
           <span className="text-[10px] lg:text-[11px] text-on-surface-variant uppercase font-bold">Code:</span>
-          <span className="font-mono text-[11px] lg:text-[13px] text-primary-container tracking-widest">{REFERRAL_CODE}</span>
+          <span className="font-mono text-[11px] lg:text-[13px] text-primary-container tracking-widest">{referralCode}</span>
         </div>
       </section>
 

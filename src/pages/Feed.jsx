@@ -1,13 +1,18 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Icon, RightSidebar } from '../components/Layout'
 import PostCard from '../components/PostCard'
+import { useAuth } from '../context/AuthContext'
 import {
-  feedPosts,
-  feedCategories,
-  currentUser,
-  suggestedUsers,
-  trendingTopics,
-} from '../data/mockData'
+  getFeedPosts,
+  getFeedCategories,
+  getSuggestedUsers,
+  getTrendingTopics,
+  createPost as apiCreatePost,
+  likePost as apiLikePost,
+  unlikePost as apiUnlikePost,
+  followUser as apiFollowUser,
+  unfollowUser as apiUnfollowUser,
+} from '../services/api'
 
 // ── GIF Keyboard ─────────────────────────────────────────────
 const GIF_CATEGORIES = ['trending', 'reactions', 'memes', 'crypto', 'hype', 'lol']
@@ -153,10 +158,35 @@ function PollCreator({ onAdd, onClose }) {
 }
 
 export default function Feed() {
-  const [posts, setPosts] = useState(feedPosts)
+  const { user } = useAuth()
+  const [posts, setPosts] = useState([])
+  const [categories, setCategories] = useState([])
   const [activeFilter, setActiveFilter] = useState('general')
-  const [suggested, setSuggested] = useState(suggestedUsers)
+  const [suggested, setSuggested] = useState([])
+  const [trendingTopics, setTrendingTopics] = useState([])
+  const [loading, setLoading] = useState(true)
   const [postContent, setPostContent] = useState('')
+
+  useEffect(() => {
+    Promise.all([
+      getFeedPosts(activeFilter),
+      getFeedCategories(),
+      getSuggestedUsers(),
+      getTrendingTopics(),
+    ]).then(([postsData, catsData, suggestData, trendData]) => {
+      setPosts(postsData)
+      setCategories(catsData)
+      setSuggested(suggestData)
+      setTrendingTopics(trendData)
+    }).finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    setLoading(true)
+    getFeedPosts(activeFilter)
+      .then(setPosts)
+      .finally(() => setLoading(false))
+  }, [activeFilter])
   const [selectedFiles, setSelectedFiles] = useState([])
   const [selectedGifs, setSelectedGifs] = useState([])
   const [poll, setPoll] = useState(null)
@@ -164,7 +194,10 @@ export default function Feed() {
   const [showPollCreator, setShowPollCreator] = useState(false)
   const fileInputRef = useRef(null)
 
-  const handleLike = (postId) => {
+  const handleLike = async (postId) => {
+    const post = posts.find(p => p.id === postId)
+    if (!post) return
+    // Optimistic update
     setPosts((prev) =>
       prev.map((p) =>
         p.id === postId
@@ -172,12 +205,35 @@ export default function Feed() {
           : p
       )
     )
+    try {
+      if (post.liked) await apiUnlikePost(postId)
+      else await apiLikePost(postId)
+    } catch {
+      // Revert on error
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? { ...p, liked: post.liked, likes: post.likes }
+            : p
+        )
+      )
+    }
   }
 
-  const handleFollow = (userId) => {
+  const handleFollow = async (userId) => {
+    const su = suggested.find(u => u.id === userId)
+    if (!su) return
     setSuggested((prev) =>
       prev.map((u) => (u.id === userId ? { ...u, following: !u.following } : u))
     )
+    try {
+      if (su.following) await apiUnfollowUser(userId)
+      else await apiFollowUser(userId)
+    } catch {
+      setSuggested((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, following: su.following } : u))
+      )
+    }
   }
 
   const handleFileChange = (e) => {
@@ -190,23 +246,31 @@ export default function Feed() {
   const removeFile = (i) => setSelectedFiles(prev => prev.filter((_, idx) => idx !== i))
   const removeGif = (i) => setSelectedGifs(prev => prev.filter((_, idx) => idx !== i))
 
-  const handlePost = () => {
+  const handlePost = async () => {
     if (!postContent.trim() && selectedFiles.length === 0 && selectedGifs.length === 0 && !poll) return
-    const newPost = {
-      id: `p_${Date.now()}`,
-      author: currentUser,
+    const payload = {
       content: postContent,
       images: [...selectedGifs, ...selectedFiles.map(f => f.url)],
       poll: poll || null,
-      likes: 0,
-      comments: 0,
-      shares: 0,
-      trending: false,
       category: 'General',
-      timestamp: 'just now',
-      liked: false,
     }
-    setPosts([newPost, ...posts])
+    try {
+      const created = await apiCreatePost(payload)
+      setPosts([created, ...posts])
+    } catch {
+      // Fallback: optimistic local add
+      setPosts([{
+        id: `p_${Date.now()}`,
+        author: user,
+        ...payload,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        trending: false,
+        timestamp: 'just now',
+        liked: false,
+      }, ...posts])
+    }
     setPostContent('')
     setSelectedFiles([])
     setSelectedGifs([])
@@ -215,10 +279,7 @@ export default function Feed() {
     setShowPollCreator(false)
   }
 
-  const filteredPosts =
-    activeFilter === 'general'
-      ? posts
-      : posts.filter((p) => p.category.toLowerCase().replace(' ', '-') === activeFilter)
+  const filteredPosts = posts
 
   return (
     <div className="flex-1 lg:ml-[300px] lg:mr-[340px] max-w-2xl w-full flex flex-col gap-4 lg:gap-8 min-w-0">
@@ -235,7 +296,7 @@ export default function Feed() {
       {/* Compose Box */}
       <section className="bg-surface-container border border-on-background/10 lg:neo-border lg:neo-shadow p-3 lg:p-6">
         <div className="flex gap-3">
-          <img src={currentUser.avatar} alt="Me" className="w-9 h-9 lg:w-12 lg:h-12 border border-on-background/20 lg:neo-border object-cover" />
+          <img src={user?.avatar || '/favicon.jpg'} alt="Me" className="w-9 h-9 lg:w-12 lg:h-12 border border-on-background/20 lg:neo-border object-cover" />
           <div className="flex-1">
             <textarea
               value={postContent}
@@ -361,7 +422,7 @@ export default function Feed() {
 
       {/* Category Filters */}
       <div className="flex gap-2 lg:gap-4 overflow-x-auto pb-2 no-scrollbar">
-        {feedCategories.map((cat) => (
+        {categories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => setActiveFilter(cat.id)}

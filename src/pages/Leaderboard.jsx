@@ -1,12 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Icon } from '../components/Layout'
-import {
-  leaderboardCreators,
-  leaderboardStakers,
-  leaderboardRising,
-  leaderboardInfluence,
-  leaderboardMyStats,
-} from '../data/mockData'
+import { getLeaderboard, getMyLeaderboardStats } from '../services/api'
 
 // ── Tier styling ──────────────────────────────────────────────
 const tierRow = {
@@ -193,8 +187,10 @@ function InfluenceTable({ entries }) {
 }
 
 // ── My Stats Banner ───────────────────────────────────────────
-function MyStatsBanner({ tab }) {
-  const s = leaderboardMyStats[tab]
+function MyStatsBanner({ tab, myStats }) {
+  if (!myStats) return null
+  const s = myStats[tab]
+  if (!s) return null
 
   const statsByTab = {
     creators:  [{ label: 'Posts', value: s.posts }, { label: 'Likes', value: s.likes?.toLocaleString() }, { label: 'Comments', value: s.comments }],
@@ -233,16 +229,23 @@ function MyStatsBanner({ tab }) {
 }
 
 // ── Main Page ─────────────────────────────────────────────────
-const DATA = {
-  creators:  leaderboardCreators,
-  stakers:   leaderboardStakers,
-  rising:    leaderboardRising,
-  influence: leaderboardInfluence,
-}
-
 export default function Leaderboard() {
   const [activeTab, setActiveTab] = useState('creators')
+  const [data, setData] = useState([])
+  const [myStats, setMyStats] = useState(null)
+  const [loading, setLoading] = useState(true)
   const currentTab = TABS.find(t => t.key === activeTab)
+
+  useEffect(() => {
+    setLoading(true)
+    getLeaderboard(activeTab)
+      .then(setData)
+      .finally(() => setLoading(false))
+  }, [activeTab])
+
+  useEffect(() => {
+    getMyLeaderboardStats().then(setMyStats).catch(() => {})
+  }, [])
 
   return (
     <div className="flex-1 lg:ml-[300px] w-full max-w-4xl flex flex-col gap-4 lg:gap-6">
@@ -277,8 +280,9 @@ export default function Leaderboard() {
       </div>
 
       {/* Top 3 Podium (gold/silver/bronze) */}
+      {data.length >= 3 && (
       <div className="grid grid-cols-3 gap-2 lg:gap-4">
-        {DATA[activeTab].slice(0, 3).map((e, i) => {
+        {data.slice(0, 3).map((e, i) => {
           const order = [1, 0, 2] // silver | gold | bronze visual order
           const heights = ['h-20 lg:h-24', 'h-28 lg:h-32', 'h-16 lg:h-20']
           const podiumColors = [
@@ -286,7 +290,7 @@ export default function Leaderboard() {
             'bg-primary-container/40 border-primary-container',
             'bg-amber-100 border-amber-300',
           ]
-          const entry = DATA[activeTab][order[i]]
+          const entry = data[order[i]]
           return (
             <div key={entry.id} className={`flex flex-col items-center ${i === 1 ? '-mt-3 lg:-mt-5' : ''}`}>
               <img src={entry.avatar} alt={entry.name} className="w-10 h-10 lg:w-14 lg:h-14 border-2 border-on-background/20 object-cover mb-1" />
@@ -298,17 +302,24 @@ export default function Leaderboard() {
           )
         })}
       </div>
+      )}
 
       {/* Full Table */}
       <section className="border border-on-background/10 lg:neo-border lg:neo-shadow overflow-hidden">
-        {activeTab === 'creators'  && <CreatorsTable  entries={DATA.creators}  />}
-        {activeTab === 'stakers'   && <StakersTable   entries={DATA.stakers}   />}
-        {activeTab === 'rising'    && <RisingTable    entries={DATA.rising}    />}
-        {activeTab === 'influence' && <InfluenceTable entries={DATA.influence} />}
+        {loading ? (
+          <div className="flex justify-center py-12 text-on-surface-variant">Loading…</div>
+        ) : (
+          <>
+            {activeTab === 'creators'  && <CreatorsTable  entries={data}  />}
+            {activeTab === 'stakers'   && <StakersTable   entries={data}   />}
+            {activeTab === 'rising'    && <RisingTable    entries={data}    />}
+            {activeTab === 'influence' && <InfluenceTable entries={data} />}
+          </>
+        )}
       </section>
 
       {/* My Stats */}
-      <MyStatsBanner tab={activeTab} />
+      <MyStatsBanner tab={activeTab} myStats={myStats} />
 
       <div className="h-20 md:h-0" />
     </div>

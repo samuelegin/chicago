@@ -1,29 +1,49 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Icon } from '../components/Layout'
-import { feedPosts, currentUser } from '../data/mockData'
-// BACKEND: import api from '../services/api'
-// useEffect(() => { api.getUser(userId).then(setUser) }, [userId])
-
-// Simulated user lookup from post authors
-function getUserById(id) {
-  const allAuthors = feedPosts.map((p) => p.author)
-  const found = allAuthors.find((a) => a.id === id)
-  if (!found) return null
-  // Enrich with fake profile data for demo
-  const extras = {
-    u_002: { bio: 'Cross-chain architect & DAO engineer. Building the infrastructure for the next wave of decentralised finance.', website: 'devzero.eth', posts: 832, followers: 12400, following: 204, cltHeld: 28000 },
-    u_003: { bio: 'Generative NFT artist. Creator of the Chicago Skyline series. Merging brutalist aesthetics with on-chain permanence.', website: 'artblock.sol', posts: 510, followers: 9100, following: 317, cltHeld: 11000 },
-  }
-  return { ...found, ...(extras[id] || { bio: 'Chicago Web3 community member.', posts: 120, followers: 1800, following: 90, cltHeld: 3000 }) }
-}
+import { getUser, getFeedPosts, followUser as apiFollowUser, unfollowUser as apiUnfollowUser } from '../services/api'
 
 export default function UserProfile() {
   const { userId } = useParams()
   const navigate = useNavigate()
-  const user = getUserById(userId)
+  const [user, setUser] = useState(null)
+  const [userPosts, setUserPosts] = useState([])
   const [following, setFollowing] = useState(false)
-  const [followerCount, setFollowerCount] = useState(user?.followers ?? 0)
+  const [followerCount, setFollowerCount] = useState(0)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    Promise.all([
+      getUser(userId),
+      getFeedPosts('general'),
+    ]).then(([userData, allPosts]) => {
+      setUser(userData)
+      setFollowing(userData.isFollowing ?? false)
+      setFollowerCount(userData.followers ?? 0)
+      setUserPosts(allPosts.filter(p => p.author.id === userId))
+    }).catch(() => setUser(null))
+      .finally(() => setLoading(false))
+  }, [userId])
+
+  const handleFollowToggle = async () => {
+    setFollowing(f => !f)
+    setFollowerCount(c => following ? c - 1 : c + 1)
+    try {
+      if (following) await apiUnfollowUser(userId)
+      else await apiFollowUser(userId)
+    } catch {
+      setFollowing(f => !f)
+      setFollowerCount(c => following ? c + 1 : c - 1)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex-1 lg:ml-[300px] w-full max-w-3xl flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-[3px] border-on-background border-t-transparent animate-spin" />
+      </div>
+    )
+  }
 
   if (!user) {
     return (
@@ -36,15 +56,7 @@ export default function UserProfile() {
     )
   }
 
-  const userPosts = feedPosts.filter((p) => p.author.id === userId)
-
-  const handleFollow = () => {
-    // BACKEND: await api.followUser(userId)
-    setFollowing((v) => !v)
-    setFollowerCount((c) => following ? c - 1 : c + 1)
-  }
-
-  const isOwnProfile = userId === currentUser.id
+  const isOwnProfile = false // always viewing another user's profile from this route
 
   return (
     <div className="flex-1 lg:ml-[300px] w-full max-w-3xl flex flex-col gap-4 lg:gap-8">
@@ -60,7 +72,7 @@ export default function UserProfile() {
             {/* Follow / Unfollow button */}
             {!isOwnProfile && (
               <button
-                onClick={handleFollow}
+                onClick={handleFollowToggle}
                 className={`mt-2 flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-2.5 font-bold text-[12px] lg:text-[13px] uppercase tracking-wider transition-all active:scale-95
                   ${following
                     ? 'bg-surface-container text-on-background border border-on-background/30 lg:neo-border hover:bg-error/10 hover:text-error hover:border-error/40'

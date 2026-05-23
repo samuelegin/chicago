@@ -1,35 +1,35 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
-import { mockAdmins } from '../../data/mockData'
+import { adminLogin } from '../../services/api'
 
 export default function AdminLogin() {
   const navigate = useNavigate()
-  const { logout } = useAuth()
 
-  const [email, setEmail]     = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [showPw, setShowPw]   = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState('')
+  const [showPw, setShowPw]     = useState(false)
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     if (!email || !password) { setError('Please fill in all fields.'); return }
     setLoading(true)
-    await new Promise(r => setTimeout(r, 900))
-    const match = mockAdmins.find(a => a.email === email && a.password === password)
-    setLoading(false)
-    if (!match) { setError('Invalid email or password.'); return }
-    // Navigate to 2FA verify step
-    navigate('/portal-ax92-v1/verify', { state: { adminId: match.id } })
+    try {
+      const result = await adminLogin(email, password)
+      // Backend returns { adminId } to proceed to 2FA step
+      navigate('/portal-ax92-v1/verify', { state: { adminId: result.adminId } })
+    } catch (err) {
+      setError(err.message || 'Invalid email or password.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <div className="min-h-screen bg-surface-container flex items-center justify-center p-6">
 
-      {/* Background geometric decoration */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
         <div className="absolute top-[-8%] right-[-8%] w-[40%] h-[40%] border-[8px] border-on-background/5 rotate-12" />
         <div className="absolute bottom-[-6%] left-[-6%] w-[30%] h-[30%] bg-primary-container/8 -rotate-6" />
@@ -41,7 +41,6 @@ export default function AdminLogin() {
           style={{ boxShadow: '8px 8px 0px 0px #000' }}
         >
 
-          {/* Header */}
           <div className="text-center flex flex-col items-center gap-3">
             <div
               className="w-16 h-16 bg-on-surface border-[4px] border-on-surface flex items-center justify-center"
@@ -62,7 +61,6 @@ export default function AdminLogin() {
             </p>
           </div>
 
-          {/* Restricted badge */}
           <div className="flex items-center gap-3 border-[3px] border-on-surface bg-surface-container p-3">
             <span
               className="material-symbols-outlined text-[18px]"
@@ -73,7 +71,6 @@ export default function AdminLogin() {
             <span className="font-bold text-[11px] uppercase tracking-wider">Secure Infrastructure</span>
           </div>
 
-          {/* Error */}
           {error && (
             <div className="flex items-center gap-3 border-[3px] border-error bg-error-container text-on-error-container p-4">
               <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
@@ -81,10 +78,8 @@ export default function AdminLogin() {
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
-            {/* Email */}
             <div className="flex flex-col gap-2">
               <label className="font-bold text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
                 Admin Email
@@ -100,7 +95,6 @@ export default function AdminLogin() {
               />
             </div>
 
-            {/* Password */}
             <div className="flex flex-col gap-2">
               <label className="font-bold text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
                 Password
@@ -127,7 +121,6 @@ export default function AdminLogin() {
               </div>
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -148,7 +141,6 @@ export default function AdminLogin() {
             </button>
           </form>
 
-          {/* Footer */}
           <div className="text-center pt-2 border-t-[2px] border-on-surface/10">
             <p className="font-bold text-[10px] uppercase tracking-widest text-on-surface-variant/50">
               Secure Infrastructure · Chicago Web3 © 2025

@@ -1,18 +1,40 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useAccount } from 'wagmi'
 import { Icon } from '../components/Layout'
-import { stakingInfo, currentUser } from '../data/mockData'
+import { getStakingInfo, stakeTokens, unstakeTokens, claimRewards } from '../services/api'
 
 export default function Staking() {
-  const [info] = useState(stakingInfo)
+  const [info, setInfo] = useState(null)
   const [stakeAmount, setStakeAmount] = useState('')
-  const [selectedDuration, setSelectedDuration] = useState(info.durationBonuses[0])
+  const [selectedDuration, setSelectedDuration] = useState(null)
   const { isConnected } = useAccount()
 
-  const handleStake = () => {
-    if (!walletConnected) return
-    console.log('stake', stakeAmount, selectedDuration.days)
+  useEffect(() => {
+    getStakingInfo().then(data => {
+      setInfo(data)
+      setSelectedDuration(data.durationBonuses?.[0] || null)
+    }).catch(() => {})
+  }, [])
+
+  const handleStake = async () => {
+    if (!isConnected || !stakeAmount || !selectedDuration) return
+    try {
+      await stakeTokens(Number(stakeAmount), selectedDuration.days)
+      const updated = await getStakingInfo()
+      setInfo(updated)
+      setStakeAmount('')
+    } catch (err) {
+      console.error('Stake failed:', err)
+    }
+  }
+
+  if (!info) {
+    return (
+      <div className="flex-1 lg:ml-[300px] w-full max-w-5xl flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-[3px] border-on-background border-t-transparent animate-spin" />
+      </div>
+    )
   }
 
   return (

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Icon } from './Layout'
-import { currentUser } from '../data/mockData'
+import { useAuth } from '../context/AuthContext'
 
 // Comments are handled by CommentsPage — see src/pages/CommentsPage.jsx
 
@@ -72,6 +72,7 @@ function EmojiPicker({ textareaRef, onClose }) {
 
 // ── Single Comment ─────────────────────────────────────────────
 function Comment({ comment, depth = 0 }) {
+  const { user } = useAuth()
   const [liked, setLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(comment.likes ?? 0)
   const [showReply, setShowReply] = useState(false)
@@ -91,7 +92,7 @@ function Comment({ comment, depth = 0 }) {
     if (!replyText.trim()) return
     setReplies(prev => [...prev, {
       id: `r_${Date.now()}`,
-      author: currentUser,
+      author: user,
       content: replyText,
       likes: 0,
       replies: [],
@@ -127,7 +128,7 @@ function Comment({ comment, depth = 0 }) {
         {/* Reply input */}
         {showReply && (
           <div className="mt-2 flex gap-2 items-start relative">
-            <img src={currentUser.avatar} alt="me" className="w-6 h-6 shrink-0 border border-on-background/20 object-cover mt-1" />
+            <img src={user?.avatar || "/favicon.jpg"} alt="me" className="w-6 h-6 shrink-0 border border-on-background/20 object-cover mt-1" />
             <div className="flex-1 relative">
               <textarea
                 ref={replyRef}
@@ -168,10 +169,11 @@ function Comment({ comment, depth = 0 }) {
 // ── PostCard ──────────────────────────────────────────────────
 export default function PostCard({ post, onLike }) {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [commentCount] = useState(post.comments ?? 0)
 
   const handleAvatarClick = () => {
-    if (post.author.id === currentUser.id) navigate('/profile')
+    if (user?.id && post.author.id === user.id) navigate('/profile')
     else navigate(`/profile/${post.author.id}`)
   }
 

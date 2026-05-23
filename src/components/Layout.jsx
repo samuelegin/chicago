@@ -1,8 +1,17 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import { navLinks, footerLinks } from '../data/mockData'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
+
+const navLinks = [
+  { id: 'home',        label: 'Home',        icon: 'home',            path: '/' },
+  { id: 'leaderboard', label: 'Leaderboard', icon: 'leaderboard',     path: '/leaderboard' },
+  { id: 'staking',     label: 'Staking',     icon: 'account_balance', path: '/staking' },
+  { id: 'marketplace', label: 'Marketplace', icon: 'storefront',      path: '/marketplace' },
+  { id: 'profile',     label: 'Profile',     icon: 'person',          path: '/profile' },
+]
+
+const footerLinks = ['Privacy', 'Terms', 'Ads', 'Cookies']
 
 // ─── Icon ────────────────────────────────────────────────────
 export function Icon({ name, className = '', filled = false }) {
