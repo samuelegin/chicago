@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { marketplaceCampaigns, marketplacePricing, networkStats as mockNetworkStats } from '../data/mockData'
-import { getNetworkStats } from '../services/api'
+import { getMarketplaceCampaigns, getMarketplacePricing, createCampaign, getNetworkStats } from '../services/api'
 
 const CATEGORIES = ['DeFi', 'NFT', 'Gaming', 'Infrastructure', 'Social', 'Other']
 const PLACEMENTS = [
@@ -10,7 +10,7 @@ const PLACEMENTS = [
 ]
 
 export default function Marketplace() {
-  const [campaigns] = useState(marketplaceCampaigns)
+  const [campaigns, setCampaigns] = useState(marketplaceCampaigns)
   const [pricing, setPricing] = useState(marketplacePricing)
   const [selectedCategory, setSelectedCategory] = useState('DeFi')
   const [selectedPlacement, setSelectedPlacement] = useState('feed')
@@ -20,9 +20,113 @@ export default function Marketplace() {
   const [stats, setStats] = useState(mockNetworkStats)
   const [statsLoading, setStatsLoading] = useState(true)
   const [statsError, setStatsError] = useState(null)
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [campaignForm, setCampaignForm] = useState({
+    title: '',
+    url: '',
+    description: '',
+    image: '',
+  })
   const fileInputRef = useRef(null)
 
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setUploadedFile(file.name)
+      setCampaignForm((prev) => ({ ...prev, image: file.name }))
+    }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setIsCreating(true)
+
+    const selectedDuration = pricing.durations.find((dur) => dur.label === pricing.selectedDuration)
+    const payload = {
+      title: campaignForm.title || `Promote ${selectedCategory}`,
+      image: campaignForm.image || uploadedFile || 'https://via.placeholder.com/720x400?text=Ad',
+      budget: pricing.totalCostEth,
+      durationDays: selectedDuration?.days || 3,
+      category: selectedCategory,
+      placement: selectedPlacement,
+      url: campaignForm.url,
+      description: campaignForm.description,
+      paymentMethod,
+    }
+
+    try {
+      const created = await createCampaign(payload)
+      const newCampaign = {
+        id: created?.id || `camp_${Date.now()}`,
+        title: payload.title,
+        advertiser: 'Your Ad',
+        image: payload.image,
+        status: 'active',
+        budget: payload.budget,
+        spent: 0,
+        clicks: 0,
+        impressions: 0,
+      }
+      setCampaigns((prev) => [newCampaign, ...(Array.isArray(prev) ? prev : [])])
+      setShowCreateForm(false)
+      setCampaignForm({ title: '', url: '', description: '', image: '' })
+      setUploadedFile(null)
+      setSelectedCategory('DeFi')
+      setSelectedPlacement('feed')
+      setPaymentMethod('ETH')
+    } catch (error) {
+      console.warn('Create campaign failed, falling back to local ad preview.', error)
+      const fallbackCampaign = {
+        id: `camp_${Date.now()}`,
+        title: payload.title,
+        advertiser: 'Your Ad',
+        image: payload.image,
+        status: 'active',
+        budget: payload.budget,
+        spent: 0,
+        clicks: 0,
+        impressions: 0,
+      }
+      setCampaigns((prev) => [fallbackCampaign, ...(Array.isArray(prev) ? prev : [])])
+      setShowCreateForm(false)
+      setCampaignForm({ title: '', url: '', description: '', image: '' })
+      setUploadedFile(null)
+      setSelectedCategory('DeFi')
+      setSelectedPlacement('feed')
+      setPaymentMethod('ETH')
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
   useEffect(() => {
+    getMarketplaceCampaigns()
+      .then((data) => {
+        if (Array.isArray(data)) setCampaigns(data)
+        else if (Array.isArray(data?.campaigns)) setCampaigns(data.campaigns)
+      })
+      .catch((error) => {
+        console.warn('Marketplace campaigns fetch failed, using fallback mock data.', error)
+      })
+
+    getMarketplacePricing()
+      .then((data) => {
+        if (data?.durations) {
+          const selectedDuration = data.selectedDuration || pricing.selectedDuration
+          const duration = data.durations.find((dur) => dur.label === selectedDuration)
+          setPricing((prev) => ({
+            ...prev,
+            ...data,
+            selectedDuration,
+            totalCostEth: data.totalCostEth ?? duration?.priceEth ?? prev.totalCostEth,
+          }))
+        }
+      })
+      .catch((error) => {
+        console.warn('Marketplace pricing fetch failed, using fallback mock pricing.', error)
+      })
+
     getNetworkStats()
       .then((data) => setStats(data))
       .catch((error) => {
@@ -41,7 +145,10 @@ export default function Marketplace() {
     e.preventDefault()
     setDragOver(false)
     const file = e.dataTransfer.files[0]
-    if (file) setUploadedFile(file.name)
+    if (file) {
+      setUploadedFile(file.name)
+      setCampaignForm((prev) => ({ ...prev, image: file.name }))
+    }
   }
 
   return (
@@ -53,22 +160,68 @@ export default function Marketplace() {
           Marketplace
         </h2>
         <p className="text-sm lg:text-[24px] lg:leading-[32px] lg:font-bold text-on-surface-variant max-w-2xl">
-          Boost your presence across the Chicago network. High-impact placements for modern Web3 protocols.
+          Browse live sponsor campaigns from other Chicago brands, then create your own ad placement when you’re ready.
         </p>
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowCreateForm(false)}
+            className={`px-5 py-3 font-bold uppercase transition border-2 ${showCreateForm ? 'bg-surface text-on-surface border-on-surface hover:bg-surface-container' : 'bg-primary text-on-primary border-primary'}`}
+          >
+            Browse Ads
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowCreateForm(true)}
+            className={`px-5 py-3 font-bold uppercase transition border-2 ${showCreateForm ? 'bg-primary text-on-primary border-primary' : 'bg-surface text-on-surface border-on-surface hover:bg-surface-container'}`}
+          >
+            Place an Ad
+          </button>
+        </div>
       </section>
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 px-4 lg:px-0">
 
-        {/* ── Campaign Creation Form ── */}
+        {/* ── Marketplace Ads + Campaign Builder ── */}
         <div className="lg:col-span-7 flex flex-col gap-4 lg:gap-6">
-          <div className="bg-surface border border-on-background/10 lg:border-4 lg:border-on-surface p-5 lg:p-8 neo-shadow">
-
-            {/* Form Title */}
-            <div className="flex items-center gap-2 mb-5 lg:mb-6">
-              <span className="material-symbols-outlined text-primary text-2xl lg:text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>campaign</span>
-              <h3 className="font-extrabold uppercase text-sm lg:text-[24px] lg:leading-[32px]">Place an Ad</h3>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h3 className="font-extrabold uppercase text-sm lg:text-[24px] lg:leading-[32px]">
+                {showCreateForm ? 'Create an Ad Campaign' : 'Ads by Other Publishers'}
+              </h3>
+              <p className="text-xs lg:text-sm text-on-surface-variant max-w-2xl">
+                {showCreateForm
+                  ? 'Build your campaign, select placement, and submit your ad for review.'
+                  : 'See the latest promos and sponsor placements currently running on Chicago.'}
+              </p>
             </div>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => setShowCreateForm(false)}
+                className={`px-5 py-3 font-bold uppercase transition border-2 ${showCreateForm ? 'bg-surface text-on-surface border-on-surface hover:bg-surface-container' : 'bg-primary text-on-primary border-primary'}`}
+              >
+                Browse Ads
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCreateForm(true)}
+                className={`px-5 py-3 font-bold uppercase transition border-2 ${showCreateForm ? 'bg-primary text-on-primary border-primary' : 'bg-surface text-on-surface border-on-surface hover:bg-surface-container'}`}
+              >
+                Place an Ad
+              </button>
+            </div>
+          </div>
+
+          {showCreateForm ? (
+            <form onSubmit={handleSubmit} className="bg-surface border border-on-background/10 lg:border-4 lg:border-on-surface p-5 lg:p-8 neo-shadow">
+
+              {/* Form Title */}
+              <div className="flex items-center gap-2 mb-5 lg:mb-6">
+                <span className="material-symbols-outlined text-primary text-2xl lg:text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>campaign</span>
+                <h3 className="font-extrabold uppercase text-sm lg:text-[24px] lg:leading-[32px]">Place an Ad</h3>
+              </div>
 
             <div className="flex flex-col gap-4 lg:gap-6">
 
@@ -143,6 +296,8 @@ export default function Marketplace() {
                   </label>
                   <input
                     type="text"
+                    value={campaignForm.title}
+                    onChange={(e) => setCampaignForm((prev) => ({ ...prev, title: e.target.value }))}
                     placeholder="Enter campaign name"
                     className="w-full border-2 lg:border-4 border-on-surface bg-surface p-2 lg:p-3 text-sm lg:text-base focus:ring-0 focus:outline-none focus:border-primary"
                   />
@@ -153,6 +308,8 @@ export default function Marketplace() {
                   </label>
                   <input
                     type="url"
+                    value={campaignForm.url}
+                    onChange={(e) => setCampaignForm((prev) => ({ ...prev, url: e.target.value }))}
                     placeholder="https://your-project.xyz"
                     className="w-full border-2 lg:border-4 border-on-surface bg-surface p-2 lg:p-3 text-sm lg:text-base focus:ring-0 focus:outline-none focus:border-primary"
                   />
@@ -165,6 +322,8 @@ export default function Marketplace() {
                   Campaign Description
                 </label>
                 <textarea
+                  value={campaignForm.description}
+                  onChange={(e) => setCampaignForm((prev) => ({ ...prev, description: e.target.value }))}
                   placeholder="Describe your campaign mission..."
                   rows={3}
                   className="w-full border-2 lg:border-4 border-on-surface bg-surface p-2 lg:p-3 text-sm lg:text-base focus:ring-0 focus:outline-none focus:border-primary resize-none"
@@ -201,7 +360,7 @@ export default function Marketplace() {
                       <p className="text-[9px] lg:text-[10px] uppercase mt-1 opacity-50">High-res PNG, JPG or GIF (max 5MB)</p>
                     </>
                   )}
-                  <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => setUploadedFile(e.target.files[0]?.name)} />
+                  <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} />
                 </div>
               </div>
 
@@ -251,15 +410,62 @@ export default function Marketplace() {
                   </h4>
                 </div>
                 <button
-                  type="button"
-                  className="bg-primary text-on-primary border-2 lg:border-4 border-white px-6 lg:px-8 py-3 lg:py-4 font-extrabold uppercase text-sm lg:text-[24px] lg:shadow-[4px_4px_0px_0px_rgba(212,175,55,1)] hover:bg-primary-container transition-all active:scale-95"
+                  type="submit"
+                  disabled={isCreating}
+                  className="bg-primary text-on-primary border-2 lg:border-4 border-white px-6 lg:px-8 py-3 lg:py-4 font-extrabold uppercase text-sm lg:text-[24px] lg:shadow-[4px_4px_0px_0px_rgba(212,175,55,1)] hover:bg-primary-container transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Submit for Review
+                  {isCreating ? 'Submitting…' : 'Submit for Review'}
                 </button>
               </div>
 
             </div>
-          </div>
+          </form>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {campaigns.map((camp) => (
+                <div key={camp.id} className="bg-surface border border-on-background/10 lg:border-4 lg:border-on-surface neo-shadow overflow-hidden">
+                  <div className="relative overflow-hidden h-56 bg-primary-container">
+                    <img
+                      src={camp.image}
+                      alt={camp.title}
+                      className="w-full h-full object-cover transition duration-500"
+                    />
+                    {camp.status === 'active' && (
+                      <div className="absolute top-3 left-3 bg-primary text-on-primary border-2 border-on-surface px-2 py-0.5 font-bold uppercase text-[9px] lg:text-[12px]">
+                        Active
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4 lg:p-6">
+                    <p className="text-[10px] lg:text-[12px] uppercase tracking-[0.18em] text-on-surface-variant mb-2">
+                      {camp.advertiser}
+                    </p>
+                    <h4 className="font-extrabold text-lg lg:text-[24px] leading-tight mb-3">
+                      {camp.title}
+                    </h4>
+                    <p className="text-sm lg:text-base text-on-surface-variant mb-4">
+                      {camp.description || 'Sponsored placement running across the Chicago ad network.'}
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 text-[11px] uppercase opacity-70">
+                      <div>
+                        <span className="block font-bold">Impressions</span>
+                        <span>{camp.impressions.toLocaleString()}</span>
+                      </div>
+                      <div>
+                        <span className="block font-bold">Clicks</span>
+                        <span>{camp.clicks.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {campaigns.length === 0 && (
+                <div className="rounded-xl border border-dashed border-on-surface p-8 text-center text-sm text-on-surface-variant">
+                  No ad placements available yet. Click “Place an Ad” to create the first campaign.
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ── Right Column: Management + Insights ── */}

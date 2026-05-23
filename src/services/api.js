@@ -117,6 +117,9 @@ export const claimRewards = () =>
 export const getMarketplaceCampaigns = (period = '3d') =>
   request(`/marketplace/campaigns?period=${period}`)
 
+export const getMarketplaceAds = (period = '3d') =>
+  getMarketplaceCampaigns(period)
+
 // GET /marketplace/pricing?duration=3d
 export const getMarketplacePricing = (duration = '3d') =>
   request(`/marketplace/pricing?duration=${duration}`)
@@ -152,6 +155,7 @@ export default {
   unstakeTokens,
   claimRewards,
   getMarketplaceCampaigns,
+  getMarketplaceAds,
   getMarketplacePricing,
   createCampaign,
   getNetworkStats,
