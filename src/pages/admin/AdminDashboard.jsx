@@ -42,21 +42,46 @@ function StatCard({ icon, label, value, badge, gold }) {
 
 // ── Invite modal ──────────────────────────────────────────────
 function InviteModal({ onClose }) {
-  const [email, setEmail] = useState('')
+  const [email, setEmail]     = useState('')
   const [loading, setLoading] = useState(false)
-  const [done, setDone] = useState(false)
-  const [error, setError] = useState('')
+  const [inviteUrl, setInviteUrl] = useState('')
+  const [copied, setCopied]   = useState(false)
+  const [error, setError]     = useState('')
 
   const send = async () => {
     if (!email.includes('@')) { setError('Enter a valid email.'); return }
     setError(''); setLoading(true)
-    await new Promise(r => setTimeout(r, 1200))
-    setLoading(false); setDone(true)
+    try {
+      const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api'
+      const res  = await fetch(`${base}/admin/invite`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email }),
+        credentials: 'include',
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error ?? `Server error ${res.status}`)
+      }
+      const { token } = await res.json()
+      const url = `${window.location.origin}/portal-ax92-v1/register?token=${token}`
+      setInviteUrl(url)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(inviteUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   return (
     <div className="fixed inset-0 z-50 bg-on-background/60 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="w-full max-w-[420px] bg-surface border-4 border-on-background p-8 flex flex-col gap-5"
+      <div className="w-full max-w-[460px] bg-surface border-4 border-on-background p-8 flex flex-col gap-5"
         style={{ boxShadow: '8px 8px 0px 0px var(--neo-border-color)' }}
         onClick={e => e.stopPropagation()}>
         <div className="flex items-start justify-between">
@@ -68,27 +93,57 @@ function InviteModal({ onClose }) {
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
+
         {error && <AdminAlert type="error" message={error} />}
-        {done
-          ? <>
-            <AdminAlert type="success" message={`Invite sent to ${email}. Link expires in 24 hours.`} />
+
+        {inviteUrl ? (
+          <>
+            <AdminAlert type="success" message={`Invite generated for ${email}. Link also sent by email.`} />
+            <div className="flex flex-col gap-2">
+              <label className="font-bold text-[10px] uppercase tracking-[0.14em] text-on-surface-variant">
+                Registration Link
+              </label>
+              <div className="flex gap-2">
+                <input
+                  readOnly
+                  value={inviteUrl}
+                  className="flex-1 bg-surface-container border-4 border-on-background px-4 py-3 font-mono text-[11px] text-on-surface truncate cursor-text"
+                />
+                <button
+                  onClick={copy}
+                  className="shrink-0 px-4 py-3 border-4 border-on-background font-bold text-[11px] uppercase tracking-widest bg-surface hover:bg-on-background hover:text-surface transition-all"
+                  style={{ boxShadow: '3px 3px 0px 0px var(--neo-border-color)' }}
+                >
+                  {copied
+                    ? <span className="material-symbols-outlined text-[18px] text-secondary">check</span>
+                    : <span className="material-symbols-outlined text-[18px]">content_copy</span>
+                  }
+                </button>
+              </div>
+              <p className="text-[10px] text-on-surface-variant leading-relaxed">
+                Copy this link and share it directly — useful if email isn't wired up yet. Token is destroyed on first use.
+              </p>
+            </div>
             <button onClick={onClose} className="w-full py-3 border-4 border-on-background font-bold uppercase tracking-widest text-sm bg-surface hover:bg-surface-container transition-colors">
-              Close
+              Done
             </button>
           </>
-          : <>
+        ) : (
+          <>
             <AdminInput id="invite-email" label="Colleague's Email" type="email" placeholder="colleague@chicago.io"
               value={email} onChange={e => setEmail(e.target.value)} error={error ? ' ' : ''} />
             <div className="bg-surface-container border-2 border-on-background/15 p-3 flex gap-3">
               <span className="material-symbols-outlined text-primary-container text-[18px] shrink-0 mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>info</span>
-              <p className="text-[11px] text-on-surface-variant leading-relaxed">A cryptographic token is generated, stored with a 24-hour expiry, and emailed as a secure link. The token is destroyed after use.</p>
+              <p className="text-[11px] text-on-surface-variant leading-relaxed">
+                A cryptographic token is generated server-side with a 24-hour expiry and emailed automatically. The registration link is also shown here so you can copy it manually.
+              </p>
             </div>
             <AdminButton loading={loading} onClick={send}>
               <span className="material-symbols-outlined text-[18px]">send</span>
               Send Invite Link
             </AdminButton>
           </>
-        }
+        )}
       </div>
     </div>
   )

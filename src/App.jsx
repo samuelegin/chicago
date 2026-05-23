@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { getDefaultWallets, RainbowKitProvider } from '@rainbow-me/rainbowkit'
-import { configureChains, createConfig, WagmiConfig } from 'wagmi'
-import { publicProvider } from 'wagmi/providers/public'
+import { getDefaultConfig, RainbowKitProvider } from '@rainbow-me/rainbowkit'
+import { WagmiProvider } from 'wagmi'
 import { mainnet, sepolia } from 'wagmi/chains'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { TopBar, LeftSidebar, BottomNav } from './components/Layout'
@@ -24,28 +24,18 @@ import AdminLogin     from './pages/admin/AdminLogin'
 import AdminVerify    from './pages/admin/AdminVerify'
 import AdminRegister  from './pages/admin/AdminRegister'
 import AdminDashboard from './pages/admin/AdminDashboard'
-import AdminSetup     from './pages/admin/AdminSetup'
 
 // The admin path is deliberately obscure and not exposed in the UI
 const ADMIN_SLUG = '/portal-ax92-v1'
 
-const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [mainnet, sepolia],
-  [publicProvider()]
-)
-
-const { connectors } = getDefaultWallets({
+const wagmiConfig = getDefaultConfig({
   appName: 'Chicago Web3',
-  chains,
-  projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID,
+  projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ?? 'fallback',
+  chains: [mainnet, sepolia],
+  ssr: false,
 })
 
-const wagmiConfig = createConfig({
-  autoConnect: true,
-  connectors,
-  publicClient,
-  webSocketPublicClient,
-})
+const queryClient = new QueryClient()
 
 // ── Route guards ─────────────────────────────────────────────
 function ProtectedRoute({ children }) {
@@ -107,7 +97,6 @@ function AppRoutes() {
 
         {/* ── Admin routes (hidden — own path, not linked in user UI) ── */}
         <Route path={`${ADMIN_SLUG}`}           element={<AdminLogin />} />
-        <Route path={`${ADMIN_SLUG}/setup`}     element={<AdminSetup />} />
         <Route path={`${ADMIN_SLUG}/verify`}    element={<AdminVerify />} />
         <Route path={`${ADMIN_SLUG}/register`}  element={<AdminRegister />} />
         <Route path={`${ADMIN_SLUG}/dashboard`} element={<AdminRoute><AdminDashboard /></AdminRoute>} />
@@ -121,16 +110,18 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <WagmiConfig config={wagmiConfig}>
-      <RainbowKitProvider chains={chains} modalSize="compact">
-        <BrowserRouter>
-          <ThemeProvider>
-            <AuthProvider>
-              <AppRoutes />
-            </AuthProvider>
-          </ThemeProvider>
-        </BrowserRouter>
-      </RainbowKitProvider>
-    </WagmiConfig>
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider>
+          <BrowserRouter>
+            <ThemeProvider>
+              <AuthProvider>
+                <AppRoutes />
+              </AuthProvider>
+            </ThemeProvider>
+          </BrowserRouter>
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   )
 }

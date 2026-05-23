@@ -189,56 +189,27 @@ Links a Web3 wallet address to the current user's account.
 
 ## 2. Auth — Admin
 
-> All admin routes are under `/api/admin/auth`.
+> All admin routes are under `/api/admin/auth` unless noted.
 > The admin portal lives at the obscure path `/portal-ax92-v1` (not linked in user-facing UI).
 
----
+### Flow overview
 
-### `GET /admin/auth/validate-setup-token?token=TOKEN`
-Validates the one-time server-generated bootstrap token. Only valid if **no admin accounts exist** in the database. Once used (or if an admin already exists), this endpoint returns `{ valid: false }` for all future requests.
-
-**Called from:** `src/pages/admin/AdminSetup.jsx → useEffect on mount`
-
-**Query params:** `token` — the setup token printed to server logs on first boot
-
-**Response (valid):**
-```json
-{ "valid": true }
 ```
+Bootstrap (one-time, backend only)
+  └─ Seed super admin via CLI / migration script. Never via UI.
 
-**Response (invalid / already used / admin exists):**
-```json
-{ "valid": false }
+Invite flow
+  1. Super admin POSTs /admin/invite  →  backend creates token, emails it, returns token
+  2. Invitee receives link:  /portal-ax92-v1/register?token=TOKEN
+  3. Invitee hits GET /admin/auth/validate-invite?token=TOKEN  →  email pre-filled, read-only
+  4. Invitee submits name + password  →  POST /admin/auth/register  →  token destroyed
+
+Recurring login (all admins, including super admin)
+  1. Go to /portal-ax92-v1  →  AdminLogin
+  2. POST /admin/auth/login  →  returns tempToken + triggers 2FA code
+  3. POST /admin/auth/verify-2fa  →  issues full session (HttpOnly cookie)
+  4. Land on AdminDashboard
 ```
-
----
-
-### `POST /admin/auth/setup`
-Creates the first super admin account. **Permanently destroys the setup token and disables this endpoint** after one successful call. If an admin already exists, this returns 409.
-
-**Called from:** `src/pages/admin/AdminSetup.jsx → handleSubmit()`
-
-**Request body:**
-```json
-{
-  "token": "SETUP_TOKEN_HERE",
-  "email": "superadmin@chicago.io",
-  "name": "Jane Smith",
-  "password": "SuperSecure1!"
-}
-```
-
-**Response:**
-```json
-{ "success": true }
-```
-
-**Errors:**
-| Status | Meaning |
-|--------|---------|
-| 400 | Missing/invalid fields or weak password |
-| 401 | Invalid or expired setup token |
-| 409 | An admin account already exists |
 
 ---
 
@@ -288,10 +259,18 @@ Verifies the 6-digit TOTP code entered by the admin. On success, issues a full a
 
 **Response:**
 ```json
-{ "sessionToken": "admin_session_jwt" }
+{
+  "sessionToken": "admin_session_jwt",
+  "admin": {
+    "id": "a_001",
+    "email": "admin@chicago.io",
+    "name": "Jane Smith",
+    "role": "super_admin"
+  }
+}
 ```
 
-> **Note:** Set the session as an `HttpOnly; Secure; SameSite=Strict` cookie server-side. Max-Age should match your session timeout (default frontend idle timeout: 14 minutes).
+> The frontend stores the `admin` payload in `sessionStorage` after verify. Set the session as an `HttpOnly; Secure; SameSite=Strict` cookie server-side. Max-Age should match your session timeout (default frontend idle timeout: 14 minutes).
 
 **Errors:**
 | Status | Meaning |
@@ -335,13 +314,15 @@ Validates an admin invite token before showing the registration form.
 
 **Response (invalid / expired):**
 ```json
-{ "valid": false }
+{ "valid": false, "reason": "expired" }
 ```
+
+> Possible `reason` values: `"expired"`, `"not_found"`, `"already_used"`.
 
 ---
 
-### `POST /admin/auth/invite`
-Sends an admin invite email with a one-time registration link. Only callable by a super admin. Tokens expire after 24 hours.
+### `POST /admin/invite`
+Creates an admin invite token, emails the registration link, and returns the raw token so the super admin can copy it manually (important in dev/test when email isn't configured).
 
 **Called from:** `src/pages/admin/AdminDashboard.jsx → InviteModal → send()`
 
@@ -354,8 +335,15 @@ Sends an admin invite email with a one-time registration link. Only callable by 
 
 **Response:**
 ```json
-{ "ok": true, "expiresAt": "2025-01-15T12:00:00Z" }
+{
+  "ok": true,
+  "token": "64_char_crypto_random_token",
+  "expiresAt": "2025-01-15T12:00:00Z"
+}
 ```
+
+> The frontend builds the full registration URL from `token`:
+> `${window.location.origin}/portal-ax92-v1/register?token=${token}`
 
 **Errors:**
 | Status | Meaning |
@@ -390,6 +378,50 @@ Completes an invited admin's account setup. Permanently destroys the invite toke
 |--------|---------|
 | 400 | Missing/invalid fields or weak password |
 | 401 | Invalid or expired invite token |
+
+---
+
+### Admin management endpoints
+
+These are called from the Admin Team and future admin-management sections of the dashboard.
+All require a super admin session.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/admin/invites` | List pending (unused, non-expired) invites |
+| `DELETE` | `/admin/invites/:token` | Revoke a pending invite |
+| `GET` | `/admin/admins` | List all admin accounts |
+| `PATCH` | `/admin/admins/:id` | Update an admin's role or name |
+| `DELETE` | `/admin/admins/:id` | Remove an admin account (cannot remove own account or last super admin) |
+
+**`GET /admin/admins` response:**
+```json
+{
+  "admins": [
+    {
+      "id": "a_001",
+      "email": "admin@chicago.io",
+      "name": "Jane Smith",
+      "role": "super_admin",
+      "createdAt": "2025-01-01T00:00:00Z",
+      "lastActiveAt": "2025-01-15T10:00:00Z"
+    }
+  ]
+}
+```
+
+**`GET /admin/invites` response:**
+```json
+{
+  "invites": [
+    {
+      "email": "pending@chicago.io",
+      "expiresAt": "2025-01-16T00:00:00Z",
+      "createdAt": "2025-01-15T00:00:00Z"
+    }
+  ]
+}
+```
 
 ---
 
