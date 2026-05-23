@@ -1,5 +1,6 @@
-import { useState, useRef } from 'react'
-import { marketplaceCampaigns, marketplacePricing, networkStats } from '../data/mockData'
+import { useState, useRef, useEffect } from 'react'
+import { marketplaceCampaigns, marketplacePricing, networkStats as mockNetworkStats } from '../data/mockData'
+import { getNetworkStats } from '../services/api'
 
 const CATEGORIES = ['DeFi', 'NFT', 'Gaming', 'Infrastructure', 'Social', 'Other']
 const PLACEMENTS = [
@@ -16,8 +17,20 @@ export default function Marketplace() {
   const [paymentMethod, setPaymentMethod] = useState('ETH')
   const [dragOver, setDragOver] = useState(false)
   const [uploadedFile, setUploadedFile] = useState(null)
+  const [stats, setStats] = useState(mockNetworkStats)
+  const [statsLoading, setStatsLoading] = useState(true)
+  const [statsError, setStatsError] = useState(null)
   const fileInputRef = useRef(null)
-  const stats = networkStats
+
+  useEffect(() => {
+    getNetworkStats()
+      .then((data) => setStats(data))
+      .catch((error) => {
+        console.warn('Network stats fetch failed, using fallback mock data.', error)
+        setStatsError(true)
+      })
+      .finally(() => setStatsLoading(false))
+  }, [])
 
   const handleSelectDuration = (label) => {
     const dur = pricing.durations.find((d) => d.label === label)
@@ -32,7 +45,7 @@ export default function Marketplace() {
   }
 
   return (
-    <div className="flex-1 lg:ml-[300px] w-full flex flex-col gap-4 lg:gap-8 pb-24 md:pb-8">
+    <div className="flex-1 w-full flex flex-col gap-4 lg:gap-8 pb-24 md:pb-8">
 
       {/* Hero Header */}
       <section className="p-4 lg:px-0 pt-4 lg:pt-8">
@@ -352,17 +365,26 @@ export default function Marketplace() {
 
               {/* Stats Grid */}
               <div className="grid grid-cols-2 gap-2 lg:gap-4">
-                {[
-                  { label: 'Total Users', value: stats.totalUsers },
-                  { label: 'Total Staked', value: stats.totalStaked },
-                  { label: 'Active Campaigns', value: stats.activeCampaigns },
-                  { label: 'Total Volume', value: stats.totalVolume },
-                ].map((s) => (
-                  <div key={s.label} className="bg-surface border-2 lg:border-4 border-on-surface p-3 lg:p-4">
-                    <p className="font-bold uppercase text-[9px] lg:text-[14px] opacity-60">{s.label}</p>
-                    <p className="font-extrabold text-lg lg:text-[24px]">{s.value}</p>
-                  </div>
-                ))}
+                {statsLoading ? (
+                  Array.from({ length: 4 }).map((_, index) => (
+                    <div key={index} className="bg-surface border-2 lg:border-4 border-on-surface p-3 lg:p-4 animate-pulse">
+                      <div className="h-4 bg-on-surface-variant/20 rounded mb-2" />
+                      <div className="h-8 bg-on-surface-variant/20 rounded" />
+                    </div>
+                  ))
+                ) : (
+                  [
+                    { label: 'Total Users', value: stats.totalUsers },
+                    { label: 'Total Staked', value: stats.totalStaked },
+                    { label: 'Active Campaigns', value: stats.activeCampaigns },
+                    { label: 'Total Volume', value: stats.totalVolume },
+                  ].map((s) => (
+                    <div key={s.label} className="bg-surface border-2 lg:border-4 border-on-surface p-3 lg:p-4">
+                      <p className="font-bold uppercase text-[9px] lg:text-[14px] opacity-60">{s.label}</p>
+                      <p className="font-extrabold text-lg lg:text-[24px]">{s.value}</p>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
             {/* Decorative element */}

@@ -179,6 +179,36 @@ export default function PostCard({ post, onLike }) {
     navigate('/comments', { state: { post } })
   }
 
+  const handleShare = async () => {
+    const shareData = {
+      title: 'Chicago Web3',
+      text: post.content,
+      url: window.location.href,
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch (_) {
+        // Share canceled or unavailable
+      }
+      return
+    }
+
+    const url = shareData.url
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(url)
+        window.alert('Link copied to clipboard')
+        return
+      } catch (_) {
+        // fallback next
+      }
+    }
+
+    window.prompt('Copy this link to share', url)
+  }
+
   return (
     <article className="bg-surface-container border border-on-background/10 lg:neo-border lg:neo-shadow p-3 lg:p-6">
       {/* Header */}
@@ -237,7 +267,7 @@ export default function PostCard({ post, onLike }) {
 
       {/* Action Bar */}
       <div className="flex justify-between pt-3 lg:pt-4 border-t border-on-background/10">
-        <div className="flex gap-5 lg:gap-8">
+        <div className="flex items-center gap-5 lg:gap-8">
           <button className="flex items-center gap-1.5 group transition-all" onClick={() => onLike(post.id)}>
             <Icon name="favorite" filled={post.liked} className={`text-[18px] lg:text-[24px] text-on-surface-variant group-hover:text-error transition-colors ${post.liked ? 'text-error' : ''}`} />
             <span className="text-[11px] lg:text-[12px] text-on-surface-variant">{post.likes >= 1000 ? `${(post.likes/1000).toFixed(1)}k` : post.likes}</span>
@@ -249,11 +279,15 @@ export default function PostCard({ post, onLike }) {
             <Icon name="chat_bubble" className="text-[18px] lg:text-[24px] text-on-surface-variant group-hover:text-primary-container transition-colors" />
             <span className="text-[11px] lg:text-[12px] text-on-surface-variant">{commentCount}</span>
           </button>
-          <button className="flex items-center gap-1.5 group transition-all">
-            <Icon name="share" className="text-[18px] lg:text-[24px] text-on-surface-variant group-hover:text-primary transition-colors" />
-            <span className="text-[11px] lg:text-[12px] text-on-surface-variant">{post.shares}</span>
-          </button>
         </div>
+
+        <button
+          className="flex items-center gap-1.5 group transition-all"
+          onClick={handleShare}
+        >
+          <Icon name="share" className="text-[18px] lg:text-[24px] text-on-surface-variant group-hover:text-primary transition-colors" />
+          <span className="text-[11px] lg:text-[12px] text-on-surface-variant">{post.shares}</span>
+        </button>
       </div>
     </article>
   )
