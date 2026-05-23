@@ -212,7 +212,7 @@ export default function PostCard({ post, onLike }) {
   }
 
   return (
-    <article className="bg-surface-container border border-on-background/10 lg:neo-border lg:neo-shadow p-3 lg:p-6">
+    <article className="bg-surface-container neo-border neo-shadow p-3 lg:p-6">
       {/* Header */}
       <div className="flex justify-between items-start mb-3 lg:mb-4">
         <div className="flex gap-2 lg:gap-4">

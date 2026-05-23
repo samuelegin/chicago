@@ -38,9 +38,7 @@ export function TopBar() {
   }
 
   return (
-    <header className="w-full top-0 fixed z-50 flex justify-between items-center px-4 md:px-20 py-0 bg-background border-b-[4px] border-on-background h-[72px]"
-      style={{ boxShadow: '0px 4px 0px 0px var(--neo-shadow-color)' }}
-    >
+    <header className="w-full top-0 fixed z-50 flex justify-between items-center px-4 md:px-20 py-0 bg-background border-b-[4px] border-on-background h-[72px]">
 
       {/* ── Brand ── */}
       <div className="flex items-center gap-3">
@@ -202,8 +200,8 @@ export function LeftSidebar() {
 // ─── Bottom Nav (mobile) ─────────────────────────────────────
 export function BottomNav() {
   return (
-    <nav className="fixed bottom-0 w-full lg:hidden z-50 flex justify-around items-center h-[64px] px-2 bg-background border-t-[5px] border-on-background"
-      style={{ boxShadow: '0px -4px 0px 0px var(--neo-shadow-color)' }}
+    <nav className="fixed bottom-0 w-full lg:hidden z-50 flex justify-around items-center h-[64px] px-2 bg-background border-t-[4px] border-on-background"
+      style={{ boxShadow: '0px -4px 0px 0px rgba(212,175,55,0.4)' }}
     >
       {navLinks.map((link) => (
         <NavLink
