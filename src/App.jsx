@@ -47,18 +47,21 @@ const AUTH_PATHS = ['/login', '/check-email']
 function AppShell({ walletConnected, onConnectWallet, children }) {
   const { pathname } = useLocation()
   const isAuthOrAdmin = pathname.startsWith(ADMIN_SLUG) || AUTH_PATHS.includes(pathname)
+  const isCommentsPage = pathname === '/comments'
   if (isAuthOrAdmin) return <>{children}</>
   return (
     <div className="bg-background text-on-background font-body-md overflow-x-hidden selection:bg-primary-container selection:text-on-primary-fixed min-h-screen">
       <TopBar walletConnected={walletConnected} onConnectWallet={onConnectWallet} />
-      <main className="max-w-container-max mx-auto flex gap-gutter px-4 md:px-20 py-gutter relative min-h-screen pt-24 md:pt-28">
-        <LeftSidebar />
+      <main className={`max-w-container-max mx-auto ${isCommentsPage ? '' : 'flex gap-gutter'} px-4 md:px-20 py-gutter relative min-h-screen pt-24 md:pt-28`}>
+        {!isCommentsPage && <LeftSidebar />}
         {children}
       </main>
-      <BottomNav />
-      <button className="lg:hidden fixed bottom-24 right-5 w-10 h-10 bg-primary-container text-on-primary-fixed flex items-center justify-center z-50 active:scale-90 transition-all">
-        <span className="material-symbols-outlined text-xl">edit</span>
-      </button>
+      {!isCommentsPage && <BottomNav />}
+      {!isCommentsPage && (
+        <button className="lg:hidden fixed bottom-24 right-5 w-10 h-10 bg-primary-container text-on-primary-fixed flex items-center justify-center z-50 active:scale-90 transition-all">
+          <span className="material-symbols-outlined text-xl">edit</span>
+        </button>
+      )}
     </div>
   )
 }
