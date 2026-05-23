@@ -19,6 +19,8 @@ export default function Marketplace() {
   const [stats, setStats] = useState(null)
   const [statsLoading, setStatsLoading] = useState(true)
   const [statsError, setStatsError] = useState(null)
+  const [campaignsError, setCampaignsError] = useState(null)
+  const [createError, setCreateError] = useState(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [campaignForm, setCampaignForm] = useState({
@@ -75,25 +77,7 @@ export default function Marketplace() {
       setSelectedPlacement('feed')
       setPaymentMethod('ETH')
     } catch (error) {
-      console.warn('Create campaign failed, falling back to local ad preview.', error)
-      const fallbackCampaign = {
-        id: `camp_${Date.now()}`,
-        title: payload.title,
-        advertiser: 'Your Ad',
-        image: payload.image,
-        status: 'active',
-        budget: payload.budget,
-        spent: 0,
-        clicks: 0,
-        impressions: 0,
-      }
-      setCampaigns((prev) => [fallbackCampaign, ...(Array.isArray(prev) ? prev : [])])
-      setShowCreateForm(false)
-      setCampaignForm({ title: '', url: '', description: '', image: '' })
-      setUploadedFile(null)
-      setSelectedCategory('DeFi')
-      setSelectedPlacement('feed')
-      setPaymentMethod('ETH')
+      setCreateError(error.message || 'Failed to create campaign. Please try again.')
     } finally {
       setIsCreating(false)
     }
@@ -106,7 +90,7 @@ export default function Marketplace() {
         else if (Array.isArray(data?.campaigns)) setCampaigns(data.campaigns)
       })
       .catch((error) => {
-        console.warn('Marketplace campaigns fetch failed, using fallback mock data.', error)
+        setCampaignsError(error.message || 'Failed to load campaigns')
       })
 
     getMarketplacePricing()
@@ -121,14 +105,13 @@ export default function Marketplace() {
           })
         }
       })
-      .catch((error) => {
-        console.warn('Marketplace pricing fetch failed.', error)
+      .catch(() => {
+        // Pricing will remain null; UI should handle gracefully
       })
 
     getNetworkStats()
       .then((data) => setStats(data))
-      .catch((error) => {
-        console.warn('Network stats fetch failed, using fallback mock data.', error)
+      .catch(() => {
         setStatsError(true)
       })
       .finally(() => setStatsLoading(false))

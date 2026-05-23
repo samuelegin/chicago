@@ -16,21 +16,16 @@ import {
 
 // ── GIF Keyboard ─────────────────────────────────────────────
 const GIF_CATEGORIES = ['trending', 'reactions', 'memes', 'crypto', 'hype', 'lol']
-const SAMPLE_GIFS = [
-  'https://media.giphy.com/media/l0HlvtIPzPdt2usKs/giphy.gif',
-  'https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif',
-  'https://media.giphy.com/media/xT9IgG50Lg7rusOmKs/giphy.gif',
-  'https://media.giphy.com/media/3o7abAHdYvZdBNnGZq/giphy.gif',
-  'https://media.giphy.com/media/l4Ki2obCyAQS5WhFe/giphy.gif',
-  'https://media.giphy.com/media/26BRzQS5HXcEWM7du/giphy.gif',
-  'https://media.giphy.com/media/3oFzmkkwfOGQlTYmUo/giphy.gif',
-  'https://media.giphy.com/media/xT9IgDECMFSwwFnkms/giphy.gif',
-  'https://media.giphy.com/media/26BRrSvJUa0crqw4E/giphy.gif',
-]
 
 function GifKeyboard({ onSelect, onClose }) {
   const [activeTab, setActiveTab] = useState('trending')
   const [search, setSearch] = useState('')
+
+  // GIF search is powered by your backend's GIPHY proxy.
+  // Endpoint: GET /gifs/search?q=<query>&category=<category>
+  // Returns: { gifs: [{ id, url, preview }] }
+  // Wire this up when the backend is ready.
+
   return (
     <div className="absolute bottom-full mb-2 left-0 w-80 bg-surface-container border-2 border-on-background neo-shadow z-50 p-3">
       <div className="flex justify-between items-center mb-2">
@@ -60,18 +55,10 @@ function GifKeyboard({ onSelect, onClose }) {
           </button>
         ))}
       </div>
-      <div className="grid grid-cols-3 gap-1 max-h-48 overflow-y-auto">
-        {SAMPLE_GIFS.map((gif, i) => (
-          <button
-            key={i}
-            onClick={() => { onSelect(gif); onClose() }}
-            className="aspect-square overflow-hidden border border-on-background/10 hover:border-primary-container transition-colors"
-          >
-            <img src={gif} alt="gif" className="w-full h-full object-cover" />
-          </button>
-        ))}
+      <div className="flex flex-col items-center justify-center h-32 text-on-surface-variant gap-2">
+        <Icon name="gif_box" className="text-[32px] opacity-30" />
+        <p className="text-[10px] uppercase tracking-widest font-bold opacity-50">GIF search coming soon</p>
       </div>
-      <p className="text-[9px] text-on-surface-variant mt-2 text-center">Powered by GIPHY</p>
     </div>
   )
 }
@@ -165,9 +152,11 @@ export default function Feed() {
   const [suggested, setSuggested] = useState([])
   const [trendingTopics, setTrendingTopics] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [postContent, setPostContent] = useState('')
 
   useEffect(() => {
+    setError(null)
     Promise.all([
       getFeedPosts(activeFilter),
       getFeedCategories(),
@@ -178,13 +167,16 @@ export default function Feed() {
       setCategories(catsData)
       setSuggested(suggestData)
       setTrendingTopics(trendData)
-    }).finally(() => setLoading(false))
+    }).catch(err => setError(err.message || 'Failed to load feed'))
+      .finally(() => setLoading(false))
   }, [])
 
   useEffect(() => {
     setLoading(true)
+    setError(null)
     getFeedPosts(activeFilter)
       .then(setPosts)
+      .catch(err => setError(err.message || 'Failed to load posts'))
       .finally(() => setLoading(false))
   }, [activeFilter])
   const [selectedFiles, setSelectedFiles] = useState([])
@@ -438,14 +430,22 @@ export default function Feed() {
       </div>
 
       {/* Posts */}
-      <div className="flex flex-col gap-6">
-        {filteredPosts.map((post) => (
-          <PostCard key={post.id} post={post} onLike={handleLike} />
-        ))}
-        {filteredPosts.length === 0 && (
-          <p className="text-center text-on-surface-variant py-12">No posts in this category yet.</p>
-        )}
-      </div>
+      {error ? (
+        <div className="flex flex-col items-center justify-center py-16 gap-3 text-on-surface-variant">
+          <span className="material-symbols-outlined text-[40px] opacity-30">wifi_off</span>
+          <p className="font-bold text-sm uppercase tracking-widest opacity-50">Unable to load posts</p>
+          <p className="text-xs opacity-40">{error}</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-6">
+          {filteredPosts.map((post) => (
+            <PostCard key={post.id} post={post} onLike={handleLike} />
+          ))}
+          {!loading && filteredPosts.length === 0 && (
+            <p className="text-center text-on-surface-variant py-12">No posts in this category yet.</p>
+          )}
+        </div>
+      )}
 
       <div className="h-20 md:h-0" />
 
