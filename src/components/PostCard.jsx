@@ -81,8 +81,10 @@ function Comment({ comment, depth = 0 }) {
   const replyRef = useRef(null)
 
   const handleLike = () => {
-    setLiked(v => !v)
-    setLikeCount(n => liked ? n - 1 : n + 1)
+    setLiked((currentLiked) => {
+      setLikeCount((currentCount) => currentLiked ? currentCount - 1 : currentCount + 1)
+      return !currentLiked
+    })
   }
 
   const submitReply = () => {

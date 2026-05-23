@@ -116,8 +116,10 @@ function CommentRow({ comment, onReply }) {
   const [showReply, setShowReply] = useState(false)
 
   const handleLike = () => {
-    setLiked(v => !v)
-    setLikeCount(n => liked ? n - 1 : n + 1)
+    setLiked((currentLiked) => {
+      setLikeCount((currentCount) => currentLiked ? currentCount - 1 : currentCount + 1)
+      return !currentLiked
+    })
   }
 
   return (
@@ -174,8 +176,10 @@ function ReplyRow({ reply }) {
   const [likeCount, setLikeCount] = useState(reply.likes ?? 0)
 
   const handleLike = () => {
-    setLiked(v => !v)
-    setLikeCount(n => liked ? n - 1 : n + 1)
+    setLiked((currentLiked) => {
+      setLikeCount((currentCount) => currentLiked ? currentCount - 1 : currentCount + 1)
+      return !currentLiked
+    })
   }
 
   return (
@@ -302,7 +306,7 @@ export default function CommentsPage() {
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 pb-32">
+      <div className="max-w-3xl mx-auto px-4 lg:px-0 pb-32">
 
         {/* ── Post preview (compact) ── */}
         <div className="mt-4 mb-6 bg-surface-container border border-on-background/10 neo-border neo-shadow p-4">
