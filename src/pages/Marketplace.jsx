@@ -41,11 +41,11 @@ export default function Marketplace() {
     e.preventDefault()
     setIsCreating(true)
 
-    const selectedDuration = pricing.durations.find((dur) => dur.label === pricing.selectedDuration)
+    const selectedDuration = pricing?.durations?.find((dur) => dur.label === pricing?.selectedDuration)
     const payload = {
       title: campaignForm.title || `Promote ${selectedCategory}`,
       image: campaignForm.image || uploadedFile || 'https://via.placeholder.com/720x400?text=Ad',
-      budget: pricing.totalCostEth,
+      budget: pricing?.totalCostEth ?? 0,
       durationDays: selectedDuration?.days || 3,
       category: selectedCategory,
       placement: selectedPlacement,
@@ -112,18 +112,17 @@ export default function Marketplace() {
     getMarketplacePricing()
       .then((data) => {
         if (data?.durations) {
-          const selectedDuration = data.selectedDuration || pricing.selectedDuration
+          const selectedDuration = data.selectedDuration || data.durations[0]?.label
           const duration = data.durations.find((dur) => dur.label === selectedDuration)
-          setPricing((prev) => ({
-            ...prev,
+          setPricing({
             ...data,
             selectedDuration,
-            totalCostEth: data.totalCostEth ?? duration?.priceEth ?? prev.totalCostEth,
-          }))
+            totalCostEth: data.totalCostEth ?? duration?.priceEth ?? 0,
+          })
         }
       })
       .catch((error) => {
-        console.warn('Marketplace pricing fetch failed, using fallback mock pricing.', error)
+        console.warn('Marketplace pricing fetch failed.', error)
       })
 
     getNetworkStats()
@@ -136,7 +135,9 @@ export default function Marketplace() {
   }, [])
 
   const handleSelectDuration = (label) => {
+    if (!pricing?.durations) return
     const dur = pricing.durations.find((d) => d.label === label)
+    if (!dur) return
     setPricing((prev) => ({ ...prev, selectedDuration: label, totalCostEth: dur.priceEth }))
   }
 
@@ -254,15 +255,15 @@ export default function Marketplace() {
                     Duration
                   </label>
                   <div className="flex border-2 lg:border-4 border-on-surface overflow-hidden">
-                    {pricing.durations.map((dur, i) => (
+                    {(pricing?.durations ?? []).map((dur, i) => (
                       <button
                         key={dur.label}
                         type="button"
                         onClick={() => handleSelectDuration(dur.label)}
                         className={`flex-1 py-2 lg:py-3 font-bold text-sm lg:text-base transition-colors ${
-                          i < pricing.durations.length - 1 ? 'border-r-2 lg:border-r-4 border-on-surface' : ''
+                          i < (pricing?.durations?.length ?? 0) - 1 ? 'border-r-2 lg:border-r-4 border-on-surface' : ''
                         } ${
-                          pricing.selectedDuration === dur.label
+                          pricing?.selectedDuration === dur.label
                             ? 'bg-primary text-on-primary'
                             : 'bg-surface-container-high hover:bg-primary-container/20'
                         }`}
@@ -405,7 +406,7 @@ export default function Marketplace() {
                     Final Pricing
                   </p>
                   <h4 className="font-extrabold text-lg lg:text-[40px] lg:leading-[48px]">
-                    Total: {pricing.totalCostEth} ETH
+                    Total: {pricing?.totalCostEth ?? '—'} ETH
                   </h4>
                 </div>
                 <button
