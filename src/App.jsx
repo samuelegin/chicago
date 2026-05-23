@@ -1,5 +1,8 @@
-import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { getDefaultWallets, RainbowKitProvider } from '@rainbow-me/rainbowkit'
+import { configureChains, createConfig, WagmiConfig } from 'wagmi'
+import { publicProvider } from 'wagmi/providers/public'
+import { mainnet, sepolia } from 'wagmi/chains'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { TopBar, LeftSidebar, BottomNav } from './components/Layout'
@@ -26,6 +29,24 @@ import AdminSetup     from './pages/admin/AdminSetup'
 // The admin path is deliberately obscure and not exposed in the UI
 const ADMIN_SLUG = '/portal-ax92-v1'
 
+const { chains, publicClient, webSocketPublicClient } = configureChains(
+  [mainnet, sepolia],
+  [publicProvider()]
+)
+
+const { connectors } = getDefaultWallets({
+  appName: 'Chicago Web3',
+  chains,
+  projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID,
+})
+
+const wagmiConfig = createConfig({
+  autoConnect: true,
+  connectors,
+  publicClient,
+  webSocketPublicClient,
+})
+
 // ── Route guards ─────────────────────────────────────────────
 function ProtectedRoute({ children }) {
   const { user } = useAuth()
@@ -44,14 +65,14 @@ function AdminRoute({ children }) {
 // ── App shell — hides nav on auth / admin routes ─────────────
 const AUTH_PATHS = ['/login', '/check-email']
 
-function AppShell({ walletConnected, onConnectWallet, children }) {
+function AppShell({ children }) {
   const { pathname } = useLocation()
   const isAuthOrAdmin = pathname.startsWith(ADMIN_SLUG) || AUTH_PATHS.includes(pathname)
   const isCommentsPage = pathname === '/comments'
   if (isAuthOrAdmin) return <>{children}</>
   return (
     <div className="bg-background text-on-background font-body-md overflow-x-hidden selection:bg-primary-container selection:text-on-primary-fixed min-h-screen">
-      <TopBar walletConnected={walletConnected} onConnectWallet={onConnectWallet} />
+      <TopBar />
       <main className={`max-w-container-max mx-auto ${isCommentsPage ? '' : 'flex gap-gutter'} px-4 md:px-20 py-gutter relative min-h-screen pt-24 md:pt-28`}>
         {!isCommentsPage && <LeftSidebar />}
         {children}
@@ -67,10 +88,8 @@ function AppShell({ walletConnected, onConnectWallet, children }) {
 }
 
 function AppRoutes() {
-  const [walletConnected, setWalletConnected] = useState(false)
-
   return (
-    <AppShell walletConnected={walletConnected} onConnectWallet={() => setWalletConnected(v => !v)}>
+    <AppShell>
       <Routes>
         {/* ── Auth (public) ── */}
         <Route path="/login"       element={<Login />} />
@@ -102,12 +121,16 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <ThemeProvider>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+    <WagmiConfig config={wagmiConfig}>
+      <RainbowKitProvider chains={chains} modalSize="compact">
+        <BrowserRouter>
+          <ThemeProvider>
+            <AuthProvider>
+              <AppRoutes />
+            </AuthProvider>
+          </ThemeProvider>
+        </BrowserRouter>
+      </RainbowKitProvider>
+    </WagmiConfig>
   )
 }

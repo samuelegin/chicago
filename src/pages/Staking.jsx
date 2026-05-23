@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { useAccount } from 'wagmi'
 import { Icon } from '../components/Layout'
 import { stakingInfo, currentUser } from '../data/mockData'
 
@@ -6,7 +8,7 @@ export default function Staking() {
   const [info] = useState(stakingInfo)
   const [stakeAmount, setStakeAmount] = useState('')
   const [selectedDuration, setSelectedDuration] = useState(info.durationBonuses[0])
-  const walletConnected = currentUser.walletConnected
+  const { isConnected } = useAccount()
 
   const handleStake = () => {
     if (!walletConnected) return
@@ -30,14 +32,25 @@ export default function Staking() {
         <div className="lg:col-span-3 flex flex-col gap-4 lg:gap-6">
           <section className="bg-surface-container border border-on-background/10 lg:neo-border lg:neo-shadow p-4 lg:p-6">
             <h3 className="font-headline-md text-sm lg:text-headline-md uppercase mb-3 lg:mb-4">Your Stake</h3>
-            {!walletConnected ? (
+            {!isConnected ? (
               <>
                 <p className="text-sm lg:text-body-lg text-on-surface-variant mb-4 lg:mb-6">
                   Your wallet is not currently connected. To view your rewards and stake CLT, please connect a compatible wallet.
                 </p>
-                <button className="w-full bg-primary text-on-primary font-bold border border-on-background/20 lg:border-4 lg:border-on-background px-6 lg:px-10 py-3 lg:py-4 text-sm lg:text-headline-md lg:neo-shadow active:translate-y-1 active:shadow-none transition-all uppercase">
-                  Connect Wallet
-                </button>
+                <ConnectButton.Custom>
+                  {({ account, chain, openConnectModal, openAccountModal, mounted }) => {
+                    const connected = mounted && account
+                    return (
+                      <button
+                        type="button"
+                        onClick={connected ? openAccountModal : openConnectModal}
+                        className="w-full bg-primary text-on-primary font-bold border border-on-background/20 lg:border-4 lg:border-on-background px-6 lg:px-10 py-3 lg:py-4 text-sm lg:text-headline-md lg:neo-shadow active:translate-y-1 active:shadow-none transition-all uppercase"
+                      >
+                        {connected ? 'Manage Wallet' : 'Connect Wallet'}
+                      </button>
+                    )
+                  }}
+                </ConnectButton.Custom>
                 <div className="flex items-center gap-2 text-[11px] lg:text-[12px] text-on-surface-variant mt-3 lg:mt-4">
                   <Icon name="info" />
                   <span>Supports MetaMask, WalletConnect, Coinbase Wallet</span>

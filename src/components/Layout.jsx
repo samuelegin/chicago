@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { navLinks, footerLinks } from '../data/mockData'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
@@ -17,7 +18,7 @@ export function Icon({ name, className = '', filled = false }) {
 }
 
 // ─── TopBar ──────────────────────────────────────────────────
-export function TopBar({ walletConnected, onConnectWallet }) {
+export function TopBar() {
   const { dark, toggle } = useTheme()
   const { user, logout } = useAuth()
   const navigate = useNavigate()
@@ -60,16 +61,24 @@ export function TopBar({ walletConnected, onConnectWallet }) {
         </button>
 
         {/* Connect Wallet */}
-        <button
-          onClick={onConnectWallet}
-          className="hidden sm:flex items-center gap-2 px-4 py-2 bg-surface text-on-surface font-bold border-[3px] border-on-surface hover:bg-primary-container/10 transition-all text-sm"
-          style={{ boxShadow: '3px 3px 0px 0px var(--neo-shadow-color)' }}
-        >
-          <Icon name="account_balance_wallet" className="text-[18px]" />
-          <span className="hidden md:inline font-bold text-[11px] uppercase tracking-wider">
-            {walletConnected ? 'Connected' : 'Connect Wallet'}
-          </span>
-        </button>
+        <ConnectButton.Custom>
+          {({ account, chain, openConnectModal, openAccountModal, mounted }) => {
+            const connected = mounted && account
+            return (
+              <button
+                type="button"
+                onClick={connected ? openAccountModal : openConnectModal}
+                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-surface text-on-surface font-bold border-[3px] border-on-surface hover:bg-primary-container/10 transition-all text-sm"
+                style={{ boxShadow: '3px 3px 0px 0px var(--neo-shadow-color)' }}
+              >
+                <Icon name="account_balance_wallet" className="text-[18px]" />
+                <span className="hidden md:inline font-bold text-[11px] uppercase tracking-wider">
+                  {connected ? 'Connected' : 'Connect Wallet'}
+                </span>
+              </button>
+            )
+          }}
+        </ConnectButton.Custom>
 
         {/* User avatar + logout */}
         {user && (
