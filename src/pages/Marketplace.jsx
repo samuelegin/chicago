@@ -45,7 +45,7 @@ export default function Marketplace() {
   }
 
   return (
-    <div className="flex-1 w-full flex flex-col gap-4 lg:gap-8 pb-24 md:pb-8">
+    <div className="flex-1 lg:ml-[300px] w-full flex flex-col gap-4 lg:gap-8 pb-24 md:pb-8">
 
       {/* Hero Header */}
       <section className="p-4 lg:px-0 pt-4 lg:pt-8">
