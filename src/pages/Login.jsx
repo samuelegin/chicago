@@ -141,9 +141,14 @@ export default function Login() {
           className="absolute bottom-16 left-16 right-16 p-8 bg-white/10 backdrop-blur-md border border-white/20"
           style={{ boxShadow: '8px 8px 0px 0px rgba(0,0,0,0.8)' }}
         >
-          <h2 className="font-extrabold text-[40px] uppercase tracking-tight leading-none text-white mb-3">
-            Chicago
-          </h2>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 bg-primary-container border-[3px] border-on-surface overflow-hidden flex items-center justify-center">
+              <img src="/favicon.jpg" alt="Chicago logo" className="w-full h-full object-cover" />
+            </div>
+            <h2 className="font-extrabold text-[40px] uppercase tracking-tight leading-none text-white">
+              Chicago
+            </h2>
+          </div>
           <p className="text-white/90 font-medium text-[16px] leading-relaxed">
             The next architectural era of decentralized social networking.
           </p>
@@ -154,9 +159,12 @@ export default function Login() {
             className="bg-primary-container px-4 py-2 border-[3px] border-on-surface"
             style={{ boxShadow: '4px 4px 0px 0px #000' }}
           >
-            <span className="font-extrabold text-[18px] uppercase tracking-widest text-on-primary-container">
-              Chicago
-            </span>
+            <div className="flex items-center gap-2">
+              <img src="/favicon.jpg" alt="Chicago logo" className="w-6 h-6 object-cover" />
+              <span className="font-extrabold text-[18px] uppercase tracking-widest text-on-primary-container">
+                Chicago
+              </span>
+            </div>
           </div>
         </div>
       </section>
@@ -171,9 +179,12 @@ export default function Login() {
               className="bg-primary-container px-4 py-2 border-[3px] border-on-surface"
               style={{ boxShadow: '4px 4px 0px 0px #000' }}
             >
-              <span className="font-extrabold text-[18px] uppercase tracking-widest text-on-primary-container">
-                Chicago
-              </span>
+              <div className="flex items-center gap-2">
+                <img src="/favicon.jpg" alt="Chicago logo" className="w-6 h-6 object-cover" />
+                <span className="font-extrabold text-[18px] uppercase tracking-widest text-on-primary-container">
+                  Chicago
+                </span>
+              </div>
             </div>
           </div>
 
@@ -181,15 +192,10 @@ export default function Login() {
           <div className="mb-8 text-center">
             <div className="mb-6 flex justify-center">
               <div
-                className="w-16 h-16 bg-primary-container border-[3px] border-on-surface flex items-center justify-center"
+                className="w-16 h-16 bg-primary-container border-[3px] border-on-surface overflow-hidden"
                 style={{ boxShadow: '4px 4px 0px 0px #000' }}
               >
-                <span
-                  className="material-symbols-outlined text-on-primary-container text-4xl"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  architecture
-                </span>
+                <img src="/favicon.jpg" alt="Chicago logo" className="w-full h-full object-cover" />
               </div>
             </div>
             <h1 className="font-extrabold text-[32px] md:text-[40px] uppercase tracking-tight leading-none text-on-surface mb-2">

@@ -33,10 +33,10 @@ export function TopBar({ walletConnected, onConnectWallet }) {
       {/* ── Brand ── */}
       <div className="flex items-center gap-3">
         <div
-          className="w-10 h-10 bg-primary-container border-[3px] border-on-surface flex items-center justify-center flex-shrink-0"
+          className="w-10 h-10 bg-primary-container border-[3px] border-on-surface overflow-hidden flex items-center justify-center flex-shrink-0"
           style={{ boxShadow: '3px 3px 0px 0px #000' }}
         >
-          <Icon name="architecture" className="text-on-primary-container text-[20px]" filled />
+          <img src="/favicon.jpg" alt="Chicago logo" className="w-full h-full object-cover" />
         </div>
         <span
           className="font-extrabold text-[22px] md:text-[26px] uppercase tracking-tight leading-none text-on-surface"
