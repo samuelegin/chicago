@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { Icon } from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { getMyLeaderboardStats } from '../services/api'
 
@@ -79,13 +78,12 @@ export default function Staking() {
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: 'Rank',       value: `#${stakerStats.rank}`,                          icon: 'leaderboard' },
-              { label: 'Percentile', value: stakerStats.percentile,                           icon: 'percent' },
-              { label: 'CLT Staked', value: `${stakerStats.cltStaked?.toLocaleString()} CLT`, icon: 'toll' },
-              { label: 'APR',        value: `${stakerStats.apr}%`,                            icon: 'trending_up' },
+              { label: 'Rank',       value: `#${stakerStats.rank}`                          },
+              { label: 'Percentile', value: stakerStats.percentile                           },
+              { label: 'CLT Staked', value: `${stakerStats.cltStaked?.toLocaleString()} CLT`},
+              { label: 'APR',        value: `${stakerStats.apr}%`                            },
             ].map((stat) => (
               <div key={stat.label} className="border-2 border-on-background/20 p-3 bg-surface-container flex flex-col gap-1">
-                <Icon name={stat.icon} className="text-[16px] text-primary-container" />
                 <p className="font-extrabold text-lg lg:text-2xl leading-none text-on-surface">{stat.value}</p>
                 <p className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">{stat.label}</p>
               </div>
@@ -105,8 +103,8 @@ export default function Staking() {
         <div className="flex flex-col gap-3">
           {SCORE_WEIGHTS.map((w) => (
             <div key={w.label} className="flex items-center gap-4">
-              <div className="w-12 h-12 flex-shrink-0 bg-on-background text-surface flex items-center justify-center border-2 border-on-background">
-                <Icon name={w.icon} className="text-[20px]" />
+              <div className="w-12 h-12 flex-shrink-0 bg-on-background text-surface flex items-center justify-center border-2 border-on-background font-extrabold text-[11px] uppercase">
+                {w.value}%
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
@@ -131,9 +129,8 @@ export default function Staking() {
         className="bg-surface border-4 border-on-background p-5 lg:p-6"
         style={{ boxShadow: '4px 4px 0px 0px var(--neo-shadow-color)' }}
       >
-        <h2 className="font-bold text-[11px] uppercase tracking-[0.14em] mb-5 pb-3 border-b-[3px] border-on-background text-on-surface flex items-center gap-2">
-          <Icon name="bolt" className="text-primary-container" />
-          Staking Boost Tiers
+        <h2 className="font-bold text-[11px] uppercase tracking-[0.14em] mb-5 pb-3 border-b-[3px] border-on-background text-on-surface">
+          ⚡ Staking Boost Tiers
         </h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {BOOST_TIERS.map((tier, i) => (
@@ -145,10 +142,7 @@ export default function Staking() {
                   : 'border-on-background/20 bg-surface-container'
               }`}
             >
-              <Icon
-                name={tier.icon}
-                className={`text-[22px] ${tier.multiplier >= 50 ? 'text-primary-container' : 'text-on-surface-variant'}`}
-              />
+              <p className="text-2xl">{tier.multiplier >= 50 ? '🔥' : tier.multiplier > 0 ? '⚡' : '—'}</p>
               <p className="font-extrabold text-base text-on-surface leading-none">{tier.label}</p>
               <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">{tier.threshold}</p>
             </div>

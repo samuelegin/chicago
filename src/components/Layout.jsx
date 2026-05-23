@@ -38,7 +38,9 @@ export function TopBar() {
   }
 
   return (
-    <header className="w-full top-0 fixed z-50 flex justify-between items-center px-4 md:px-20 py-0 bg-background border-b-[4px] border-on-background h-[72px]">
+    <header className="w-full top-0 fixed z-50 flex justify-between items-center px-4 md:px-20 py-0 bg-background border-b-[4px] border-on-background h-[72px]"
+      style={{ boxShadow: '0px 4px 0px 0px var(--neo-shadow-color)' }}
+    >
 
       {/* ── Brand ── */}
       <div className="flex items-center gap-3">
@@ -59,17 +61,17 @@ export function TopBar() {
       {/* ── Actions ── */}
       <div className="flex items-center gap-2 md:gap-3">
 
-        {/* Theme toggle */}
+        {/* Theme toggle — desktop only */}
         <button
           title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
           onClick={toggle}
-          className="flex items-center justify-center w-10 h-10 border-[3px] border-on-surface bg-surface-container text-on-surface-variant hover:bg-primary-container/10 hover:text-primary-container transition-all"
+          className="hidden lg:flex items-center justify-center w-10 h-10 border-[3px] border-on-surface bg-surface-container text-on-surface-variant hover:bg-primary-container/10 hover:text-primary-container transition-all"
           style={{ boxShadow: '2px 2px 0px 0px var(--neo-shadow-color)' }}
         >
           <Icon name={dark ? 'light_mode' : 'dark_mode'} className="text-[20px]" />
         </button>
 
-        {/* Connect Wallet */}
+        {/* Connect Wallet — always visible */}
         <ConnectButton.Custom>
           {({ account, chain, openConnectModal, openAccountModal, mounted }) => {
             const connected = mounted && account
@@ -77,11 +79,11 @@ export function TopBar() {
               <button
                 type="button"
                 onClick={connected ? openAccountModal : openConnectModal}
-                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-surface text-on-surface font-bold border-[3px] border-on-surface hover:bg-primary-container/10 transition-all text-sm"
+                className="flex items-center gap-2 px-3 md:px-4 py-2 bg-surface text-on-surface font-bold border-[3px] border-on-surface hover:bg-primary-container/10 transition-all text-sm"
                 style={{ boxShadow: '3px 3px 0px 0px var(--neo-shadow-color)' }}
               >
                 <Icon name="account_balance_wallet" className="text-[18px]" />
-                <span className="hidden md:inline font-bold text-[11px] uppercase tracking-wider">
+                <span className="hidden sm:inline font-bold text-[11px] uppercase tracking-wider">
                   {connected ? 'Connected' : 'Connect Wallet'}
                 </span>
               </button>
@@ -89,9 +91,9 @@ export function TopBar() {
           }}
         </ConnectButton.Custom>
 
-        {/* User avatar + logout */}
+        {/* User avatar + logout — desktop only */}
         {user && (
-          <div className="flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-2">
             {user.avatar ? (
               <img
                 src={user.avatar}
@@ -113,7 +115,7 @@ export function TopBar() {
             <button
               onClick={handleLogout}
               title="Sign out"
-              className="hidden md:flex items-center justify-center w-10 h-10 border-[3px] border-on-surface bg-surface-container text-on-surface-variant hover:bg-error-container hover:text-on-error-container transition-all"
+              className="flex items-center justify-center w-10 h-10 border-[3px] border-on-surface bg-surface-container text-on-surface-variant hover:bg-error-container hover:text-on-error-container transition-all"
               style={{ boxShadow: '2px 2px 0px 0px var(--neo-shadow-color)' }}
             >
               <Icon name="logout" className="text-[18px]" />
@@ -200,8 +202,8 @@ export function LeftSidebar() {
 // ─── Bottom Nav (mobile) ─────────────────────────────────────
 export function BottomNav() {
   return (
-    <nav className="fixed bottom-0 w-full lg:hidden z-50 flex justify-around items-center h-[64px] px-2 bg-background border-t-[4px] border-on-background"
-      style={{ boxShadow: '0px -4px 0px 0px rgba(212,175,55,0.4)' }}
+    <nav className="fixed bottom-0 w-full lg:hidden z-50 flex justify-around items-center h-[64px] px-2 bg-background border-t-[5px] border-on-background"
+      style={{ boxShadow: '0px -4px 0px 0px var(--neo-shadow-color)' }}
     >
       {navLinks.map((link) => (
         <NavLink
