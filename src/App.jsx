@@ -68,7 +68,7 @@ function AppShell({ children }) {
         {children}
       </main>
       {!isCommentsPage && <BottomNav />}
-      {!isCommentsPage && (
+      {pathname === '/' && (
         <button className="lg:hidden fixed bottom-24 right-5 w-10 h-10 bg-primary-container text-on-primary-fixed flex items-center justify-center z-50 active:scale-90 transition-all">
           <span className="material-symbols-outlined text-xl">edit</span>
         </button>
