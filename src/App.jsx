@@ -8,8 +8,9 @@ import { ThemeProvider } from './context/ThemeContext'
 import { TopBar, LeftSidebar, BottomNav } from './components/Layout'
 
 // Pages
-import Login      from './pages/Login'
-import CheckEmail from './pages/CheckEmail'
+import Login        from './pages/Login'
+import CheckEmail   from './pages/CheckEmail'
+import AuthCallback from './pages/AuthCallback'
 import Feed       from './pages/Feed'
 import Leaderboard from './pages/Leaderboard'
 import Staking    from './pages/Staking'
@@ -82,8 +83,9 @@ function AppRoutes() {
     <AppShell>
       <Routes>
         {/* ── Auth (public) ── */}
-        <Route path="/login"       element={<Login />} />
-        <Route path="/check-email" element={<CheckEmail />} />
+        <Route path="/login"         element={<Login />} />
+        <Route path="/check-email"   element={<CheckEmail />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
 
         {/* ── Protected user routes ── */}
         <Route path="/"                element={<ProtectedRoute><Feed /></ProtectedRoute>} />

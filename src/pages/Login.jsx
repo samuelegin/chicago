@@ -119,7 +119,11 @@ export default function Login() {
   }
 
   const handleGoogle = () => {
-    window.location.href = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/auth/google`
+    if (!import.meta.env.VITE_API_BASE_URL) {
+      alert('Authentication is not configured yet. Please check back soon.')
+      return
+    }
+    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google`
   }
 
   return (
