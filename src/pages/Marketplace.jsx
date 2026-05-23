@@ -351,16 +351,6 @@ export default function Marketplace() {
                     Our network reach has grown by 40% this month. <strong>DeFi</strong> campaigns have the highest conversion rate.
                   </p>
                 </div>
-                <div className="flex gap-2 lg:gap-4 shrink-0">
-                  <div className="bg-surface border-2 lg:border-4 border-on-surface p-3 lg:p-4 text-center">
-                    <div className="font-bold uppercase text-[9px] lg:text-[14px] opacity-60">Avg. CTR</div>
-                    <div className="font-extrabold text-xl lg:text-[40px] lg:leading-[48px]">3.2%</div>
-                  </div>
-                  <div className="bg-surface border-2 lg:border-4 border-on-surface p-3 lg:p-4 text-center">
-                    <div className="font-bold uppercase text-[9px] lg:text-[14px] opacity-60">Reach</div>
-                    <div className="font-extrabold text-xl lg:text-[40px] lg:leading-[48px]">2.8M</div>
-                  </div>
-                </div>
               </div>
 
               {/* Stats Grid */}
