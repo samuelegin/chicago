@@ -240,6 +240,7 @@ export default function Leaderboard() {
     setLoading(true)
     getLeaderboard(activeTab)
       .then(setData)
+      .catch(() => setData([]))
       .finally(() => setLoading(false))
   }, [activeTab])
 

@@ -2,12 +2,14 @@
  * ============================================================
  *  CHICAGO WEB3 — API SERVICE
  * ============================================================
- *  Set VITE_API_BASE_URL in your .env file to point at the backend.
- *  All requests automatically attach the stored auth token when present.
+ *  Set VITE_API_BASE_URL in your .env to point at the backend.
+ *  Until then, all calls fall back to mockData automatically.
  * ============================================================
  */
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+import * as mock from '../data/mockData'
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 function getAuthHeaders() {
   try {
@@ -19,6 +21,7 @@ function getAuthHeaders() {
 }
 
 async function request(path, options = {}) {
+  if (!BASE_URL) throw new Error('No API URL configured')
   const res = await fetch(`${BASE_URL}${path}`, {
     headers: {
       'Content-Type': 'application/json',
@@ -32,153 +35,121 @@ async function request(path, options = {}) {
 }
 
 // ─── AUTH ─────────────────────────────────────────────────────
-// POST /auth/magic-link  { email }
 export const requestMagicLink = (email) =>
   request('/auth/magic-link', { method: 'POST', body: JSON.stringify({ email }) })
 
-// POST /auth/magic-link/verify  { token }
 export const verifyMagicLink = (token) =>
   request('/auth/magic-link/verify', { method: 'POST', body: JSON.stringify({ token }) })
 
-// GET /auth/me
-export const getCurrentUser = () => request('/auth/me')
+export const getCurrentUser = () =>
+  request('/auth/me').catch(() => mock.currentUser)
 
-// POST /auth/wallet/connect  { address }
 export const connectWallet = (address) =>
   request('/auth/wallet/connect', { method: 'POST', body: JSON.stringify({ address }) })
 
 // ─── FEED ─────────────────────────────────────────────────────
-// GET /feed/posts?filter=general&page=1
 export const getFeedPosts = (filter = 'general', page = 1) =>
-  request(`/feed/posts?filter=${filter}&page=${page}`)
+  request(`/feed/posts?filter=${filter}&page=${page}`).catch(() => mock.feedPosts)
 
-// GET /feed/categories
-export const getFeedCategories = () => request('/feed/categories')
+export const getFeedCategories = () =>
+  request('/feed/categories').catch(() => mock.feedCategories)
 
-// POST /feed/posts  { content, images, category }
 export const createPost = (payload) =>
   request('/feed/posts', { method: 'POST', body: JSON.stringify(payload) })
 
-// POST /posts/:postId/like
 export const likePost = (postId) =>
-  request(`/posts/${postId}/like`, { method: 'POST' })
+  request(`/posts/${postId}/like`, { method: 'POST' }).catch(() => ({ ok: true }))
 
-// DELETE /posts/:postId/like
 export const unlikePost = (postId) =>
-  request(`/posts/${postId}/like`, { method: 'DELETE' })
+  request(`/posts/${postId}/like`, { method: 'DELETE' }).catch(() => ({ ok: true }))
 
-// GET /feed/trending
-export const getTrendingTopics = () => request('/feed/trending')
+export const getTrendingTopics = () =>
+  request('/feed/trending').catch(() => mock.trendingTopics)
 
 // ─── COMMENTS ─────────────────────────────────────────────────
-// GET /posts/:postId/comments
-export const getComments = (postId) => request(`/posts/${postId}/comments`)
+export const getComments = (postId) =>
+  request(`/posts/${postId}/comments`).catch(() =>
+    mock.postComments.filter(c => c.postId === postId)
+  )
 
-// POST /posts/:postId/comments  { content }
 export const createComment = (postId, content) =>
   request(`/posts/${postId}/comments`, { method: 'POST', body: JSON.stringify({ content }) })
 
 // ─── USERS ────────────────────────────────────────────────────
-// GET /users/:userId
-export const getUser = (userId) => request(`/users/${userId}`)
+export const getUser = (userId) =>
+  request(`/users/${userId}`).catch(() =>
+    mock.mockUsers.find(u => u.id === userId) || mock.currentUser
+  )
 
-// GET /users/suggestions
-export const getSuggestedUsers = () => request('/users/suggestions')
+export const getSuggestedUsers = () =>
+  request('/users/suggestions').catch(() => mock.suggestedUsers)
 
-// POST /users/:userId/follow
 export const followUser = (userId) =>
-  request(`/users/${userId}/follow`, { method: 'POST' })
+  request(`/users/${userId}/follow`, { method: 'POST' }).catch(() => ({ ok: true }))
 
-// DELETE /users/:userId/follow
 export const unfollowUser = (userId) =>
-  request(`/users/${userId}/follow`, { method: 'DELETE' })
+  request(`/users/${userId}/follow`, { method: 'DELETE' }).catch(() => ({ ok: true }))
 
-// PATCH /users/me  { name, bio, website, twitter, farcaster, avatar }
 export const updateProfile = (payload) =>
   request('/users/me', { method: 'PATCH', body: JSON.stringify(payload) })
 
 // ─── LEADERBOARD ──────────────────────────────────────────────
-// GET /leaderboard?type=creators|stakers|rising|influence
 export const getLeaderboard = (type = 'creators') =>
-  request(`/leaderboard?type=${type}`)
+  request(`/leaderboard?type=${type}`).catch(() => ({
+    creators:  mock.leaderboardCreators,
+    stakers:   mock.leaderboardStakers,
+    rising:    mock.leaderboardRising,
+    influence: mock.leaderboardInfluence,
+  }[type] || mock.leaderboardCreators))
 
-// GET /leaderboard/me
-export const getMyLeaderboardStats = () => request('/leaderboard/me')
+export const getMyLeaderboardStats = () =>
+  request('/leaderboard/me').catch(() => mock.leaderboardMyStats)
 
 // ─── STAKING ──────────────────────────────────────────────────
-// GET /staking/info
-export const getStakingInfo = () => request('/staking/info')
+export const getStakingInfo = () =>
+  request('/staking/info').catch(() => mock.stakingInfo)
 
-// POST /staking/stake  { amount, durationDays }
 export const stakeTokens = (amount, durationDays) =>
   request('/staking/stake', { method: 'POST', body: JSON.stringify({ amount, durationDays }) })
 
-// POST /staking/unstake  { amount }
 export const unstakeTokens = (amount) =>
   request('/staking/unstake', { method: 'POST', body: JSON.stringify({ amount }) })
 
-// POST /staking/claim-rewards
 export const claimRewards = () =>
   request('/staking/claim-rewards', { method: 'POST' })
 
 // ─── MARKETPLACE ──────────────────────────────────────────────
-// GET /marketplace/campaigns?period=3d
 export const getMarketplaceCampaigns = (period = '3d') =>
-  request(`/marketplace/campaigns?period=${period}`)
+  request(`/marketplace/campaigns?period=${period}`).catch(() => mock.marketplaceCampaigns)
 
 export const getMarketplaceAds = (period = '3d') =>
   getMarketplaceCampaigns(period)
 
-// GET /marketplace/pricing?duration=3d
 export const getMarketplacePricing = (duration = '3d') =>
-  request(`/marketplace/pricing?duration=${duration}`)
+  request(`/marketplace/pricing?duration=${duration}`).catch(() => mock.marketplacePricing)
 
-// POST /marketplace/campaigns  { title, image, budget, durationDays }
 export const createCampaign = (payload) =>
   request('/marketplace/campaigns', { method: 'POST', body: JSON.stringify(payload) })
 
 // ─── NETWORK ──────────────────────────────────────────────────
-// GET /network/stats
-export const getNetworkStats = () => request('/network/stats')
+export const getNetworkStats = () =>
+  request('/network/stats').catch(() => mock.networkStats)
 
 // ─── ADMIN ────────────────────────────────────────────────────
-// POST /admin/auth/login  { email, password }
 export const adminLogin = (email, password) =>
   request('/admin/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
 
-// POST /admin/auth/verify-2fa  { adminId, code }
 export const adminVerify2FA = (adminId, code) =>
   request('/admin/auth/verify-2fa', { method: 'POST', body: JSON.stringify({ adminId, code }) })
 
 export default {
-  requestMagicLink,
-  verifyMagicLink,
-  getCurrentUser,
-  connectWallet,
-  getFeedPosts,
-  getFeedCategories,
-  createPost,
-  likePost,
-  unlikePost,
-  getTrendingTopics,
-  getComments,
-  createComment,
-  getUser,
-  getSuggestedUsers,
-  followUser,
-  unfollowUser,
-  updateProfile,
-  getLeaderboard,
-  getMyLeaderboardStats,
-  getStakingInfo,
-  stakeTokens,
-  unstakeTokens,
-  claimRewards,
-  getMarketplaceCampaigns,
-  getMarketplaceAds,
-  getMarketplacePricing,
-  createCampaign,
+  requestMagicLink, verifyMagicLink, getCurrentUser, connectWallet,
+  getFeedPosts, getFeedCategories, createPost, likePost, unlikePost, getTrendingTopics,
+  getComments, createComment,
+  getUser, getSuggestedUsers, followUser, unfollowUser, updateProfile,
+  getLeaderboard, getMyLeaderboardStats,
+  getStakingInfo, stakeTokens, unstakeTokens, claimRewards,
+  getMarketplaceCampaigns, getMarketplaceAds, getMarketplacePricing, createCampaign,
   getNetworkStats,
-  adminLogin,
-  adminVerify2FA,
+  adminLogin, adminVerify2FA,
 }
