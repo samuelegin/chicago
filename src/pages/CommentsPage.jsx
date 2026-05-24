@@ -244,11 +244,19 @@ export default function CommentsPage() {
   const [showEmoji,    setShowEmoji]    = useState(false)
   const inputRef = useRef(null)
 
+  const [commentsLoading, setCommentsLoading] = useState(false)
+  const [commentsError, setCommentsError]     = useState(null)
+
   // Fetch real comments on mount
   useEffect(() => {
     window.scrollTo(0, 0)
     if (post?.id) {
-      getComments(post.id).then(setComments).catch(() => {})
+      setCommentsLoading(true)
+      setCommentsError(null)
+      getComments(post.id)
+        .then(data => setComments(data.comments ?? data))
+        .catch(err => setCommentsError(err.message || 'Failed to load comments'))
+        .finally(() => setCommentsLoading(false))
     }
   }, [post?.id])
 
@@ -392,7 +400,16 @@ export default function CommentsPage() {
         </div>
 
         {/* ── Comments list ── */}
-        {comments.length > 0 ? (
+        {commentsLoading ? (
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-[3px] border-on-background border-t-transparent animate-spin" />
+          </div>
+        ) : commentsError ? (
+          <div className="flex flex-col items-center gap-3 py-16 text-on-surface-variant">
+            <Icon name="wifi_off" className="text-[40px] opacity-30" />
+            <p className="text-sm font-bold uppercase tracking-widest opacity-50">Failed to load comments</p>
+          </div>
+        ) : comments.length > 0 ? (
           <div className="flex flex-col gap-6">
             {comments.map(comment => (
               <CommentThread key={comment.id} comment={comment} onReply={handleReply} />

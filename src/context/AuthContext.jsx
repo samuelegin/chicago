@@ -1,5 +1,7 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import * as api from '../services/api'
+import { onUnauthorized } from '../services/api'
 
 const AuthContext = createContext(null)
 
@@ -11,22 +13,29 @@ export function AuthProvider({ children }) {
     } catch { return null }
   })
 
-  // Sends a magic-link email via the real backend
+  const logout = useCallback(() => {
+    localStorage.removeItem('chicago_user')
+    setUser(null)
+  }, [])
+
+  // Global 401 handler — any API call that gets a 401 clears the session
+  useEffect(() => {
+    const unsub = onUnauthorized(() => {
+      logout()
+      // Let the ProtectedRoute redirect handle navigation
+    })
+    return unsub
+  }, [logout])
+
   const requestMagicLink = useCallback(async (email) => {
     return api.requestMagicLink(email)
   }, [])
 
-  // Called after the user clicks their magic-link and lands on /auth/verify?token=…
   const verifyMagicLink = useCallback(async (token) => {
     const session = await api.verifyMagicLink(token)
     localStorage.setItem('chicago_user', JSON.stringify(session))
     setUser(session)
     return session
-  }, [])
-
-  const logout = useCallback(() => {
-    localStorage.removeItem('chicago_user')
-    setUser(null)
   }, [])
 
   return (

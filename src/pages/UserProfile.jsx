@@ -12,16 +12,23 @@ export default function UserProfile() {
   const [followerCount, setFollowerCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
+  const [fetchError, setFetchError] = useState(null)
+
   useEffect(() => {
+    setFetchError(null)
     Promise.all([
       getUser(userId),
       getFeedPosts('general'),
-    ]).then(([userData, allPosts]) => {
+    ]).then(([userData, postsData]) => {
       setUser(userData)
       setFollowing(userData.isFollowing ?? false)
       setFollowerCount(userData.followers ?? 0)
-      setUserPosts(allPosts.filter(p => p.author.id === userId))
-    }).catch(() => setUser(null))
+      const posts = postsData.posts ?? postsData
+      setUserPosts(posts.filter(p => p.author?.id === userId))
+    }).catch(err => {
+      setFetchError(err.message)
+      setUser(null)
+    })
       .finally(() => setLoading(false))
   }, [userId])
 
@@ -48,7 +55,10 @@ export default function UserProfile() {
   if (!user) {
     return (
       <div className="flex-1 lg:ml-[300px] w-full max-w-3xl flex flex-col items-center justify-center gap-4 py-20">
-        <p className="text-on-surface-variant text-lg font-bold uppercase">User not found</p>
+        <span className="material-symbols-outlined text-[48px] text-on-surface-variant opacity-30">person_off</span>
+        <p className="text-on-surface-variant font-bold uppercase tracking-widest text-sm">
+          {fetchError ? 'Failed to load profile' : 'User not found'}
+        </p>
         <button onClick={() => navigate('/')} className="px-4 py-2 bg-primary-container text-on-primary-fixed font-bold text-sm uppercase border border-on-background/20 lg:neo-border">
           Back to Feed
         </button>

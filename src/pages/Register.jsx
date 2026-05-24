@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 // ── Shared Input ──────────────────────────────────────────────
 function FormInput({ label, id, type = 'text', placeholder, value, onChange, disabled, error, rightSlot, helper }) {
@@ -207,12 +208,19 @@ export default function Register() {
     setError('')
     if (!validateStep1()) return
     setLoading(true)
-    // BACKEND: POST /api/auth/register
-    // { email, password, username, displayName, bio }
-    // Expected: { token: '...', user: {...} }
-    await new Promise(r => setTimeout(r, 1600))
-    setLoading(false)
-    setStep(2)
+    try {
+      // POST /auth/register — handled via AuthContext
+      const { verifyMagicLink: _unused, ...rest } = {} // placeholder until useAuth wired
+      // Direct import to avoid hook-order issues
+      const { default: api } = await import('../services/api')
+      await api.requestMagicLink(email) // magic link flow: send link, show done step
+      setStep(2)
+    } catch (err) {
+      setError(err.message || 'Registration failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+    return
   }
 
   return (

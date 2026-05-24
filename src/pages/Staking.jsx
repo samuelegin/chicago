@@ -19,10 +19,16 @@ const SCORE_WEIGHTS = [
 
 export default function Staking() {
   const { user: authUser } = useAuth()
-  const [myStats, setMyStats] = useState(null)
+  const [myStats, setMyStats]   = useState(null)
+  const [statsError, setStatsError] = useState(null)
+  const [statsLoading, setStatsLoading] = useState(true)
 
   useEffect(() => {
-    getMyLeaderboardStats().then(setMyStats).catch(() => {})
+    setStatsError(null)
+    getMyLeaderboardStats()
+      .then(setMyStats)
+      .catch(err => setStatsError(err.message || 'Failed to load staking stats'))
+      .finally(() => setStatsLoading(false))
   }, [])
 
   const stakerStats = myStats?.stakers
@@ -68,7 +74,16 @@ export default function Staking() {
       </a>
 
       {/* My Staking Stats */}
-      {stakerStats && (
+      {statsError ? (
+        <section className="bg-surface border-4 border-on-background p-5 flex items-center gap-3 text-on-surface-variant">
+          <span className="material-symbols-outlined text-[20px] opacity-40">wifi_off</span>
+          <p className="font-bold text-[12px] uppercase tracking-widest opacity-50">Failed to load staking stats</p>
+        </section>
+      ) : statsLoading ? (
+        <section className="bg-surface border-4 border-on-background p-5 flex justify-center">
+          <div className="w-6 h-6 border-[3px] border-on-background border-t-transparent animate-spin" />
+        </section>
+      ) : stakerStats && (
         <section
           className="bg-surface border-4 border-on-background p-5 lg:p-6"
           style={{ boxShadow: '4px 4px 0px 0px rgba(212,175,55,1)' }}

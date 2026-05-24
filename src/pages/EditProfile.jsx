@@ -16,6 +16,7 @@ export default function EditProfile() {
   const [avatarPreview, setAvatarPreview] = useState('')
   const [originalAvatar, setOriginalAvatar] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -37,18 +38,20 @@ export default function EditProfile() {
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const url = URL.createObjectURL(file)
-    setAvatarPreview(url)
+    const reader = new FileReader()
+    reader.onload = (ev) => setAvatarPreview(ev.target.result) // base64 data URI
+    reader.readAsDataURL(file)
     e.target.value = ''
   }
 
   const handleSave = async () => {
     setSaving(true)
+    setSaveError('')
     try {
       await updateProfile({ ...form, avatar: avatarPreview })
       navigate('/profile')
     } catch (err) {
-      console.error('Save failed:', err)
+      setSaveError(err.message || 'Failed to save. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -137,6 +140,13 @@ export default function EditProfile() {
               )}
             </div>
           ))}
+
+          {saveError && (
+            <div className="flex items-center gap-2 border border-error bg-error-container text-on-error-container px-4 py-3">
+              <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
+              <p className="font-bold text-[12px]">{saveError}</p>
+            </div>
+          )}
 
           <div className="flex gap-3 lg:gap-4 pt-3 lg:pt-4">
             <button

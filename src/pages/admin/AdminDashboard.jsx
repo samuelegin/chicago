@@ -801,7 +801,6 @@ export default function AdminDashboard() {
             </div>
             <button className="relative p-2 hover:bg-surface-container transition-colors">
               <span className="material-symbols-outlined text-on-surface">notifications</span>
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-error border-2 border-surface" />
             </button>
             <button onClick={() => setShowInvite(true)}
               className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary-container text-on-primary-fixed font-bold text-[11px] uppercase tracking-wider border-2 border-on-background hover:brightness-105 transition-all"

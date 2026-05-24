@@ -22,11 +22,16 @@ export default function Profile() {
   const { user: authUser, logout } = useAuth()
   const navigate = useNavigate()
 
+  const [profileError, setProfileError] = useState(null)
+
   useEffect(() => {
-    getCurrentUser().then(setUser).catch(() => setUser(authUser))
+    setProfileError(null)
+    getCurrentUser()
+      .then(setUser)
+      .catch(err => { setProfileError(err.message); setUser(authUser) })
     getMyLeaderboardStats().then(setMyStats).catch(() => {})
     getFeedPosts('general').then(posts => {
-      if (authUser?.id) setUserPosts(posts.filter(p => p.author.id === authUser.id))
+      if (authUser?.id) setUserPosts((posts.posts ?? posts).filter(p => p.author?.id === authUser.id))
     }).catch(() => {})
   }, [authUser])
 
@@ -41,7 +46,14 @@ export default function Profile() {
   if (!user) {
     return (
       <div className="flex-1 lg:ml-[300px] w-full max-w-3xl flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-[3px] border-on-background border-t-transparent animate-spin" />
+        {profileError ? (
+          <div className="flex flex-col items-center gap-3 text-on-surface-variant">
+            <span className="material-symbols-outlined text-[40px] opacity-30">wifi_off</span>
+            <p className="font-bold text-sm uppercase tracking-widest opacity-50">Failed to load profile</p>
+          </div>
+        ) : (
+          <div className="w-8 h-8 border-[3px] border-on-background border-t-transparent animate-spin" />
+        )}
       </div>
     )
   }

@@ -31,7 +31,6 @@ export default function AuthCallback() {
     verifyMagicLink(token)
       .then(() => navigate('/', { replace: true }))
       .catch((err) => {
-        console.error('Auth callback error:', err)
         setError('Sign-in failed. The link may have expired. Please try again.')
       })
   }, [])

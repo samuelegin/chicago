@@ -9,6 +9,16 @@
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
+// Global 401 handler — pages/components subscribe to this
+const unauthorizedCallbacks = new Set()
+export function onUnauthorized(cb) {
+  unauthorizedCallbacks.add(cb)
+  return () => unauthorizedCallbacks.delete(cb)
+}
+function notifyUnauthorized() {
+  unauthorizedCallbacks.forEach(cb => cb())
+}
+
 function getAuthHeaders() {
   try {
     const user = JSON.parse(localStorage.getItem('chicago_user') || 'null')
@@ -39,6 +49,10 @@ async function request(path, options = {}) {
     },
     ...options,
   })
+  if (res.status === 401) {
+    notifyUnauthorized()
+    throw new Error('Session expired. Please sign in again.')
+  }
   if (!res.ok) {
     let message = `API error ${res.status}`
     try {
@@ -55,7 +69,7 @@ async function adminRequest(path, options = {}) {
     throw new Error('API not configured: set VITE_API_BASE_URL in your .env file')
   }
   const res = await fetch(`${BASE_URL}${path}`, {
-    credentials: 'include', // sends HttpOnly session cookie
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...getAdminAuthHeaders(),
@@ -180,14 +194,12 @@ export const adminValidateSetupToken = (token) =>
   adminRequest(`/admin/auth/validate-setup-token?token=${token}`)
 
 export const adminSetup = (payload) =>
-  // payload: { token, email, name, password }
   adminRequest('/admin/auth/setup', { method: 'POST', body: JSON.stringify(payload) })
 
 export const adminValidateInviteToken = (token) =>
   adminRequest(`/admin/auth/validate-invite?token=${token}`)
 
 export const adminRegister = (payload) =>
-  // payload: { token, name, password }
   adminRequest('/admin/auth/register', { method: 'POST', body: JSON.stringify(payload) })
 
 export const adminInvite = (email) =>
@@ -195,20 +207,16 @@ export const adminInvite = (email) =>
 
 // ─── ADMIN DASHBOARD ──────────────────────────────────────────
 export const adminGetStats = () =>
-  // Returns: { totalUsers, totalPosts, totalStaked, activeCampaigns, ... }
   adminRequest('/admin/stats')
 
 export const adminGetActivityLog = () =>
-  // Returns: { events: [{ icon, text, time, ok }] }
   adminRequest('/admin/activity-log')
 
 // ─── ADMIN USER MANAGEMENT ────────────────────────────────────
 export const adminGetUsers = ({ search = '', filter = 'all', page = 1 } = {}) =>
-  // Returns: { users: [...], total: N, page: N, pageSize: N }
   adminRequest(`/admin/users?search=${encodeURIComponent(search)}&filter=${filter}&page=${page}`)
 
 export const adminUpdateUser = (userId, payload) =>
-  // payload: { role?, status? }
   adminRequest(`/admin/users/${userId}`, { method: 'PATCH', body: JSON.stringify(payload) })
 
 export const adminSuspendUser = (userId) =>
@@ -219,11 +227,9 @@ export const adminUnsuspendUser = (userId) =>
 
 // ─── ADMIN AD MANAGER ─────────────────────────────────────────
 export const adminGetCampaigns = () =>
-  // Returns: { campaigns: [...], stats: { impressions, clicks, ctr } }
   adminRequest('/admin/campaigns')
 
 export const adminUpdateCampaign = (campaignId, payload) =>
-  // payload: { status: 'active' | 'paused' | 'pending' }
   adminRequest(`/admin/campaigns/${campaignId}`, { method: 'PATCH', body: JSON.stringify(payload) })
 
 export const adminDeleteCampaign = (campaignId) =>
@@ -234,11 +240,9 @@ export const adminCreateCampaign = (payload) =>
 
 // ─── ADMIN TEAM ───────────────────────────────────────────────
 export const adminGetTeam = () =>
-  // Returns: { admins: [{ id, name, email, role, since, last, status }] }
   adminRequest('/admin/team')
 
 export const adminUpdateTeamMember = (adminId, payload) =>
-  // payload: { role? }
   adminRequest(`/admin/team/${adminId}`, { method: 'PATCH', body: JSON.stringify(payload) })
 
 export const adminRemoveTeamMember = (adminId) =>
