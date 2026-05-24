@@ -18,6 +18,15 @@ function getAuthHeaders() {
   }
 }
 
+function getAdminAuthHeaders() {
+  try {
+    const token = sessionStorage.getItem('admin_temp_token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  } catch {
+    return {}
+  }
+}
+
 async function request(path, options = {}) {
   if (!BASE_URL) {
     throw new Error('API not configured: set VITE_API_BASE_URL in your .env file')
@@ -26,6 +35,30 @@ async function request(path, options = {}) {
     headers: {
       'Content-Type': 'application/json',
       ...getAuthHeaders(),
+      ...options.headers,
+    },
+    ...options,
+  })
+  if (!res.ok) {
+    let message = `API error ${res.status}`
+    try {
+      const body = await res.json()
+      message = body.message || body.error || message
+    } catch { /* ignore parse errors */ }
+    throw new Error(message)
+  }
+  return res.json()
+}
+
+async function adminRequest(path, options = {}) {
+  if (!BASE_URL) {
+    throw new Error('API not configured: set VITE_API_BASE_URL in your .env file')
+  }
+  const res = await fetch(`${BASE_URL}${path}`, {
+    credentials: 'include', // sends HttpOnly session cookie
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAdminAuthHeaders(),
       ...options.headers,
     },
     ...options,
@@ -133,12 +166,83 @@ export const createCampaign = (payload) =>
 export const getNetworkStats = () =>
   request('/network/stats')
 
-// ─── ADMIN ────────────────────────────────────────────────────
+// ─── ADMIN AUTH ───────────────────────────────────────────────
 export const adminLogin = (email, password) =>
-  request('/admin/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
+  adminRequest('/admin/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
 
-export const adminVerify2FA = (adminId, code) =>
-  request('/admin/auth/verify-2fa', { method: 'POST', body: JSON.stringify({ adminId, code }) })
+export const adminVerify2FA = (code) =>
+  adminRequest('/admin/auth/verify-2fa', { method: 'POST', body: JSON.stringify({ code }) })
+
+export const adminResend2FA = () =>
+  adminRequest('/admin/auth/resend-2fa', { method: 'POST' })
+
+export const adminValidateSetupToken = (token) =>
+  adminRequest(`/admin/auth/validate-setup-token?token=${token}`)
+
+export const adminSetup = (payload) =>
+  // payload: { token, email, name, password }
+  adminRequest('/admin/auth/setup', { method: 'POST', body: JSON.stringify(payload) })
+
+export const adminValidateInviteToken = (token) =>
+  adminRequest(`/admin/auth/validate-invite?token=${token}`)
+
+export const adminRegister = (payload) =>
+  // payload: { token, name, password }
+  adminRequest('/admin/auth/register', { method: 'POST', body: JSON.stringify(payload) })
+
+export const adminInvite = (email) =>
+  adminRequest('/admin/invite', { method: 'POST', body: JSON.stringify({ email }) })
+
+// ─── ADMIN DASHBOARD ──────────────────────────────────────────
+export const adminGetStats = () =>
+  // Returns: { totalUsers, totalPosts, totalStaked, activeCampaigns, ... }
+  adminRequest('/admin/stats')
+
+export const adminGetActivityLog = () =>
+  // Returns: { events: [{ icon, text, time, ok }] }
+  adminRequest('/admin/activity-log')
+
+// ─── ADMIN USER MANAGEMENT ────────────────────────────────────
+export const adminGetUsers = ({ search = '', filter = 'all', page = 1 } = {}) =>
+  // Returns: { users: [...], total: N, page: N, pageSize: N }
+  adminRequest(`/admin/users?search=${encodeURIComponent(search)}&filter=${filter}&page=${page}`)
+
+export const adminUpdateUser = (userId, payload) =>
+  // payload: { role?, status? }
+  adminRequest(`/admin/users/${userId}`, { method: 'PATCH', body: JSON.stringify(payload) })
+
+export const adminSuspendUser = (userId) =>
+  adminRequest(`/admin/users/${userId}/suspend`, { method: 'POST' })
+
+export const adminUnsuspendUser = (userId) =>
+  adminRequest(`/admin/users/${userId}/unsuspend`, { method: 'POST' })
+
+// ─── ADMIN AD MANAGER ─────────────────────────────────────────
+export const adminGetCampaigns = () =>
+  // Returns: { campaigns: [...], stats: { impressions, clicks, ctr } }
+  adminRequest('/admin/campaigns')
+
+export const adminUpdateCampaign = (campaignId, payload) =>
+  // payload: { status: 'active' | 'paused' | 'pending' }
+  adminRequest(`/admin/campaigns/${campaignId}`, { method: 'PATCH', body: JSON.stringify(payload) })
+
+export const adminDeleteCampaign = (campaignId) =>
+  adminRequest(`/admin/campaigns/${campaignId}`, { method: 'DELETE' })
+
+export const adminCreateCampaign = (payload) =>
+  adminRequest('/admin/campaigns', { method: 'POST', body: JSON.stringify(payload) })
+
+// ─── ADMIN TEAM ───────────────────────────────────────────────
+export const adminGetTeam = () =>
+  // Returns: { admins: [{ id, name, email, role, since, last, status }] }
+  adminRequest('/admin/team')
+
+export const adminUpdateTeamMember = (adminId, payload) =>
+  // payload: { role? }
+  adminRequest(`/admin/team/${adminId}`, { method: 'PATCH', body: JSON.stringify(payload) })
+
+export const adminRemoveTeamMember = (adminId) =>
+  adminRequest(`/admin/team/${adminId}`, { method: 'DELETE' })
 
 export default {
   requestMagicLink, verifyMagicLink, getCurrentUser, connectWallet,
@@ -149,5 +253,12 @@ export default {
   getStakingInfo, stakeTokens, unstakeTokens, claimRewards,
   getMarketplaceCampaigns, getMarketplaceAds, getMarketplacePricing, createCampaign,
   getNetworkStats,
-  adminLogin, adminVerify2FA,
+  adminLogin, adminVerify2FA, adminResend2FA,
+  adminValidateSetupToken, adminSetup,
+  adminValidateInviteToken, adminRegister,
+  adminInvite,
+  adminGetStats, adminGetActivityLog,
+  adminGetUsers, adminUpdateUser, adminSuspendUser, adminUnsuspendUser,
+  adminGetCampaigns, adminUpdateCampaign, adminDeleteCampaign, adminCreateCampaign,
+  adminGetTeam, adminUpdateTeamMember, adminRemoveTeamMember,
 }

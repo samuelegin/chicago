@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AdminShell, AdminButton, AdminAlert } from './AdminShared'
+import { adminVerify2FA, adminResend2FA } from '../../services/api'
 
 export default function AdminVerify() {
   const navigate  = useNavigate()
@@ -45,22 +46,27 @@ export default function AdminVerify() {
     if (code.length < 6) { setError('Please enter all 6 digits.'); return }
     setError('')
     setLoading(true)
-    // BACKEND: POST /api/admin/auth/verify-2fa
-    //   Headers: { Authorization: `Bearer ${sessionStorage.getItem('admin_temp_token')}` }
-    //   Body: { code }
-    // Expected response: { sessionToken: '...' }
-    // Then: document.cookie = `admin_session=...; HttpOnly; Secure; SameSite=Strict; Max-Age=900`
-    //   (HttpOnly must be set server-side; store session ID in cookie from server response)
-    await new Promise(r => setTimeout(r, 1500))
-    setLoading(false)
-    setSuccess(true)
-    setTimeout(() => navigate('/portal-ax92-v1/dashboard'), 1000)
+    try {
+      await adminVerify2FA(code)
+      setSuccess(true)
+      setTimeout(() => navigate('/portal-ax92-v1/dashboard'), 1000)
+    } catch (err) {
+      setError(err.message || 'Invalid code. Please try again.')
+      setDigits(['', '', '', '', '', ''])
+      inputRefs.current[0]?.focus()
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleResend = () => {
+  const handleResend = async () => {
     setResendCooldown(60)
     setError('')
-    // BACKEND: POST /api/admin/auth/resend-2fa
+    try {
+      await adminResend2FA()
+    } catch {
+      // Silently ignore — cooldown still applies
+    }
   }
 
   return (

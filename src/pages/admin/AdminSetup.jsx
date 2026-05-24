@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AdminShell, AdminButton, AdminAlert, AdminInput } from './AdminShared'
+import { adminValidateSetupToken, adminSetup } from '../../services/api'
 
 // ── Password strength ──────────────────────────────────────────
 function getStrength(pw) {
@@ -49,12 +50,9 @@ export default function AdminSetup() {
   // Validate setup token on mount
   useEffect(() => {
     if (!token) { setTokenValid(false); return }
-    // BACKEND: GET /api/admin/auth/validate-setup-token?token=TOKEN
-    // Returns: { valid: true } if token matches the server-generated one-time token
-    // Returns: { valid: false } if already used, invalid, or admin already exists
-    setTimeout(() => {
-      setTokenValid(token.length >= 8)
-    }, 800)
+    adminValidateSetupToken(token)
+      .then(res => setTokenValid(res.valid === true))
+      .catch(() => setTokenValid(false))
   }, [token])
 
   const handleSubmit = async (e) => {
@@ -67,16 +65,16 @@ export default function AdminSetup() {
     if (!pwMatch)         { setError('Passwords do not match.'); return }
 
     setLoading(true)
-    // BACKEND: POST /api/admin/auth/setup
-    //   Body: { token, email, name, password }
-    //   Creates the first admin with role = 'super_admin'
-    //   Permanently destroys the setup token server-side
-    //   Disables the /setup route for all future requests
-    //   Response: { success: true }
-    await new Promise(r => setTimeout(r, 1500))
-    setLoading(false)
-    setDone(true)
-    setTimeout(() => navigate('/portal-ax92-v1'), 3000)
+    try {
+      await adminSetup({ token, email, name, password })
+      setDone(true)
+      setTimeout(() => navigate('/portal-ax92-v1'), 3000)
+    } catch (err) {
+      setError(err.message || 'Setup failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+    return
   }
 
   // ── Validating token ──

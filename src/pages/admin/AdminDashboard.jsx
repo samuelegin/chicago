@@ -2,6 +2,19 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { AdminAlert, AdminButton, AdminInput } from './AdminShared'
+import {
+  adminInvite,
+  adminGetStats,
+  adminGetActivityLog,
+  adminGetUsers,
+  adminSuspendUser,
+  adminUnsuspendUser,
+  adminGetCampaigns,
+  adminUpdateCampaign,
+  adminDeleteCampaign,
+  adminGetTeam,
+  adminRemoveTeamMember,
+} from '../../services/api'
 
 // ── Idle logout ───────────────────────────────────────────────
 function useIdleLogout(timeoutMs = 14 * 60 * 1000, onTrigger) {
@@ -33,7 +46,7 @@ function StatCard({ icon, label, value, badge, gold }) {
         )}
       </div>
       <div>
-        <p className="font-extrabold text-[36px] leading-none tracking-tight">{value}</p>
+        <p className="font-extrabold text-[36px] leading-none tracking-tight">{value ?? '—'}</p>
         <p className="font-bold text-[10px] uppercase tracking-[0.14em] text-on-surface-variant mt-1">{label}</p>
       </div>
     </div>
@@ -42,28 +55,17 @@ function StatCard({ icon, label, value, badge, gold }) {
 
 // ── Invite modal ──────────────────────────────────────────────
 function InviteModal({ onClose }) {
-  const [email, setEmail]     = useState('')
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail]         = useState('')
+  const [loading, setLoading]     = useState(false)
   const [inviteUrl, setInviteUrl] = useState('')
-  const [copied, setCopied]   = useState(false)
-  const [error, setError]     = useState('')
+  const [copied, setCopied]       = useState(false)
+  const [error, setError]         = useState('')
 
   const send = async () => {
     if (!email.includes('@')) { setError('Enter a valid email.'); return }
     setError(''); setLoading(true)
     try {
-      const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api'
-      const res  = await fetch(`${base}/admin/invite`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email }),
-        credentials: 'include',
-      })
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        throw new Error(body.error ?? `Server error ${res.status}`)
-      }
-      const { token } = await res.json()
+      const { token } = await adminInvite(email)
       const url = `${window.location.origin}/portal-ax92-v1/register?token=${token}`
       setInviteUrl(url)
     } catch (err) {
@@ -100,33 +102,23 @@ function InviteModal({ onClose }) {
           <>
             <AdminAlert type="success" message={`Invite generated for ${email}. Link also sent by email.`} />
             <div className="flex flex-col gap-2">
-              <label className="font-bold text-[10px] uppercase tracking-[0.14em] text-on-surface-variant">
-                Registration Link
-              </label>
+              <label className="font-bold text-[10px] uppercase tracking-[0.14em] text-on-surface-variant">Registration Link</label>
               <div className="flex gap-2">
-                <input
-                  readOnly
-                  value={inviteUrl}
-                  className="flex-1 bg-surface-container border-4 border-on-background px-4 py-3 font-mono text-[11px] text-on-surface truncate cursor-text"
-                />
-                <button
-                  onClick={copy}
+                <input readOnly value={inviteUrl}
+                  className="flex-1 bg-surface-container border-4 border-on-background px-4 py-3 font-mono text-[11px] text-on-surface truncate cursor-text" />
+                <button onClick={copy}
                   className="shrink-0 px-4 py-3 border-4 border-on-background font-bold text-[11px] uppercase tracking-widest bg-surface hover:bg-on-background hover:text-surface transition-all"
-                  style={{ boxShadow: '3px 3px 0px 0px var(--neo-border-color)' }}
-                >
+                  style={{ boxShadow: '3px 3px 0px 0px var(--neo-border-color)' }}>
                   {copied
                     ? <span className="material-symbols-outlined text-[18px] text-secondary">check</span>
-                    : <span className="material-symbols-outlined text-[18px]">content_copy</span>
-                  }
+                    : <span className="material-symbols-outlined text-[18px]">content_copy</span>}
                 </button>
               </div>
               <p className="text-[10px] text-on-surface-variant leading-relaxed">
                 Copy this link and share it directly — useful if email isn't wired up yet. Token is destroyed on first use.
               </p>
             </div>
-            <button onClick={onClose} className="w-full py-3 border-4 border-on-background font-bold uppercase tracking-widest text-sm bg-surface hover:bg-surface-container transition-colors">
-              Done
-            </button>
+            <button onClick={onClose} className="w-full py-3 border-4 border-on-background font-bold uppercase tracking-widest text-sm bg-surface hover:bg-surface-container transition-colors">Done</button>
           </>
         ) : (
           <>
@@ -192,15 +184,24 @@ function NavItem({ icon, label, active, onClick, badge }) {
   )
 }
 
+// ── Loading skeleton ──────────────────────────────────────────
+function Skeleton({ className = '' }) {
+  return <div className={`animate-pulse bg-on-background/10 ${className}`} />
+}
+
 // ── Section: Overview ─────────────────────────────────────────
 function Overview({ onInvite }) {
-  const recentActivity = [
-    { icon: 'login',       text: 'Admin login · 2FA passed',       time: '2 min ago',  ok: true  },
-    { icon: 'send',        text: 'Invite sent to dev@chicago.io',   time: '1 hr ago',   ok: true  },
-    { icon: 'warning',     text: 'Failed login attempt (3rd party)', time: '3 hrs ago',  ok: false },
-    { icon: 'person_add',  text: 'New user registered',             time: '5 hrs ago',  ok: true  },
-    { icon: 'toll',        text: 'Staking reward distributed',      time: '8 hrs ago',  ok: true  },
-  ]
+  const [stats, setStats]       = useState(null)
+  const [activity, setActivity] = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState(null)
+
+  useEffect(() => {
+    Promise.all([adminGetStats(), adminGetActivityLog()])
+      .then(([s, a]) => { setStats(s); setActivity(a.events ?? a) })
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
 
   return (
     <div className="flex flex-col gap-8">
@@ -219,12 +220,20 @@ function Overview({ onInvite }) {
         </div>
       </div>
 
+      {error && <AdminAlert type="error" message={error} />}
+
       {/* Stats */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard icon="group"      label="Total Users"       value="14,820"  badge="+2.4%"       gold />
-        <StatCard icon="article"    label="Total Posts"       value="89,314"  badge="412 today"        />
-        <StatCard icon="toll"       label="$CHI Staked"       value="4.2M"    badge="↑ 8%"        gold />
-        <StatCard icon="campaign"   label="Active Campaigns"  value="23"      badge="3 pending"        />
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-36" />)
+        ) : (
+          <>
+            <StatCard icon="group"    label="Total Users"      value={stats?.totalUsers}      badge={stats?.usersBadge}     gold />
+            <StatCard icon="article"  label="Total Posts"      value={stats?.totalPosts}      badge={stats?.postsBadge}          />
+            <StatCard icon="toll"     label="$CHI Staked"      value={stats?.totalStaked}     badge={stats?.stakedBadge}    gold />
+            <StatCard icon="campaign" label="Active Campaigns" value={stats?.activeCampaigns} badge={stats?.campaignsBadge}      />
+          </>
+        )}
       </div>
 
       {/* Two-col lower */}
@@ -255,27 +264,33 @@ function Overview({ onInvite }) {
             </div>
             <span className="font-bold text-[9px] uppercase tracking-widest text-on-surface-variant border-2 border-on-background/15 px-2 py-1">Last 24h</span>
           </div>
-          <ul className="flex flex-col divide-y-2 divide-on-background/10">
-            {recentActivity.map((item, i) => (
-              <li key={i} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
-                <span className={`flex items-center gap-2 font-bold text-[11px] ${item.ok ? 'text-on-surface' : 'text-error'}`}>
-                  <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                    {item.ok ? 'check_circle' : 'warning'}
+          {loading ? (
+            <div className="flex flex-col gap-2">
+              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-8" />)}
+            </div>
+          ) : activity.length === 0 ? (
+            <p className="text-[11px] text-on-surface-variant">No recent activity.</p>
+          ) : (
+            <ul className="flex flex-col divide-y-2 divide-on-background/10">
+              {activity.map((item, i) => (
+                <li key={i} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                  <span className={`flex items-center gap-2 font-bold text-[11px] ${item.ok ? 'text-on-surface' : 'text-error'}`}>
+                    <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      {item.ok ? 'check_circle' : 'warning'}
+                    </span>
+                    {item.text}
                   </span>
-                  {item.text}
-                </span>
-                <span className="text-on-surface-variant text-[10px] font-mono ml-3 shrink-0">{item.time}</span>
-              </li>
-            ))}
-          </ul>
+                  <span className="text-on-surface-variant text-[10px] font-mono ml-3 shrink-0">{item.time}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
 
       {/* Backend checklist */}
       <div className="bg-on-background text-surface border-4 border-on-background p-6" style={{ boxShadow: '4px 4px 0px 0px #d4af37' }}>
-        <h2 className="font-extrabold text-[13px] uppercase tracking-widest mb-4 text-primary-container">
-          Backend Integration Checklist
-        </h2>
+        <h2 className="font-extrabold text-[13px] uppercase tracking-widest mb-4 text-primary-container">Backend Integration Checklist</h2>
         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-8 text-[11px] text-surface/70">
           {[
             'Phase 1: Seed Super Admin via CLI — never via UI',
@@ -300,16 +315,42 @@ function Overview({ onInvite }) {
 
 // ── Section: User Management ──────────────────────────────────
 function UserManagement() {
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState('all')
+  const [search, setSearch]   = useState('')
+  const [filter, setFilter]   = useState('all')
+  const [users, setUsers]     = useState([])
+  const [total, setTotal]     = useState(0)
+  const [page, setPage]       = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState(null)
 
-  const users = [
-    { id: 1, name: 'Amara Osei',      handle: '@amara_web3',   role: 'User',  joined: 'May 2026',  status: 'active',    posts: 142, staked: '2,400' },
-    { id: 2, name: 'Jake Thornton',   handle: '@jaketh',        role: 'User',  joined: 'Apr 2026',  status: 'active',    posts: 88,  staked: '800'   },
-    { id: 3, name: 'Priya Nair',      handle: '@priya_nair',    role: 'Mod',   joined: 'Mar 2026',  status: 'active',    posts: 310, staked: '5,100' },
-    { id: 4, name: 'Luca Bianchi',    handle: '@luca_b',        role: 'User',  joined: 'Feb 2026',  status: 'suspended', posts: 14,  staked: '0'     },
-    { id: 5, name: 'Yuki Tanaka',     handle: '@yuki_t',        role: 'User',  joined: 'Jan 2026',  status: 'active',    posts: 207, staked: '1,200' },
-  ]
+  const fetchUsers = (s = search, f = filter, p = page) => {
+    setLoading(true)
+    setError(null)
+    adminGetUsers({ search: s, filter: f, page: p })
+      .then(data => {
+        setUsers(data.users ?? data)
+        setTotal(data.total ?? (data.users ?? data).length)
+      })
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { fetchUsers() }, [])
+
+  const handleSearch = (val) => { setSearch(val); setPage(1); fetchUsers(val, filter, 1) }
+  const handleFilter = (val) => { setFilter(val); setPage(1); fetchUsers(search, val, 1) }
+  const handlePrev   = () => { const p = Math.max(1, page - 1); setPage(p); fetchUsers(search, filter, p) }
+  const handleNext   = () => { const p = page + 1; setPage(p); fetchUsers(search, filter, p) }
+
+  const handleToggleSuspend = async (u) => {
+    try {
+      if (u.status === 'suspended') await adminUnsuspendUser(u.id)
+      else await adminSuspendUser(u.id)
+      fetchUsers()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
 
   const statusColors = {
     active:    'bg-green-100 text-green-800 border-green-700',
@@ -317,32 +358,28 @@ function UserManagement() {
     pending:   'bg-primary-fixed text-on-primary-fixed border-primary',
   }
   const roleColors = {
-    User: 'bg-surface-container text-on-surface-variant border-on-background/20',
-    Mod:  'bg-primary-container/30 text-on-primary-container border-primary-container',
-    Admin:'bg-on-background text-surface border-on-background',
+    User:  'bg-surface-container text-on-surface-variant border-on-background/20',
+    Mod:   'bg-primary-container/30 text-on-primary-container border-primary-container',
+    Admin: 'bg-on-background text-surface border-on-background',
   }
-
-  const filtered = users.filter(u => {
-    const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.handle.toLowerCase().includes(search.toLowerCase())
-    const matchFilter = filter === 'all' || u.status === filter
-    return matchSearch && matchFilter
-  })
 
   return (
     <div className="flex flex-col gap-6">
+      {error && <AdminAlert type="error" message={error} />}
+
       {/* Controls */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant">search</span>
           <input
             type="text" placeholder="Search users…"
-            value={search} onChange={e => setSearch(e.target.value)}
+            value={search} onChange={e => handleSearch(e.target.value)}
             className="w-full bg-surface border-4 border-on-background pl-11 pr-4 py-3 font-body-md focus:ring-0 focus:outline-none focus:border-primary-container transition-all"
           />
         </div>
         <div className="flex gap-2">
           {['all', 'active', 'suspended'].map(f => (
-            <button key={f} onClick={() => setFilter(f)}
+            <button key={f} onClick={() => handleFilter(f)}
               className={`px-4 py-3 border-4 border-on-background font-bold text-[11px] uppercase tracking-widest transition-all
                 ${filter === f ? 'bg-on-background text-surface' : 'bg-surface text-on-surface hover:bg-surface-container'}`}
               style={filter === f ? { boxShadow: '3px 3px 0px 0px #d4af37' } : { boxShadow: '3px 3px 0px 0px var(--neo-border-color)' }}>
@@ -363,47 +400,68 @@ function UserManagement() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((u, i) => (
-              <tr key={u.id} className={`border-b-2 border-on-background/10 hover:bg-primary-fixed/40 transition-colors ${i % 2 === 0 ? 'bg-surface' : 'bg-surface-container-low'}`}>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-primary-container border-2 border-on-background flex items-center justify-center font-extrabold text-[11px] text-on-primary-fixed shrink-0">
-                      {u.name.split(' ').map(n => n[0]).join('').slice(0,2)}
-                    </div>
-                    <div>
-                      <p className="font-bold text-[13px]">{u.name}</p>
-                      <p className="text-[11px] text-on-surface-variant">{u.handle}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`font-bold text-[10px] uppercase tracking-widest px-2 py-1 border-2 ${roleColors[u.role]}`}>{u.role}</span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`font-bold text-[10px] uppercase tracking-widest px-2 py-1 border-2 ${statusColors[u.status]}`}>{u.status}</span>
-                </td>
-                <td className="px-6 py-4 text-[12px] text-on-surface-variant font-mono">{u.joined}</td>
-                <td className="px-6 py-4 font-mono font-bold text-[13px]">{u.posts}</td>
-                <td className="px-6 py-4 font-mono font-bold text-[13px]">{u.staked}</td>
-                <td className="px-6 py-4">
-                  <div className="flex gap-2">
-                    <button className="p-1.5 border-2 border-on-background hover:bg-on-background hover:text-surface transition-colors">
-                      <span className="material-symbols-outlined text-[16px]">edit</span>
-                    </button>
-                    <button className="p-1.5 border-2 border-on-background hover:bg-error hover:text-on-error transition-colors">
-                      <span className="material-symbols-outlined text-[16px]">{u.status === 'suspended' ? 'lock_open' : 'block'}</span>
-                    </button>
-                  </div>
+            {loading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="border-b-2 border-on-background/10">
+                  {Array.from({ length: 7 }).map((_, j) => (
+                    <td key={j} className="px-6 py-4"><Skeleton className="h-5 w-24" /></td>
+                  ))}
+                </tr>
+              ))
+            ) : users.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-6 py-12 text-center text-on-surface-variant font-bold text-[12px] uppercase tracking-widest">
+                  No users found
                 </td>
               </tr>
-            ))}
+            ) : (
+              users.map((u, i) => (
+                <tr key={u.id} className={`border-b-2 border-on-background/10 hover:bg-primary-fixed/40 transition-colors ${i % 2 === 0 ? 'bg-surface' : 'bg-surface-container-low'}`}>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-primary-container border-2 border-on-background flex items-center justify-center font-extrabold text-[11px] text-on-primary-fixed shrink-0">
+                        {u.name?.split(' ').map(n => n[0]).join('').slice(0, 2) ?? '??'}
+                      </div>
+                      <div>
+                        <p className="font-bold text-[13px]">{u.name}</p>
+                        <p className="text-[11px] text-on-surface-variant">{u.handle}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`font-bold text-[10px] uppercase tracking-widest px-2 py-1 border-2 ${roleColors[u.role] ?? roleColors.User}`}>{u.role}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`font-bold text-[10px] uppercase tracking-widest px-2 py-1 border-2 ${statusColors[u.status] ?? ''}`}>{u.status}</span>
+                  </td>
+                  <td className="px-6 py-4 text-[12px] text-on-surface-variant font-mono">{u.joined}</td>
+                  <td className="px-6 py-4 font-mono font-bold text-[13px]">{u.posts}</td>
+                  <td className="px-6 py-4 font-mono font-bold text-[13px]">{u.staked}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleToggleSuspend(u)}
+                        className="p-1.5 border-2 border-on-background hover:bg-error hover:text-on-error transition-colors"
+                        title={u.status === 'suspended' ? 'Unsuspend' : 'Suspend'}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">{u.status === 'suspended' ? 'lock_open' : 'block'}</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
         <div className="px-6 py-4 border-t-4 border-on-background bg-surface-container-low flex items-center justify-between">
-          <p className="font-bold text-[10px] uppercase tracking-widest text-on-surface-variant">Showing {filtered.length} of {users.length} users</p>
+          <p className="font-bold text-[10px] uppercase tracking-widest text-on-surface-variant">
+            {loading ? 'Loading…' : `Showing ${users.length} of ${total} users`}
+          </p>
           <div className="flex gap-2">
-            <button className="px-4 py-2 border-2 border-on-background font-bold text-[11px] uppercase tracking-widest hover:bg-on-background hover:text-surface transition-colors disabled:opacity-40" disabled>Prev</button>
-            <button className="px-4 py-2 border-2 border-on-background font-bold text-[11px] uppercase tracking-widest hover:bg-on-background hover:text-surface transition-colors">Next</button>
+            <button onClick={handlePrev} disabled={page <= 1 || loading}
+              className="px-4 py-2 border-2 border-on-background font-bold text-[11px] uppercase tracking-widest hover:bg-on-background hover:text-surface transition-colors disabled:opacity-40">Prev</button>
+            <button onClick={handleNext} disabled={users.length < 20 || loading}
+              className="px-4 py-2 border-2 border-on-background font-bold text-[11px] uppercase tracking-widest hover:bg-on-background hover:text-surface transition-colors disabled:opacity-40">Next</button>
           </div>
         </div>
       </div>
@@ -413,12 +471,44 @@ function UserManagement() {
 
 // ── Section: Ad Manager ───────────────────────────────────────
 function AdManager() {
-  const campaigns = [
-    { name: 'Premium Tier Access',    status: 'active',  impressions: '452,001', clicks: '12,402', ctr: '2.74%' },
-    { name: 'Governance Update Q3',   status: 'paused',  impressions: '120,442', clicks: '4,120',  ctr: '3.42%' },
-    { name: 'Developer Grants Open',  status: 'active',  impressions: '712,058', clicks: '32,409', ctr: '4.55%' },
-    { name: 'Chicago NFT Drop',       status: 'pending', impressions: '—',       clicks: '—',      ctr: '—'     },
-  ]
+  const [campaigns, setCampaigns] = useState([])
+  const [adStats, setAdStats]     = useState(null)
+  const [loading, setLoading]     = useState(true)
+  const [error, setError]         = useState(null)
+
+  const fetchCampaigns = () => {
+    setLoading(true)
+    setError(null)
+    adminGetCampaigns()
+      .then(data => {
+        setCampaigns(data.campaigns ?? data)
+        if (data.stats) setAdStats(data.stats)
+      })
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { fetchCampaigns() }, [])
+
+  const handleToggle = async (c) => {
+    try {
+      const newStatus = c.status === 'active' ? 'paused' : 'active'
+      await adminUpdateCampaign(c.id, { status: newStatus })
+      fetchCampaigns()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const handleDelete = async (campaignId) => {
+    try {
+      await adminDeleteCampaign(campaignId)
+      fetchCampaigns()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   const statusColors = {
     active:  'bg-green-100 text-green-800 border-green-700',
     paused:  'bg-yellow-100 text-yellow-800 border-yellow-700',
@@ -427,37 +517,35 @@ function AdManager() {
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+      {error && <div className="xl:col-span-3"><AdminAlert type="error" message={error} /></div>}
+
       {/* Stats row */}
       <div className="xl:col-span-3 grid grid-cols-3 gap-4">
-        {[
-          { icon: 'visibility', label: 'Total Impressions', value: '1.28M', badge: 'Live' },
-          { icon: 'ads_click',  label: 'Total Clicks',      value: '48,931' },
-          { icon: 'percent',    label: 'Average CTR',       value: '3.81%' },
-        ].map(s => (
-          <div key={s.label} className="bg-surface border-4 border-on-background p-5 transition-all hover:-translate-y-px hover:-translate-x-px"
-            style={{ boxShadow: '6px 6px 0px 0px #d4af37' }}>
-            <div className="flex items-center justify-between mb-3">
-              <span className="material-symbols-outlined text-primary text-[22px]" style={{ fontVariationSettings: "'FILL' 1" }}>{s.icon}</span>
-              {s.badge && <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 bg-primary-fixed border-2 border-primary text-on-primary-fixed">{s.badge}</span>}
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28" />)
+        ) : (
+          [
+            { icon: 'visibility', label: 'Total Impressions', value: adStats?.impressions ?? '—', badge: 'Live' },
+            { icon: 'ads_click',  label: 'Total Clicks',      value: adStats?.clicks ?? '—' },
+            { icon: 'percent',    label: 'Average CTR',       value: adStats?.ctr ?? '—' },
+          ].map(s => (
+            <div key={s.label} className="bg-surface border-4 border-on-background p-5 transition-all hover:-translate-y-px hover:-translate-x-px"
+              style={{ boxShadow: '6px 6px 0px 0px #d4af37' }}>
+              <div className="flex items-center justify-between mb-3">
+                <span className="material-symbols-outlined text-primary text-[22px]" style={{ fontVariationSettings: "'FILL' 1" }}>{s.icon}</span>
+                {s.badge && <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 bg-primary-fixed border-2 border-primary text-on-primary-fixed">{s.badge}</span>}
+              </div>
+              <p className="font-bold text-[10px] uppercase tracking-[0.14em] text-on-surface-variant">{s.label}</p>
+              <p className="font-extrabold text-[36px] leading-none tracking-tight mt-1">{s.value}</p>
             </div>
-            <p className="font-bold text-[10px] uppercase tracking-[0.14em] text-on-surface-variant">{s.label}</p>
-            <p className="font-extrabold text-[36px] leading-none tracking-tight mt-1">{s.value}</p>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Campaigns table */}
       <div className="xl:col-span-2 border-4 border-on-background" style={{ boxShadow: '6px 6px 0px 0px var(--neo-border-color)' }}>
         <div className="px-6 py-4 border-b-4 border-on-background bg-surface flex items-center justify-between">
-          <h3 className="font-extrabold text-[15px] uppercase tracking-tight">Active Campaigns</h3>
-          <div className="flex gap-2">
-            <button className="p-2 border-2 border-on-background hover:bg-on-background hover:text-surface transition-colors">
-              <span className="material-symbols-outlined text-[18px]">filter_list</span>
-            </button>
-            <button className="p-2 border-2 border-on-background hover:bg-on-background hover:text-surface transition-colors">
-              <span className="material-symbols-outlined text-[18px]">download</span>
-            </button>
-          </div>
+          <h3 className="font-extrabold text-[15px] uppercase tracking-tight">Campaigns</h3>
         </div>
         <table className="w-full">
           <thead>
@@ -468,35 +556,46 @@ function AdManager() {
             </tr>
           </thead>
           <tbody>
-            {campaigns.map((c, i) => (
-              <tr key={i} className="border-b-2 border-on-background/10 hover:bg-primary-fixed/30 transition-colors">
-                <td className="px-5 py-4 font-bold text-[13px]">{c.name}</td>
-                <td className="px-5 py-4">
-                  <span className={`font-bold text-[10px] uppercase tracking-widest px-2 py-1 border-2 ${statusColors[c.status]}`}>{c.status}</span>
-                </td>
-                <td className="px-5 py-4 font-mono text-[13px]">{c.impressions}</td>
-                <td className="px-5 py-4 font-mono text-[13px]">{c.clicks}</td>
-                <td className="px-5 py-4 font-mono font-bold text-[13px]">{c.ctr}</td>
-                <td className="px-5 py-4">
-                  <div className="flex gap-1.5">
-                    <button className="p-1.5 border-2 border-on-background hover:bg-on-background hover:text-surface transition-colors">
-                      <span className="material-symbols-outlined text-[15px]">edit</span>
-                    </button>
-                    <button className="p-1.5 border-2 border-on-background hover:bg-on-background hover:text-surface transition-colors">
-                      <span className="material-symbols-outlined text-[15px]">{c.status === 'active' ? 'pause' : 'play_arrow'}</span>
-                    </button>
-                    <button className="p-1.5 border-2 border-on-background hover:bg-error hover:text-on-error transition-colors">
-                      <span className="material-symbols-outlined text-[15px]">delete</span>
-                    </button>
-                  </div>
-                </td>
+            {loading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <tr key={i} className="border-b-2 border-on-background/10">
+                  {Array.from({ length: 6 }).map((_, j) => (
+                    <td key={j} className="px-5 py-4"><Skeleton className="h-5 w-20" /></td>
+                  ))}
+                </tr>
+              ))
+            ) : campaigns.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-5 py-10 text-center text-on-surface-variant font-bold text-[12px] uppercase tracking-widest">No campaigns found</td>
               </tr>
-            ))}
+            ) : (
+              campaigns.map((c, i) => (
+                <tr key={c.id ?? i} className="border-b-2 border-on-background/10 hover:bg-primary-fixed/30 transition-colors">
+                  <td className="px-5 py-4 font-bold text-[13px]">{c.name}</td>
+                  <td className="px-5 py-4">
+                    <span className={`font-bold text-[10px] uppercase tracking-widest px-2 py-1 border-2 ${statusColors[c.status] ?? ''}`}>{c.status}</span>
+                  </td>
+                  <td className="px-5 py-4 font-mono text-[13px]">{c.impressions}</td>
+                  <td className="px-5 py-4 font-mono text-[13px]">{c.clicks}</td>
+                  <td className="px-5 py-4 font-mono font-bold text-[13px]">{c.ctr}</td>
+                  <td className="px-5 py-4">
+                    <div className="flex gap-1.5">
+                      <button onClick={() => handleToggle(c)} className="p-1.5 border-2 border-on-background hover:bg-on-background hover:text-surface transition-colors">
+                        <span className="material-symbols-outlined text-[15px]">{c.status === 'active' ? 'pause' : 'play_arrow'}</span>
+                      </button>
+                      <button onClick={() => handleDelete(c.id)} className="p-1.5 border-2 border-on-background hover:bg-error hover:text-on-error transition-colors">
+                        <span className="material-symbols-outlined text-[15px]">delete</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
-      {/* Create ad form */}
+      {/* Create ad form — wires to Marketplace createCampaign */}
       <div className="border-4 border-on-background" style={{ boxShadow: '6px 6px 0px 0px #d4af37' }}>
         <div className="px-6 py-4 border-b-4 border-on-background bg-primary">
           <h3 className="font-extrabold text-[15px] uppercase tracking-tight text-on-primary">Create New Ad</h3>
@@ -534,17 +633,40 @@ function AdManager() {
 
 // ── Section: Admin Team ───────────────────────────────────────
 function AdminTeam({ onInvite }) {
-  const admins = [
-    { name: 'Root Admin',    email: 'root@chicago.io',    role: 'Super Admin', since: 'Jan 2025', last: '2 min ago',  status: 'online' },
-    { name: 'Priya Nair',    email: 'priya@chicago.io',   role: 'Moderator',   since: 'Mar 2025', last: '1 hr ago',   status: 'away'   },
-    { name: 'James Okafor',  email: 'james@chicago.io',   role: 'Ad Manager',  since: 'Jun 2025', last: '3 hrs ago',  status: 'offline'},
-  ]
+  const [admins, setAdmins]   = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState(null)
+
+  const fetchTeam = () => {
+    setLoading(true)
+    setError(null)
+    adminGetTeam()
+      .then(data => setAdmins(data.admins ?? data))
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { fetchTeam() }, [])
+
+  const handleRemove = async (adminId) => {
+    try {
+      await adminRemoveTeamMember(adminId)
+      fetchTeam()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   const statusDot = { online: 'bg-green-500', away: 'bg-yellow-400', offline: 'bg-on-surface-variant/30' }
 
   return (
     <div className="flex flex-col gap-6">
+      {error && <AdminAlert type="error" message={error} />}
+
       <div className="flex items-center justify-between">
-        <p className="text-[12px] text-on-surface-variant font-medium">{admins.length} active admins on this platform</p>
+        <p className="text-[12px] text-on-surface-variant font-medium">
+          {loading ? '…' : `${admins.length} active admin${admins.length !== 1 ? 's' : ''} on this platform`}
+        </p>
         <button onClick={onInvite}
           className="flex items-center gap-2 px-5 py-3 bg-primary-container text-on-primary-fixed font-bold text-[11px] uppercase tracking-widest border-4 border-on-background hover:brightness-105 transition-all"
           style={{ boxShadow: '3px 3px 0px 0px var(--neo-border-color)' }}>
@@ -552,36 +674,40 @@ function AdminTeam({ onInvite }) {
           Invite Admin
         </button>
       </div>
+
       <div className="flex flex-col gap-4">
-        {admins.map((a, i) => (
-          <div key={i} className="bg-surface border-4 border-on-background p-6 flex items-center gap-5"
-            style={{ boxShadow: '4px 4px 0px 0px var(--neo-border-color)' }}>
-            <div className="relative shrink-0">
-              <div className="w-12 h-12 bg-primary-container border-4 border-on-background flex items-center justify-center font-extrabold text-[13px] text-on-primary-fixed">
-                {a.name.split(' ').map(n => n[0]).join('').slice(0,2)}
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)
+        ) : admins.length === 0 ? (
+          <p className="text-[12px] text-on-surface-variant">No admins found.</p>
+        ) : (
+          admins.map((a, i) => (
+            <div key={a.id ?? i} className="bg-surface border-4 border-on-background p-6 flex items-center gap-5"
+              style={{ boxShadow: '4px 4px 0px 0px var(--neo-border-color)' }}>
+              <div className="relative shrink-0">
+                <div className="w-12 h-12 bg-primary-container border-4 border-on-background flex items-center justify-center font-extrabold text-[13px] text-on-primary-fixed">
+                  {a.name?.split(' ').map(n => n[0]).join('').slice(0, 2) ?? '??'}
+                </div>
+                <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-surface ${statusDot[a.status] ?? statusDot.offline}`} />
               </div>
-              <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-surface ${statusDot[a.status]}`} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="font-extrabold text-[15px]">{a.name}</p>
-                <span className="font-bold text-[9px] uppercase tracking-widest px-2 py-0.5 border-2 border-on-background/20 bg-surface-container text-on-surface-variant">{a.role}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-extrabold text-[15px]">{a.name}</p>
+                  <span className="font-bold text-[9px] uppercase tracking-widest px-2 py-0.5 border-2 border-on-background/20 bg-surface-container text-on-surface-variant">{a.role}</span>
+                </div>
+                <p className="text-[12px] text-on-surface-variant">{a.email}</p>
+                <p className="text-[11px] text-on-surface-variant/60 mt-0.5">Since {a.since} · Last active {a.last}</p>
               </div>
-              <p className="text-[12px] text-on-surface-variant">{a.email}</p>
-              <p className="text-[11px] text-on-surface-variant/60 mt-0.5">Since {a.since} · Last active {a.last}</p>
+              <div className="flex gap-2 shrink-0">
+                {a.role !== 'Super Admin' && (
+                  <button onClick={() => handleRemove(a.id)} className="p-2 border-2 border-on-background hover:bg-error hover:text-on-error transition-colors">
+                    <span className="material-symbols-outlined text-[18px]">remove_circle</span>
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="flex gap-2 shrink-0">
-              <button className="p-2 border-2 border-on-background hover:bg-on-background hover:text-surface transition-colors">
-                <span className="material-symbols-outlined text-[18px]">edit</span>
-              </button>
-              {a.role !== 'Super Admin' && (
-                <button className="p-2 border-2 border-on-background hover:bg-error hover:text-on-error transition-colors">
-                  <span className="material-symbols-outlined text-[18px]">remove_circle</span>
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   )
@@ -591,17 +717,14 @@ function AdminTeam({ onInvite }) {
 export default function AdminDashboard() {
   const navigate               = useNavigate()
   const { logout: authLogout } = useAuth()
-  const [activeTab, setActiveTab]       = useState('overview')
-  const [showInvite, setShowInvite]     = useState(false)
-  const [idleWarning, setIdleWarning]   = useState(false)
+  const [activeTab, setActiveTab]         = useState('overview')
+  const [showInvite, setShowInvite]       = useState(false)
+  const [idleWarning, setIdleWarning]     = useState(false)
   const [idleCountdown, setIdleCountdown] = useState(60)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const countdownRef = useRef(null)
 
-  const logout = () => {
-    authLogout()
-    navigate('/login')
-  }
+  const logout = () => { authLogout(); navigate('/login') }
 
   useIdleLogout(14 * 60 * 1000, () => {
     setIdleWarning(true)
@@ -617,25 +740,21 @@ export default function AdminDashboard() {
   const stayActive = () => { setIdleWarning(false); clearInterval(countdownRef.current) }
 
   const tabs = [
-    { id: 'overview',  icon: 'dashboard',     label: 'Overview'        },
-    { id: 'users',     icon: 'group',          label: 'User Management', badge: '14.8k' },
-    { id: 'ads',       icon: 'ads_click',      label: 'Ad Manager',      badge: '23'    },
-    { id: 'team',      icon: 'shield_person',  label: 'Admin Team',      badge: '3'     },
+    { id: 'overview', icon: 'dashboard',    label: 'Overview'         },
+    { id: 'users',    icon: 'group',         label: 'User Management'  },
+    { id: 'ads',      icon: 'ads_click',     label: 'Ad Manager'       },
+    { id: 'team',     icon: 'shield_person', label: 'Admin Team'       },
   ]
-
   const tabTitles = { overview: 'Dashboard', users: 'User Management', ads: 'Ad Manager', team: 'Admin Team' }
 
   return (
     <div className="min-h-screen bg-surface-container flex">
-
-      {/* ── Overlays ── */}
       {idleWarning && <IdleWarning countdown={idleCountdown} onStay={stayActive} onLogout={logout} />}
       {showInvite  && <InviteModal onClose={() => setShowInvite(false)} />}
 
-      {/* ── Sidebar (desktop) ── */}
+      {/* Sidebar (desktop) */}
       <aside className="hidden md:flex flex-col h-screen w-72 border-r-4 border-on-background bg-surface sticky top-0 z-40 overflow-y-auto">
         <div className="flex flex-col h-full">
-          {/* Brand */}
           <div className="px-6 py-6 border-b-4 border-on-background">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-primary-container border-4 border-on-background flex items-center justify-center"
@@ -648,22 +767,16 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
-
-          {/* Status badge */}
           <div className="mx-4 mt-4 mb-2 px-4 py-2.5 bg-on-background flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
             <span className="font-bold text-[9px] uppercase tracking-[0.18em] text-surface/70">Session Authenticated</span>
           </div>
-
-          {/* Nav */}
           <nav className="flex-1 py-2">
             {tabs.map(t => (
               <NavItem key={t.id} icon={t.icon} label={t.label} active={activeTab === t.id}
-                badge={t.badge} onClick={() => setActiveTab(t.id)} />
+                onClick={() => setActiveTab(t.id)} />
             ))}
           </nav>
-
-          {/* Footer */}
           <div className="border-t-4 border-on-background">
             <NavItem icon="settings" label="Settings" active={false} onClick={() => {}} />
             <NavItem icon="logout"   label="Log Out"  active={false} onClick={logout}   />
@@ -671,41 +784,31 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* ── Main ── */}
+      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-
-        {/* Top bar */}
         <header className="bg-surface border-b-4 border-on-background px-6 lg:px-10 py-4 flex items-center justify-between sticky top-0 z-30">
-          {/* Mobile: hamburger + title */}
           <div className="flex items-center gap-4">
             <button className="md:hidden p-1 text-on-surface" onClick={() => setMobileNavOpen(v => !v)}>
               <span className="material-symbols-outlined">menu</span>
             </button>
             <h2 className="font-extrabold text-[18px] uppercase tracking-tight">{tabTitles[activeTab]}</h2>
           </div>
-
-          {/* Right side */}
           <div className="flex items-center gap-3">
-            {/* Search (desktop) */}
             <div className="hidden lg:flex items-center border-4 border-on-background bg-surface-container-low px-4 py-2 focus-within:border-primary-container transition-all">
               <span className="material-symbols-outlined text-[18px] text-on-surface-variant mr-2">search</span>
               <input type="text" placeholder="Search platform…"
                 className="bg-transparent border-none focus:ring-0 text-[13px] w-52 placeholder:text-on-surface-variant/40" />
             </div>
-
             <button className="relative p-2 hover:bg-surface-container transition-colors">
               <span className="material-symbols-outlined text-on-surface">notifications</span>
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-error border-2 border-surface" />
             </button>
-
-            {/* Invite (desktop) */}
             <button onClick={() => setShowInvite(true)}
               className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary-container text-on-primary-fixed font-bold text-[11px] uppercase tracking-wider border-2 border-on-background hover:brightness-105 transition-all"
               style={{ boxShadow: '2px 2px 0px 0px var(--neo-border-color)' }}>
               <span className="material-symbols-outlined text-[16px]">person_add</span>
               Invite Admin
             </button>
-
             <button onClick={logout}
               className="flex items-center gap-2 px-4 py-2 font-bold text-[11px] uppercase tracking-wider border-2 border-on-background hover:bg-surface-container transition-colors">
               <span className="material-symbols-outlined text-[16px]">logout</span>
@@ -714,7 +817,6 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        {/* Mobile nav drawer */}
         {mobileNavOpen && (
           <div className="md:hidden fixed inset-0 z-50 bg-on-background/60" onClick={() => setMobileNavOpen(false)}>
             <div className="w-72 h-full bg-surface border-r-4 border-on-background flex flex-col" onClick={e => e.stopPropagation()}>
@@ -725,7 +827,7 @@ export default function AdminDashboard() {
               <nav className="flex-1 py-2">
                 {tabs.map(t => (
                   <NavItem key={t.id} icon={t.icon} label={t.label} active={activeTab === t.id}
-                    badge={t.badge} onClick={() => { setActiveTab(t.id); setMobileNavOpen(false) }} />
+                    onClick={() => { setActiveTab(t.id); setMobileNavOpen(false) }} />
                 ))}
               </nav>
               <div className="border-t-4 border-on-background">
@@ -735,15 +837,12 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Page content */}
         <main className="flex-1 p-6 lg:p-10 max-w-[1400px] mx-auto w-full">
-          {/* Breadcrumb */}
           <div className="flex items-center gap-2 mb-6">
             <span className="font-bold text-[10px] uppercase tracking-[0.16em] text-on-surface-variant">Admin</span>
             <span className="text-on-surface-variant/40 font-bold">/</span>
             <span className="font-bold text-[10px] uppercase tracking-[0.16em] text-on-surface">{tabTitles[activeTab]}</span>
           </div>
-
           {activeTab === 'overview' && <Overview onInvite={() => setShowInvite(true)} />}
           {activeTab === 'users'    && <UserManagement />}
           {activeTab === 'ads'      && <AdManager />}
@@ -751,7 +850,6 @@ export default function AdminDashboard() {
         </main>
       </div>
 
-      {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t-4 border-on-background z-20 flex justify-around py-3 px-2">
         {tabs.map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id)}

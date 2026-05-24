@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AdminShell, AdminButton, AdminAlert, AdminInput } from './AdminShared'
+import { adminValidateInviteToken, adminRegister } from '../../services/api'
 
 // ── Password strength checker ─────────────────────────────────
 function getStrength(pw) {
@@ -61,17 +62,16 @@ export default function AdminRegister() {
   // Validate invite token on mount
   useEffect(() => {
     if (!token) { setTokenValid(false); return }
-    // BACKEND: GET /api/admin/auth/validate-invite?token=TOKEN
-    // Returns: { valid: true, email: 'invited@example.com', expiresAt: '...' }
-    // If invalid/expired → { valid: false }
-    setTimeout(() => {
-      if (token.length >= 8) {
-        setTokenValid(true)
-        setInvitedEmail('invited-admin@chicago.io') // ← replace with API response
-      } else {
-        setTokenValid(false)
-      }
-    }, 800)
+    adminValidateInviteToken(token)
+      .then(res => {
+        if (res.valid) {
+          setTokenValid(true)
+          setInvitedEmail(res.email ?? '')
+        } else {
+          setTokenValid(false)
+        }
+      })
+      .catch(() => setTokenValid(false))
   }, [token])
 
   const handleSubmit = async (e) => {
@@ -82,15 +82,16 @@ export default function AdminRegister() {
     if (!pwMatch)           { setError('Passwords do not match.'); return }
 
     setLoading(true)
-    // BACKEND: POST /api/admin/auth/register
-    //   Body: { token, name, password }
-    // On success → token is permanently destroyed server-side
-    // Response: { success: true }
-    // Then redirect to login
-    await new Promise(r => setTimeout(r, 1500))
-    setLoading(false)
-    setDone(true)
-    setTimeout(() => navigate('/portal-ax92-v1'), 2500)
+    try {
+      await adminRegister({ token, name, password })
+      setDone(true)
+      setTimeout(() => navigate('/portal-ax92-v1'), 2500)
+    } catch (err) {
+      setError(err.message || 'Registration failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+    return
   }
 
   // ── Token validating ──
