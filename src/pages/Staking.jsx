@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { Icon } from '../components/Layout'
 import { getMyLeaderboardStats } from '../services/index'
 
 const TEAM_FINANCE_URL = 'https://www.team.finance/whitelabel'
