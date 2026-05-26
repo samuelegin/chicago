@@ -1,0 +1,243 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Light mode tokens (default) ───────────────────────────── */
+:root {
+  --color-background:                #f9f9f9;
+  --color-surface:                   #f9f9f9;
+  --color-surface-bright:            #f9f9f9;
+  --color-surface-dim:               #dadada;
+  --color-surface-variant:           #e2e2e2;
+  --color-surface-container-lowest:  #ffffff;
+  --color-surface-container-low:     #f3f3f3;
+  --color-surface-container:         #eeeeee;
+  --color-surface-container-high:    #e8e8e8;
+  --color-surface-container-highest: #e2e2e2;
+  --color-on-background:             #1a1c1c;
+  --color-on-surface:                #1a1c1c;
+  --color-on-surface-variant:        #4d4635;
+  --color-outline:                   #7f7663;
+  --color-outline-variant:           #d0c5af;
+  --color-primary:                   #735c00;
+  --color-on-primary:                #ffffff;
+  --color-primary-container:         #d4af37;
+  --color-on-primary-container:      #554300;
+  --color-primary-fixed:             #ffe088;
+  --color-primary-fixed-dim:         #e9c349;
+  --color-on-primary-fixed:          #241a00;
+  --color-on-primary-fixed-variant:  #574500;
+  --color-inverse-primary:           #e9c349;
+  --color-secondary:                 #5e5e5e;
+  --color-on-secondary:              #ffffff;
+  --color-secondary-container:       #e2e2e2;
+  --color-on-secondary-container:    #646464;
+  --color-secondary-fixed:           #e2e2e2;
+  --color-secondary-fixed-dim:       #c6c6c6;
+  --color-on-secondary-fixed:        #1b1b1b;
+  --color-on-secondary-fixed-variant:#474747;
+  --color-tertiary:                  #5d5f5f;
+  --color-on-tertiary:               #ffffff;
+  --color-tertiary-container:        #b2b3b3;
+  --color-on-tertiary-container:     #434546;
+  --color-tertiary-fixed:            #e2e2e2;
+  --color-tertiary-fixed-dim:        #c6c6c7;
+  --color-on-tertiary-fixed:         #1a1c1c;
+  --color-on-tertiary-fixed-variant: #454747;
+  --color-error:                     #ba1a1a;
+  --color-on-error:                  #ffffff;
+  --color-error-container:           #ffdad6;
+  --color-on-error-container:        #93000a;
+  --color-inverse-surface:           #2f3131;
+  --color-inverse-on-surface:        #f1f1f1;
+  --color-surface-tint:              #735c00;
+  --neo-border-color:                #1a1c1c;
+  --neo-shadow-color:                rgba(26,28,28,1);
+
+  /* ── chicago-mock-preview: radius scale ── */
+  --ui-radius-sm:   4px;
+  --ui-radius:      8px;
+  --ui-radius-md:   10px;
+  --ui-radius-lg:   14px;
+  --ui-radius-xl:   18px;
+  --ui-radius-full: 9999px;
+}
+
+/* ── Dark mode tokens ───────────────────────────────────────── */
+.dark {
+  --color-background:                #0f1010;
+  --color-surface:                   #0f1010;
+  --color-surface-bright:            #1a1c1c;
+  --color-surface-dim:               #080909;
+  --color-surface-variant:           #2a2c2c;
+  --color-surface-container-lowest:  #080909;
+  --color-surface-container-low:     #141616;
+  --color-surface-container:         #1a1c1c;
+  --color-surface-container-high:    #222424;
+  --color-surface-container-highest: #2a2c2c;
+  --color-on-background:             #e2e2e2;
+  --color-on-surface:                #e2e2e2;
+  --color-on-surface-variant:        #d0c5af;
+  --color-outline:                   #998f78;
+  --color-outline-variant:           #4d4635;
+  --color-primary:                   #e9c349;
+  --color-on-primary:                #241a00;
+  --color-primary-container:         #554300;
+  --color-on-primary-container:      #ffe088;
+  --color-primary-fixed:             #ffe088;
+  --color-primary-fixed-dim:         #e9c349;
+  --color-on-primary-fixed:          #241a00;
+  --color-on-primary-fixed-variant:  #574500;
+  --color-inverse-primary:           #735c00;
+  --color-secondary:                 #c6c6c6;
+  --color-on-secondary:              #303030;
+  --color-secondary-container:       #474747;
+  --color-on-secondary-container:    #e2e2e2;
+  --color-error:                     #ffb4ab;
+  --color-on-error:                  #690005;
+  --color-error-container:           #93000a;
+  --color-on-error-container:        #ffdad6;
+  --color-inverse-surface:           #e2e2e2;
+  --color-inverse-on-surface:        #2f3131;
+  --color-surface-tint:              #e9c349;
+  --neo-border-color:                #e2e2e2;
+  --neo-shadow-color:                rgba(226,226,226,0.7);
+}
+
+/* ── Base ───────────────────────────────────────────────────── */
+@layer base {
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    font-family: 'Material Symbols Outlined';
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-on-background);
+    transition: background-color 0.2s ease, color 0.2s ease;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--color-primary-container);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: rgba(212, 175, 55, 0.35);
+    color: #241a00;
+  }
+
+  /* ── chicago-mock-preview: rounded corners ──────────────────
+     Neo-Brutalist zero-radius rule overridden per founder request.
+     All bordered/interactive elements use the --ui-radius scale.
+     To revert to original: replace this block with:
+       * { border-radius: 0 !important; }
+  ──────────────────────────────────────────────────────────── */
+
+  /* Global base — everything gets some softness */
+  * {
+    border-radius: var(--ui-radius-sm);
+  }
+
+  /* Inputs */
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select {
+    border-radius: var(--ui-radius) !important;
+  }
+
+  /* Buttons */
+  button,
+  [role="button"],
+  a[class*="px-"] {
+    border-radius: var(--ui-radius-sm) !important;
+  }
+
+  /* Cards / panels — bigger radius */
+  section,
+  aside > *,
+  [class*="neo-shadow"],
+  [class*="neo-border"] {
+    border-radius: var(--ui-radius) !important;
+  }
+
+  /* Modals, dropdowns, overlays */
+  [class*="z-50"] > div,
+  [class*="absolute"][class*="border"] {
+    border-radius: var(--ui-radius-md) !important;
+  }
+
+  /* Avatars — circular feels more natural */
+  img[class*="w-"][class*="h-"][class*="border"] {
+    border-radius: var(--ui-radius-lg) !important;
+  }
+
+  /* TopBar and BottomNav stay edge-to-edge — no radius */
+  header,
+  nav.fixed.bottom-0,
+  header * {
+    border-radius: 0 !important;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar-thumb {
+    border-radius: var(--ui-radius-full) !important;
+  }
+}
+
+/* ── Utilities ──────────────────────────────────────────────── */
+@layer utilities {
+  .neo-shadow {
+    box-shadow: 6px 6px 0px 0px var(--neo-shadow-color);
+  }
+  .neo-shadow-sm {
+    box-shadow: 4px 4px 0px 0px var(--neo-shadow-color);
+  }
+  .neo-shadow-lg {
+    box-shadow: 8px 8px 0px 0px var(--neo-shadow-color);
+  }
+  .neo-shadow-gold {
+    box-shadow: 6px 6px 0px 0px rgba(212, 175, 55, 1);
+  }
+  .neo-shadow-gold-sm {
+    box-shadow: 4px 4px 0px 0px rgba(212, 175, 55, 1);
+  }
+  .neo-border {
+    border: 3px solid var(--neo-border-color);
+  }
+  .neo-border-4 {
+    border: 4px solid var(--neo-border-color);
+  }
+  .neo-border-gold {
+    border: 3px solid #d4af37;
+  }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+/* ── Button press interaction ───────────────────────────────── */
+button:active:not(:disabled) {
+  transform: translate(2px, 2px);
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-surface-container); }
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary-container);
+  border: 2px solid var(--color-surface);
+}
