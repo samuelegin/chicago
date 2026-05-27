@@ -59,11 +59,11 @@ export function TopBar() {
       {/* ── Actions ── */}
       <div className="flex items-center gap-2 md:gap-3">
 
-        {/* Theme toggle — desktop only */}
+        {/* Theme toggle — visible on all screen sizes */}
         <button
           title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
           onClick={toggle}
-          className="hidden lg:flex items-center justify-center w-10 h-10 border-[3px] border-on-surface bg-surface-container text-on-surface-variant hover:bg-primary-container/10 hover:text-primary-container transition-all"
+          className="flex items-center justify-center w-10 h-10 border-[3px] border-on-surface bg-surface-container text-on-surface-variant hover:bg-primary-container/10 hover:text-primary-container transition-all"
           style={{ boxShadow: '2px 2px 0px 0px var(--neo-shadow-color)' }}
         >
           <Icon name={dark ? 'light_mode' : 'dark_mode'} className="text-[20px]" />
