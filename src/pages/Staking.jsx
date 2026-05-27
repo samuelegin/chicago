@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { getMyLeaderboardStats } from '../services/api'
+import { Icon } from '../components/Layout'
 
 const TEAM_FINANCE_URL = 'https://www.team.finance/whitelabel'
 
@@ -144,8 +145,9 @@ export default function Staking() {
         className="bg-surface border-4 border-on-background p-5 lg:p-6"
         style={{ boxShadow: '4px 4px 0px 0px var(--neo-shadow-color)' }}
       >
-        <h2 className="font-bold text-[11px] uppercase tracking-[0.14em] mb-5 pb-3 border-b-[3px] border-on-background text-on-surface">
-          ⚡ Staking Boost Tiers
+        <h2 className="font-bold text-[11px] uppercase tracking-[0.14em] mb-5 pb-3 border-b-[3px] border-on-background text-on-surface flex items-center gap-2">
+          <Icon name="bolt" className="text-[16px] text-primary-container" />
+          Staking Boost Tiers
         </h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {BOOST_TIERS.map((tier, i) => (
@@ -157,7 +159,16 @@ export default function Staking() {
                   : 'border-on-background/20 bg-surface-container'
               }`}
             >
-              <p className="text-2xl">{tier.multiplier >= 50 ? '🔥' : tier.multiplier > 0 ? '⚡' : '—'}</p>
+              <Icon
+                name={tier.icon}
+                className={`text-[28px] ${
+                  tier.multiplier >= 50
+                    ? 'text-primary-container'
+                    : tier.multiplier > 0
+                    ? 'text-on-surface'
+                    : 'text-on-surface-variant/40'
+                }`}
+              />
               <p className="font-extrabold text-base text-on-surface leading-none">{tier.label}</p>
               <p className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">{tier.threshold}</p>
             </div>
