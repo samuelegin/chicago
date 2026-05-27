@@ -54,8 +54,14 @@ export default {
         'surface-tint':              'var(--color-surface-tint)',
       },
       borderRadius: {
-        DEFAULT: '0px', sm: '0px', md: '0px', lg: '0px', xl: '0px',
-        '2xl': '0px', '3xl': '0px', full: '9999px',
+        DEFAULT: 'var(--radius)',
+        sm:      '4px',
+        md:      '8px',
+        lg:      '12px',
+        xl:      '16px',
+        '2xl':   '20px',
+        '3xl':   '24px',
+        full:    '9999px',
       },
       spacing: {
         'margin-mobile':  '16px',

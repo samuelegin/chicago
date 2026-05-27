@@ -133,8 +133,13 @@
     color: #241a00;
   }
 
-  /* Sharp corners everywhere — Neo-Brutalist rule */
-  * { border-radius: 0 !important; }
+  /* ── Global border-radius override ─────────────────────────── */
+  /* Change --radius to any value you want (e.g. 8px, 12px, 0.5rem) */
+  :root { --radius: 12px; }
+
+  *  { border-radius: var(--radius); }
+  /* Pill shapes stay fully round */
+  .rounded-full { border-radius: 9999px !important; }
 }
 
 /* ── Utilities ──────────────────────────────────────────────── */
