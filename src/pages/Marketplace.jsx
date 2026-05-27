@@ -265,8 +265,8 @@ export default function Marketplace() {
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="w-full border-2 lg:border-4 border-on-surface bg-surface p-2 lg:p-3 font-medium text-sm lg:text-base focus:ring-0 focus:outline-none focus:border-primary"
                   >
-                    <option value="ETH">Pay with ETH</option>
-                    <option value="CLT">Pay with CLT</option>
+                    <option value="ETH">ETH</option>
+                    <option value="CLT">CLT</option>
                   </select>
                 </div>
               </div>
@@ -389,8 +389,11 @@ export default function Marketplace() {
                     Final Pricing
                   </p>
                   <h4 className="font-extrabold text-lg lg:text-[40px] lg:leading-[48px]">
-                    Total: {pricing?.totalCostEth ?? '—'} ETH
+                    Total: {pricing?.totalCostEth ?? '—'} {paymentMethod}
                   </h4>
+                  <p className="text-[10px] lg:text-[12px] opacity-60 mt-1">
+                    One-time payment — no recurring charges
+                  </p>
                 </div>
                 <button
                   type="submit"
@@ -496,20 +499,6 @@ export default function Marketplace() {
                       <div className="flex flex-col">
                         <span className="font-bold uppercase text-[9px] lg:text-[14px] opacity-60">Clicks</span>
                         <span className="font-extrabold text-lg lg:text-[24px]">{camp.clicks.toLocaleString()}</span>
-                      </div>
-                    </div>
-
-                    {/* Budget bar */}
-                    <div className="mb-3 lg:mb-4">
-                      <div className="flex justify-between text-[9px] lg:text-[11px] font-bold uppercase opacity-60 mb-1">
-                        <span>Budget spent</span>
-                        <span>{camp.spent} / {camp.budget} ETH</span>
-                      </div>
-                      <div className="h-1.5 lg:h-2 border border-on-background/10 lg:border-2 lg:border-on-surface bg-surface-container overflow-hidden">
-                        <div
-                          className="h-full bg-primary transition-all"
-                          style={{ width: `${(camp.spent / camp.budget) * 100}%` }}
-                        />
                       </div>
                     </div>
 
