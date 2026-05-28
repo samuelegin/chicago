@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { Icon } from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
-import { getCurrentUser, getMyLeaderboardStats, getFeedPosts } from '../services/api'
+import { useToast } from '../context/ToastContext'
+import { getCurrentUser, getMyLeaderboardStats, getUserPosts } from '../services/api'
 
 // Referral code derived from user id (in production, comes from backend)
 // Influence score config
@@ -14,12 +15,30 @@ const TIER_THRESHOLDS = [
   { label: 'Diamond',  min: 60000,  max: 100000, color: 'bg-cyan-400' },
 ]
 
+function PostSkeleton() {
+  return (
+    <div className="border border-on-background/10 lg:neo-border bg-background p-3 lg:p-4 animate-pulse">
+      <div className="flex justify-between items-center mb-2">
+        <div className="h-2.5 bg-on-background/10 w-28" />
+        <div className="h-2 bg-on-background/10 w-16" />
+      </div>
+      <div className="flex flex-col gap-1.5 mb-3">
+        <div className="h-3 bg-on-background/10 w-full" />
+        <div className="h-3 bg-on-background/10 w-5/6" />
+        <div className="h-3 bg-on-background/10 w-4/6" />
+      </div>
+    </div>
+  )
+}
+
 export default function Profile() {
   const [user, setUser] = useState(null)
   const [myStats, setMyStats] = useState(null)
   const [userPosts, setUserPosts] = useState([])
   const [copied, setCopied] = useState(false)
+  const [postsLoading, setPostsLoading] = useState(true)
   const { user: authUser, logout } = useAuth()
+  const toast = useToast()
   const navigate = useNavigate()
 
   const [profileError, setProfileError] = useState(null)
@@ -30,9 +49,11 @@ export default function Profile() {
       .then(setUser)
       .catch(err => { setProfileError(err.message); setUser(authUser) })
     getMyLeaderboardStats().then(setMyStats).catch(() => {})
-    getFeedPosts('general').then(posts => {
-      if (authUser?.id) setUserPosts((posts.posts ?? posts).filter(p => p.author?.id === authUser.id))
-    }).catch(() => {})
+    setPostsLoading(true)
+    getUserPosts()
+      .then(data => setUserPosts(Array.isArray(data) ? data : data.posts ?? []))
+      .catch(() => toast.error('Could not load your posts'))
+      .finally(() => setPostsLoading(false))
   }, [authUser])
 
   const influenceScore = myStats?.influence?.score ?? 0
@@ -77,8 +98,13 @@ export default function Profile() {
         <div className="w-full h-28 lg:h-40 bg-primary-container border border-on-background/10 lg:neo-border lg:neo-shadow" />
         <div className="bg-surface-container border border-on-background/10 border-t-0 lg:neo-border lg:border-t-0 p-3 lg:p-6">
           <div className="flex justify-between items-start mb-3 lg:mb-4">
-            <div className="-mt-10 lg:-mt-16 w-16 h-16 lg:w-24 lg:h-24 border-2 border-on-background/20 lg:neo-border overflow-hidden">
-              <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+            <div className="-mt-10 lg:-mt-16 w-16 h-16 lg:w-24 lg:h-24 border-2 border-on-background/20 lg:neo-border overflow-hidden bg-surface-container flex items-center justify-center">
+              {user.avatar
+                ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }} />
+                : null}
+              <div style={{ display: user.avatar ? 'none' : 'flex' }} className="w-full h-full items-center justify-center">
+                <Icon name="person" className="text-[32px] lg:text-[48px] text-on-surface-variant/40" />
+              </div>
             </div>
             <div className="flex items-center gap-2 mt-2">
               <NavLink
@@ -112,10 +138,10 @@ export default function Profile() {
           {/* Stats row */}
           <div className="flex gap-4 lg:gap-6 mt-3 lg:mt-4 pt-3 lg:pt-4 border-t border-on-background/10">
             {[
-              { label: 'Posts',     value: user.posts.toLocaleString() },
-              { label: 'Followers', value: user.followers >= 1000 ? `${(user.followers / 1000).toFixed(1)}k` : user.followers },
-              { label: 'Following', value: user.following },
-              { label: 'CLT Held',  value: user.cltHeld.toLocaleString(), accent: true },
+              { label: 'Posts',     value: (user.posts ?? 0).toLocaleString() },
+              { label: 'Followers', value: (user.followers ?? 0) >= 1000 ? `${((user.followers ?? 0) / 1000).toFixed(1)}k` : (user.followers ?? 0) },
+              { label: 'Following', value: user.following ?? 0 },
+              { label: 'CLT Held',  value: (user.cltHeld ?? 0).toLocaleString(), accent: true },
             ].map((stat) => (
               <div key={stat.label} className="flex flex-col items-center">
                 <span className="text-[9px] lg:text-[12px] uppercase text-on-surface-variant font-bold">{stat.label}</span>
@@ -232,7 +258,13 @@ export default function Profile() {
           <h2 className="font-headline-md text-sm lg:text-headline-md uppercase font-black">All Posts</h2>
           <Icon name="sort" className="cursor-pointer" />
         </div>
-        {userPosts.length === 0 ? (
+        {postsLoading ? (
+          <div className="flex flex-col gap-3 lg:gap-4">
+            <PostSkeleton />
+            <PostSkeleton />
+            <PostSkeleton />
+          </div>
+        ) : userPosts.length === 0 ? (
           <p className="text-on-surface-variant py-6 lg:py-8 text-center text-sm">No posts yet.</p>
         ) : (
           <div className="flex flex-col gap-3 lg:gap-6">
@@ -243,7 +275,7 @@ export default function Profile() {
                   <span className="text-[9px] lg:text-[10px] text-on-surface-variant font-mono">{post.timestamp}</span>
                 </div>
                 <p className="text-sm lg:text-body-lg mb-3 lg:mb-4">{post.content}</p>
-                {post.images.length > 0 && (
+                {post.images?.length > 0 && (
                   <img src={post.images[0]} alt="" className="border border-on-background/10 lg:neo-border w-full h-32 lg:h-40 object-cover" />
                 )}
               </div>

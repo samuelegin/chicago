@@ -143,6 +143,9 @@ export const unfollowUser = (userId) =>
 export const updateProfile = (payload) =>
   request('/users/me', { method: 'PATCH', body: JSON.stringify(payload) })
 
+export const getUserPosts = (page = 1) =>
+  request(`/users/me/posts?page=${page}`)
+
 // ─── LEADERBOARD ──────────────────────────────────────────────
 export const getLeaderboard = (type = 'creators') =>
   request(`/leaderboard?type=${type}`)
@@ -252,7 +255,7 @@ export default {
   requestMagicLink, verifyMagicLink, getCurrentUser, connectWallet,
   getFeedPosts, getFeedCategories, createPost, likePost, unlikePost, getTrendingTopics,
   getComments, createComment,
-  getUser, getSuggestedUsers, followUser, unfollowUser, updateProfile,
+  getUser, getSuggestedUsers, followUser, unfollowUser, updateProfile, getUserPosts,
   getLeaderboard, getMyLeaderboardStats,
   getStakingInfo, stakeTokens, unstakeTokens, claimRewards,
   getMarketplaceCampaigns, getMarketplaceAds, getMarketplacePricing, createCampaign,

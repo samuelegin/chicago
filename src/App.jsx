@@ -5,6 +5,7 @@ import { mainnet, sepolia } from 'wagmi/chains'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { ToastProvider } from './context/ToastContext'
 import { TopBar, LeftSidebar, BottomNav } from './components/Layout'
 import ErrorBoundary from './components/ErrorBoundary'
 
@@ -71,7 +72,13 @@ function AppShell({ children }) {
       </main>
       {!isCommentsPage && <BottomNav />}
       {pathname === '/' && (
-        <button className="lg:hidden fixed bottom-24 right-5 w-10 h-10 bg-primary-container text-on-primary-fixed flex items-center justify-center z-50 active:scale-90 transition-all">
+        <button
+          onClick={() => {
+            const ta = document.querySelector('textarea[placeholder]')
+            if (ta) { ta.scrollIntoView({ behavior: 'smooth', block: 'center' }); ta.focus() }
+          }}
+          className="lg:hidden fixed bottom-24 right-5 w-10 h-10 bg-primary-container text-on-primary-fixed flex items-center justify-center z-50 active:scale-90 transition-all"
+        >
           <span className="material-symbols-outlined text-xl">edit</span>
         </button>
       )}
@@ -121,7 +128,9 @@ export default function App() {
             <BrowserRouter>
               <ThemeProvider>
                 <AuthProvider>
-                  <AppRoutes />
+                  <ToastProvider>
+                    <AppRoutes />
+                  </ToastProvider>
                 </AuthProvider>
               </ThemeProvider>
             </BrowserRouter>
