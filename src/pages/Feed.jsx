@@ -144,6 +144,31 @@ function PollCreator({ onAdd, onClose }) {
   )
 }
 
+// ── Post Skeleton ─────────────────────────────────────────────
+function PostSkeleton() {
+  return (
+    <div className="bg-surface-container border border-on-background/10 lg:neo-border p-4 lg:p-6 animate-pulse">
+      <div className="flex gap-3 mb-4">
+        <div className="w-10 h-10 bg-on-background/10 rounded-none flex-shrink-0" />
+        <div className="flex-1 flex flex-col gap-2 pt-1">
+          <div className="h-3 bg-on-background/10 w-32" />
+          <div className="h-2.5 bg-on-background/10 w-20" />
+        </div>
+      </div>
+      <div className="flex flex-col gap-2 mb-4">
+        <div className="h-3 bg-on-background/10 w-full" />
+        <div className="h-3 bg-on-background/10 w-5/6" />
+        <div className="h-3 bg-on-background/10 w-4/6" />
+      </div>
+      <div className="flex gap-6 pt-2 border-t border-on-background/10">
+        <div className="h-3 bg-on-background/10 w-12" />
+        <div className="h-3 bg-on-background/10 w-12" />
+        <div className="h-3 bg-on-background/10 w-12" />
+      </div>
+    </div>
+  )
+}
+
 export default function Feed() {
   const { user } = useAuth()
   const [posts, setPosts] = useState([])
@@ -152,33 +177,64 @@ export default function Feed() {
   const [suggested, setSuggested] = useState([])
   const [trendingTopics, setTrendingTopics] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [page, setPage] = useState(1)
   const [error, setError] = useState(null)
   const [postContent, setPostContent] = useState('')
+  const feedTopRef = useRef(null)
 
+  // Load sidebar data once on mount
   useEffect(() => {
-    setError(null)
-    Promise.all([
-      getFeedPosts(activeFilter),
-      getFeedCategories(),
-      getSuggestedUsers(),
-      getTrendingTopics(),
-    ]).then(([postsData, catsData, suggestData, trendData]) => {
-      setPosts(postsData)
-      setCategories(catsData)
-      setSuggested(suggestData)
-      setTrendingTopics(trendData)
-    }).catch(err => setError(err.message || 'Failed to load feed'))
-      .finally(() => setLoading(false))
+    Promise.all([getFeedCategories(), getSuggestedUsers(), getTrendingTopics()])
+      .then(([catsData, suggestData, trendData]) => {
+        setCategories(catsData)
+        setSuggested(suggestData)
+        setTrendingTopics(trendData)
+      })
+      .catch(() => {})
   }, [])
 
+  // Load posts whenever filter changes — reset pagination
   useEffect(() => {
     setLoading(true)
     setError(null)
-    getFeedPosts(activeFilter)
-      .then(setPosts)
+    setPage(1)
+    setHasMore(true)
+    getFeedPosts(activeFilter, 1)
+      .then((data) => {
+        const incoming = Array.isArray(data) ? data : data.posts ?? []
+        setPosts(incoming)
+        if (incoming.length === 0) setHasMore(false)
+      })
       .catch(err => setError(err.message || 'Failed to load posts'))
       .finally(() => setLoading(false))
   }, [activeFilter])
+
+  const handleLoadMore = async () => {
+    if (loadingMore || !hasMore) return
+    const nextPage = page + 1
+    setLoadingMore(true)
+    try {
+      const data = await getFeedPosts(activeFilter, nextPage)
+      const incoming = Array.isArray(data) ? data : data.posts ?? []
+      if (incoming.length === 0) {
+        setHasMore(false)
+      } else {
+        setPosts(prev => [...prev, ...incoming])
+        setPage(nextPage)
+      }
+    } catch {
+      // silently fail — user can retry
+    } finally {
+      setLoadingMore(false)
+    }
+  }
+
+  const handleHashtagClick = (hashtag) => {
+    setActiveFilter(hashtag)
+    feedTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
   const [selectedFiles, setSelectedFiles] = useState([])
   const [selectedGifs, setSelectedGifs] = useState([])
   const [poll, setPoll] = useState(null)
@@ -271,10 +327,8 @@ export default function Feed() {
     setShowPollCreator(false)
   }
 
-  const filteredPosts = posts
-
   return (
-    <div className="flex-1 lg:ml-[300px] lg:mr-[340px] max-w-2xl w-full flex flex-col gap-4 lg:gap-8 min-w-0">
+    <div ref={feedTopRef} className="flex-1 lg:ml-[300px] lg:mr-[340px] max-w-2xl w-full flex flex-col gap-4 lg:gap-8 min-w-0">
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
@@ -436,13 +490,41 @@ export default function Feed() {
           <p className="font-bold text-sm uppercase tracking-widest opacity-50">Unable to load posts</p>
           <p className="text-xs opacity-40">{error}</p>
         </div>
+      ) : loading ? (
+        <div className="flex flex-col gap-6">
+          <PostSkeleton />
+          <PostSkeleton />
+          <PostSkeleton />
+        </div>
       ) : (
         <div className="flex flex-col gap-6">
-          {filteredPosts.map((post) => (
+          {posts.map((post) => (
             <PostCard key={post.id} post={post} onLike={handleLike} />
           ))}
-          {!loading && filteredPosts.length === 0 && (
+          {posts.length === 0 && (
             <p className="text-center text-on-surface-variant py-12">No posts in this category yet.</p>
+          )}
+
+          {/* Load More */}
+          {hasMore && posts.length > 0 && (
+            <button
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              className="w-full py-3 border-[3px] border-on-background/20 bg-surface-container font-bold text-sm uppercase tracking-widest text-on-surface hover:bg-primary-container/10 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {loadingMore ? (
+                <>
+                  <div className="w-4 h-4 border-[3px] border-on-background/30 border-t-primary-container animate-spin" />
+                  Loading…
+                </>
+              ) : 'Load more'}
+            </button>
+          )}
+
+          {!hasMore && posts.length > 0 && (
+            <p className="text-center text-[11px] text-on-surface-variant/40 font-bold uppercase tracking-widest py-4">
+              You're all caught up
+            </p>
           )}
         </div>
       )}
@@ -454,6 +536,7 @@ export default function Feed() {
         suggestedUsers={suggested}
         trendingTopics={trendingTopics}
         onFollow={handleFollow}
+        onHashtagClick={handleHashtagClick}
       />
     </div>
   )

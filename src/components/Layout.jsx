@@ -227,7 +227,7 @@ export function BottomNav() {
 }
 
 // ─── Right Sidebar ────────────────────────────────────────────
-export function RightSidebar({ suggestedUsers, trendingTopics, onFollow }) {
+export function RightSidebar({ suggestedUsers, trendingTopics, onFollow, onHashtagClick }) {
   return (
     <aside className="fixed right-[max(0px,calc(50%-640px))] top-[88px] w-[300px] hidden lg:flex flex-col gap-4 h-[calc(100vh-100px)] overflow-y-auto no-scrollbar">
 
@@ -279,11 +279,15 @@ export function RightSidebar({ suggestedUsers, trendingTopics, onFollow }) {
         </h2>
         <div className="flex flex-col gap-4">
           {trendingTopics.map((topic) => (
-            <a key={topic.id} className="group block" href="#">
+            <button
+              key={topic.id}
+              onClick={() => onHashtagClick?.(topic.hashtag)}
+              className="group block text-left w-full hover:opacity-80 transition-opacity"
+            >
               <p className="text-[11px] text-primary font-bold font-mono mb-0.5">{topic.hashtag}</p>
               <p className="font-bold text-on-surface text-[13px] group-hover:underline decoration-2 underline-offset-2">{topic.title}</p>
               <p className="text-[10px] text-on-surface-variant font-mono">{topic.postCount} Posts</p>
-            </a>
+            </button>
           ))}
         </div>
       </section>
