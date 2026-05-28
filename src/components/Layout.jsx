@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useTheme } from '../context/ThemeContext'
@@ -169,21 +170,26 @@ export function LeftSidebar() {
           className="border-[4px] border-on-background bg-surface p-4 flex items-center gap-3"
           style={{ boxShadow: '4px 4px 0px 0px rgba(212,175,55,1)' }}
         >
-          {user.avatar ? (
-            <img
-              src={user.avatar}
-              alt={user.name}
-              className="w-10 h-10 object-cover border-[3px] border-on-surface flex-shrink-0"
-            />
-          ) : (
-            <div className="w-10 h-10 bg-surface-container border-[3px] border-on-surface flex items-center justify-center flex-shrink-0">
-              <Icon name="person" className="text-[18px]" />
+          <button
+            onClick={() => navigate('/profile')}
+            className="flex items-center gap-3 min-w-0 flex-1 text-left hover:opacity-80 transition-opacity"
+          >
+            {user.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="w-10 h-10 object-cover border-[3px] border-on-surface flex-shrink-0"
+              />
+            ) : (
+              <div className="w-10 h-10 bg-surface-container border-[3px] border-on-surface flex items-center justify-center flex-shrink-0">
+                <Icon name="person" className="text-[18px]" />
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="font-bold text-[13px] uppercase tracking-wide text-on-surface truncate">{user.name}</p>
+              <p className="text-[11px] text-on-surface-variant truncate font-mono">{user.handle}</p>
             </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-[13px] uppercase tracking-wide text-on-surface truncate">{user.name}</p>
-            <p className="text-[11px] text-on-surface-variant truncate font-mono">{user.handle}</p>
-          </div>
+          </button>
           <button
             onClick={handleLogout}
             title="Sign out"
@@ -210,8 +216,8 @@ export function BottomNav() {
           end={link.path === '/'}
           className={({ isActive }) =>
             isActive
-              ? 'flex flex-col items-center justify-center gap-1 px-3 py-2 bg-primary-container text-on-primary-container border-[2px] border-on-background min-w-[56px]'
-              : 'flex flex-col items-center justify-center gap-1 px-3 py-2 text-on-surface-variant hover:text-on-surface min-w-[56px] transition-colors'
+              ? 'flex flex-col items-center justify-center gap-1 px-3 py-2 bg-primary-container text-on-primary-container border-[2px] border-on-background border-t-[3px] border-t-primary min-w-[56px]'
+              : 'flex flex-col items-center justify-center gap-1 px-3 py-2 text-on-surface-variant hover:text-on-surface min-w-[56px] transition-colors border-[2px] border-transparent'
           }
         >
           {({ isActive }) => (
@@ -226,8 +232,46 @@ export function BottomNav() {
   )
 }
 
+// ─── Sidebar Skeletons ───────────────────────────────────────
+function UserRowSkeleton() {
+  return (
+    <div className="flex items-center justify-between gap-3 animate-pulse">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-9 h-9 bg-on-background/10 flex-shrink-0" />
+        <div className="flex flex-col gap-1.5">
+          <div className="h-2.5 bg-on-background/10 w-24" />
+          <div className="h-2 bg-on-background/10 w-16" />
+        </div>
+      </div>
+      <div className="h-7 w-16 bg-on-background/10 flex-shrink-0" />
+    </div>
+  )
+}
+
+function TrendingRowSkeleton() {
+  return (
+    <div className="flex flex-col gap-1.5 animate-pulse">
+      <div className="h-2 bg-on-background/10 w-20" />
+      <div className="h-3 bg-on-background/10 w-36" />
+      <div className="h-2 bg-on-background/10 w-12" />
+    </div>
+  )
+}
+
 // ─── Right Sidebar ────────────────────────────────────────────
 export function RightSidebar({ suggestedUsers, trendingTopics, onFollow, onHashtagClick }) {
+  const [followingMap, setFollowingMap] = useState({})
+
+  const handleFollow = (userId, currentlyFollowing) => {
+    // Optimistic toggle
+    setFollowingMap(prev => ({ ...prev, [userId]: !currentlyFollowing }))
+    onFollow?.(userId)
+  }
+
+  const isFollowing = (u) =>
+    followingMap[u.id] !== undefined ? followingMap[u.id] : u.following
+
+  const loading = !suggestedUsers?.length && !trendingTopics?.length
   return (
     <aside className="fixed right-[max(0px,calc(50%-640px))] top-[88px] w-[300px] hidden lg:flex flex-col gap-4 h-[calc(100vh-100px)] overflow-y-auto no-scrollbar">
 
@@ -240,32 +284,51 @@ export function RightSidebar({ suggestedUsers, trendingTopics, onFollow, onHasht
           Who to Follow
         </h2>
         <div className="flex flex-col gap-4">
-          {suggestedUsers.map((u) => (
-            <div key={u.id} className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <img
-                  src={u.avatar}
-                  alt={u.name}
-                  className="w-9 h-9 border-[3px] border-on-surface object-cover flex-shrink-0"
-                />
-                <div className="min-w-0">
-                  <p className="font-bold text-on-surface text-[13px] truncate">{u.name}</p>
-                  <p className="text-[11px] text-on-surface-variant font-mono truncate">{u.handle}</p>
+          {loading ? (
+            <>
+              <UserRowSkeleton />
+              <UserRowSkeleton />
+              <UserRowSkeleton />
+            </>
+          ) : suggestedUsers?.length === 0 ? (
+            <p className="text-[11px] text-on-surface-variant/50 font-mono text-center py-2">No suggestions yet</p>
+          ) : (
+            suggestedUsers.map((u) => (
+              <div key={u.id} className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  {u.avatar ? (
+                    <img
+                      src={u.avatar}
+                      alt={u.name}
+                      className="w-9 h-9 border-[3px] border-on-surface object-cover flex-shrink-0"
+                      onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
+                    />
+                  ) : null}
+                  <div
+                    className="w-9 h-9 bg-surface-container border-[3px] border-on-surface items-center justify-center flex-shrink-0 text-on-surface-variant"
+                    style={{ display: u.avatar ? 'none' : 'flex' }}
+                  >
+                    <Icon name="person" className="text-[16px]" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-on-surface text-[13px] truncate">{u.name}</p>
+                    <p className="text-[11px] text-on-surface-variant font-mono truncate">{u.handle}</p>
+                  </div>
                 </div>
+                <button
+                  onClick={() => handleFollow(u.id, isFollowing(u))}
+                  className={`px-3 py-1.5 font-bold border-[2px] border-on-surface text-[11px] uppercase tracking-wider flex-shrink-0 transition-all hover:translate-x-[1px] hover:translate-y-[1px]
+                    ${isFollowing(u)
+                      ? 'bg-primary-container text-on-primary-container'
+                      : 'bg-surface text-on-surface hover:bg-surface-container'
+                    }`}
+                  style={{ boxShadow: '2px 2px 0px 0px #000' }}
+                >
+                  {isFollowing(u) ? 'Following' : 'Follow'}
+                </button>
               </div>
-              <button
-                onClick={() => onFollow(u.id)}
-                className={`px-3 py-1.5 font-bold border-[2px] border-on-surface text-[11px] uppercase tracking-wider flex-shrink-0 transition-all hover:translate-x-[1px] hover:translate-y-[1px]
-                  ${u.following
-                    ? 'bg-primary-container text-on-primary-container'
-                    : 'bg-surface text-on-surface hover:bg-surface-container'
-                  }`}
-                style={{ boxShadow: '2px 2px 0px 0px #000' }}
-              >
-                {u.following ? 'Following' : 'Follow'}
-              </button>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </section>
 
@@ -278,17 +341,27 @@ export function RightSidebar({ suggestedUsers, trendingTopics, onFollow, onHasht
           Trending
         </h2>
         <div className="flex flex-col gap-4">
-          {trendingTopics.map((topic) => (
-            <button
-              key={topic.id}
-              onClick={() => onHashtagClick?.(topic.hashtag)}
-              className="group block text-left w-full hover:opacity-80 transition-opacity"
-            >
-              <p className="text-[11px] text-primary font-bold font-mono mb-0.5">{topic.hashtag}</p>
-              <p className="font-bold text-on-surface text-[13px] group-hover:underline decoration-2 underline-offset-2">{topic.title}</p>
-              <p className="text-[10px] text-on-surface-variant font-mono">{topic.postCount} Posts</p>
-            </button>
-          ))}
+          {loading ? (
+            <>
+              <TrendingRowSkeleton />
+              <TrendingRowSkeleton />
+              <TrendingRowSkeleton />
+            </>
+          ) : trendingTopics?.length === 0 ? (
+            <p className="text-[11px] text-on-surface-variant/50 font-mono text-center py-2">Nothing trending yet</p>
+          ) : (
+            trendingTopics.map((topic) => (
+              <button
+                key={topic.id}
+                onClick={() => onHashtagClick?.(topic.hashtag)}
+                className="group block text-left w-full hover:opacity-80 transition-opacity"
+              >
+                <p className="text-[11px] text-primary font-bold font-mono mb-0.5">{topic.hashtag}</p>
+                <p className="font-bold text-on-surface text-[13px] group-hover:underline decoration-2 underline-offset-2">{topic.title}</p>
+                <p className="text-[10px] text-on-surface-variant font-mono">{topic.postCount} Posts</p>
+              </button>
+            ))
+          )}
         </div>
       </section>
 
