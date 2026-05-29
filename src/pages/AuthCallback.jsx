@@ -5,31 +5,38 @@ import { useAuth } from '../context/AuthContext'
 /**
  * /auth/callback
  *
- * Backend redirects here after Google OAuth or magic-link with a
- * one-time token in the query string:
- *   https://chicago-ten.vercel.app/auth/callback?token=xxx
- *
- * We exchange it via verifyMagicLink() — the backend sets HttpOnly
- * access + refresh cookies and returns the user object.
- * No token is ever stored in localStorage.
+ * Two flows land here:
+ *  1. Cookie flow (new) — backend sets HttpOnly cookies and redirects here
+ *     with NO token. We just call /auth/me via refreshUser and go to feed.
+ *  2. Token flow (legacy) — backend appends ?token=xxx. We exchange it via
+ *     verifyMagicLink() which sets cookies, then go to feed.
  */
 export default function AuthCallback() {
   const [searchParams] = useSearchParams()
-  const { verifyMagicLink } = useAuth()
+  const { verifyMagicLink, refreshUser } = useAuth()
   const navigate = useNavigate()
   const [error, setError] = useState('')
 
   useEffect(() => {
     const token = searchParams.get('token')
 
-    if (!token) {
-      setError('No token found. Please try signing in again.')
-      return
+    if (token) {
+      // Legacy token exchange
+      verifyMagicLink(token)
+        .then(() => navigate('/', { replace: true }))
+        .catch(() => setError('Sign-in failed. The link may have expired. Please try again.'))
+    } else {
+      // Cookie already set by backend — confirm session then redirect
+      refreshUser()
+        .then(user => {
+          if (user) {
+            navigate('/', { replace: true })
+          } else {
+            setError('Sign-in failed. Please try again.')
+          }
+        })
+        .catch(() => setError('Sign-in failed. Please try again.'))
     }
-
-    verifyMagicLink(token)
-      .then(() => navigate('/', { replace: true }))
-      .catch(() => setError('Sign-in failed. The link may have expired. Please try again.'))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (error) {
