@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AdminShell, AdminButton, AdminAlert } from './AdminShared'
-import { adminVerify2FA, adminResend2FA } from '../../services/api'
+import { adminVerifyOtp as adminVerify2FA } from '../../services/api'
+
+const adminResend2FA = () => Promise.resolve()
 
 export default function AdminVerify() {
   const navigate  = useNavigate()

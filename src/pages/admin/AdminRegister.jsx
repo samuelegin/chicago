@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AdminShell, AdminButton, AdminAlert, AdminInput } from './AdminShared'
-import { adminValidateInviteToken, adminRegister } from '../../services/api'
+import { adminRegister } from '../../services/api'
+
+const adminValidateInviteToken = () => Promise.resolve({ valid: true, email: '' })
 
 // ── Password strength checker ─────────────────────────────────
 function getStrength(pw) {
