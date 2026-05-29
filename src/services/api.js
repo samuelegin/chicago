@@ -2,14 +2,16 @@
  * ============================================================
  *  CHICAGO WEB3 — API SERVICE
  * ============================================================
- *  Set VITE_API_BASE_URL in your .env to point at the backend.
- *  All calls hit the real backend — no mock fallbacks.
+ *  Auth uses HttpOnly cookies (set by backend on login).
+ *  No tokens in localStorage. credentials:'include' on every call.
+ *  On 401 → auto-attempt /auth/refresh → retry → if still 401,
+ *  fire onUnauthorized() so AuthContext can clear state.
  * ============================================================
  */
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
-// Global 401 handler — pages/components subscribe to this
+// ── 401 broadcast ──────────────────────────────────────────────
 const unauthorizedCallbacks = new Set()
 export function onUnauthorized(cb) {
   unauthorizedCallbacks.add(cb)
@@ -19,89 +21,86 @@ function notifyUnauthorized() {
   unauthorizedCallbacks.forEach(cb => cb())
 }
 
-function getAuthHeaders() {
-  try {
-    const user = JSON.parse(localStorage.getItem('chicago_user') || 'null')
-    return user?.token ? { Authorization: `Bearer ${user.token}` } : {}
-  } catch {
-    return {}
-  }
+// ── Token refresh (single in-flight promise, queues callers) ──
+let refreshPromise = null
+
+async function attemptRefresh() {
+  if (refreshPromise) return refreshPromise
+  refreshPromise = fetch(`${BASE_URL}/auth/refresh`, {
+    method: 'POST',
+    credentials: 'include',
+  })
+    .then(r => r.ok)
+    .catch(() => false)
+    .finally(() => { refreshPromise = null })
+  return refreshPromise
 }
 
-function getAdminAuthHeaders() {
-  try {
-    const token = sessionStorage.getItem('admin_temp_token')
-    return token ? { Authorization: `Bearer ${token}` } : {}
-  } catch {
-    return {}
-  }
-}
-
-async function request(path, options = {}) {
+// ── Core fetch wrapper ─────────────────────────────────────────
+async function request(path, options = {}, isRetry = false) {
   if (!BASE_URL) {
     throw new Error('API not configured: set VITE_API_BASE_URL in your .env file')
   }
+
   const res = await fetch(`${BASE_URL}${path}`, {
+    ...options,
+    credentials: 'include',           // always send cookies
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeaders(),
       ...options.headers,
     },
-    ...options,
   })
-  if (res.status === 401) {
+
+  // 401 → try refresh once, then retry the original call
+  if (res.status === 401 && !isRetry) {
+    const refreshed = await attemptRefresh()
+    if (refreshed) {
+      return request(path, options, true)  // retry
+    }
+    // Refresh also failed → session is truly gone
     notifyUnauthorized()
     throw new Error('Session expired. Please sign in again.')
   }
+
   if (!res.ok) {
     let message = `API error ${res.status}`
     try {
       const body = await res.json()
       message = body.message || body.error || message
-    } catch { /* ignore parse errors */ }
+    } catch { /* ignore */ }
     throw new Error(message)
   }
+
+  // 204 No Content
+  if (res.status === 204) return {}
+
   return res.json()
 }
 
-async function adminRequest(path, options = {}) {
-  if (!BASE_URL) {
-    throw new Error('API not configured: set VITE_API_BASE_URL in your .env file')
-  }
-  const res = await fetch(`${BASE_URL}${path}`, {
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAdminAuthHeaders(),
-      ...options.headers,
-    },
-    ...options,
-  })
-  if (!res.ok) {
-    let message = `API error ${res.status}`
-    try {
-      const body = await res.json()
-      message = body.message || body.error || message
-    } catch { /* ignore parse errors */ }
-    throw new Error(message)
-  }
-  return res.json()
-}
+// ─── AUTH ──────────────────────────────────────────────────────
 
-// ─── AUTH ─────────────────────────────────────────────────────
+/**
+ * Check if the user is currently authenticated.
+ * Backend reads the HttpOnly cookie and returns the user or 401.
+ * Returns null if not authenticated (never throws).
+ */
+export const getMe = () =>
+  request('/auth/me').catch(() => null)
+
 export const requestMagicLink = (email) =>
   request('/auth/magic-link', { method: 'POST', body: JSON.stringify({ email }) })
 
+/**
+ * Verify magic link token. Backend sets HttpOnly access + refresh cookies.
+ * Returns the user object.
+ */
 export const verifyMagicLink = (token) =>
   request('/auth/magic-link/verify', { method: 'POST', body: JSON.stringify({ token }) })
-
-export const getCurrentUser = () =>
-  request('/auth/me')
 
 export const connectWallet = (address) =>
   request('/auth/wallet/connect', { method: 'POST', body: JSON.stringify({ address }) })
 
-// ─── FEED ─────────────────────────────────────────────────────
+// ─── FEED ──────────────────────────────────────────────────────
 export const getFeedPosts = (filter = 'general', page = 1) =>
   request(`/feed/posts?filter=${filter}&page=${page}`)
 
@@ -120,14 +119,29 @@ export const unlikePost = (postId) =>
 export const getTrendingTopics = () =>
   request('/feed/trending')
 
-// ─── COMMENTS ─────────────────────────────────────────────────
+// ─── COMMENTS ──────────────────────────────────────────────────
 export const getComments = (postId) =>
   request(`/posts/${postId}/comments`)
 
 export const createComment = (postId, content) =>
   request(`/posts/${postId}/comments`, { method: 'POST', body: JSON.stringify({ content }) })
 
-// ─── USERS ────────────────────────────────────────────────────
+export const createReply = (postId, commentId, content) =>
+  request(`/posts/${postId}/comments/${commentId}/replies`, { method: 'POST', body: JSON.stringify({ content }) })
+
+export const likeComment = (commentId) =>
+  request(`/comments/${commentId}/like`, { method: 'POST' })
+
+export const unlikeComment = (commentId) =>
+  request(`/comments/${commentId}/like`, { method: 'DELETE' })
+
+export const likeReply = (replyId) =>
+  request(`/replies/${replyId}/like`, { method: 'POST' })
+
+export const unlikeReply = (replyId) =>
+  request(`/replies/${replyId}/like`, { method: 'DELETE' })
+
+// ─── USERS ─────────────────────────────────────────────────────
 export const getUser = (userId) =>
   request(`/users/${userId}`)
 
@@ -146,14 +160,14 @@ export const updateProfile = (payload) =>
 export const getUserPosts = (page = 1) =>
   request(`/users/me/posts?page=${page}`)
 
-// ─── LEADERBOARD ──────────────────────────────────────────────
+// ─── LEADERBOARD ───────────────────────────────────────────────
 export const getLeaderboard = (type = 'creators') =>
   request(`/leaderboard?type=${type}`)
 
 export const getMyLeaderboardStats = () =>
   request('/leaderboard/me')
 
-// ─── STAKING ──────────────────────────────────────────────────
+// ─── STAKING ───────────────────────────────────────────────────
 export const getStakingInfo = () =>
   request('/staking/info')
 
@@ -166,7 +180,7 @@ export const unstakeTokens = (amount) =>
 export const claimRewards = () =>
   request('/staking/claim-rewards', { method: 'POST' })
 
-// ─── MARKETPLACE ──────────────────────────────────────────────
+// ─── MARKETPLACE ───────────────────────────────────────────────
 export const getMarketplaceCampaigns = (period = '3d') =>
   request(`/marketplace/campaigns?period=${period}`)
 
@@ -179,43 +193,74 @@ export const getMarketplacePricing = (duration = '3d') =>
 export const createCampaign = (payload) =>
   request('/marketplace/campaigns', { method: 'POST', body: JSON.stringify(payload) })
 
-// ─── NETWORK ──────────────────────────────────────────────────
+// ─── NETWORK ───────────────────────────────────────────────────
 export const getNetworkStats = () =>
   request('/network/stats')
 
-// ─── ADMIN AUTH ───────────────────────────────────────────────
+// ─── ADMIN AUTH ────────────────────────────────────────────────
+// Admin still uses cookies (credentials:include) for session.
+// During OTP step, tempToken is sent as Bearer via sessionStorage.
+
+function getAdminTempHeader() {
+  try {
+    const token = sessionStorage.getItem('admin_temp_token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  } catch {
+    return {}
+  }
+}
+
+async function adminRequest(path, options = {}) {
+  if (!BASE_URL) throw new Error('API not configured: set VITE_API_BASE_URL in your .env file')
+  const res = await fetch(`${BASE_URL}${path}`, {
+    ...options,
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAdminTempHeader(),
+      ...options.headers,
+    },
+  })
+  if (!res.ok) {
+    let message = `API error ${res.status}`
+    try {
+      const body = await res.json()
+      message = body.message || body.error || message
+    } catch { /* ignore */ }
+    throw new Error(message)
+  }
+  if (res.status === 204) return {}
+  return res.json()
+}
+
 export const adminLogin = (email, password) =>
-  adminRequest('/admin/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
+  adminRequest('/auth/admin/login', { method: 'POST', body: JSON.stringify({ email, password }) })
 
-export const adminVerify2FA = (code) =>
-  adminRequest('/admin/auth/verify-2fa', { method: 'POST', body: JSON.stringify({ code }) })
+export const adminVerifyOtp = (email, otp) =>
+  adminRequest('/auth/admin/login/verify-otp', { method: 'POST', body: JSON.stringify({ email, otp }) })
 
-export const adminResend2FA = () =>
-  adminRequest('/admin/auth/resend-2fa', { method: 'POST' })
+export const adminForgotPassword = (email) =>
+  adminRequest('/auth/admin/forgot-password', { method: 'POST', body: JSON.stringify({ email }) })
 
-export const adminValidateSetupToken = (token) =>
-  adminRequest(`/admin/auth/validate-setup-token?token=${token}`)
+export const adminResetPassword = (token, password) =>
+  adminRequest('/auth/admin/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) })
 
-export const adminSetup = (payload) =>
-  adminRequest('/admin/auth/setup', { method: 'POST', body: JSON.stringify(payload) })
+export const adminVerifyEmail = (token) =>
+  adminRequest('/auth/admin/verify-email', { method: 'POST', body: JSON.stringify({ token }) })
 
-export const adminValidateInviteToken = (token) =>
-  adminRequest(`/admin/auth/validate-invite?token=${token}`)
+export const adminSendInvite = (email) =>
+  adminRequest('/auth/admin/invites', { method: 'POST', body: JSON.stringify({ email }) })
 
 export const adminRegister = (payload) =>
-  adminRequest('/admin/auth/register', { method: 'POST', body: JSON.stringify(payload) })
+  adminRequest('/auth/admin/register', { method: 'POST', body: JSON.stringify(payload) })
 
-export const adminInvite = (email) =>
-  adminRequest('/admin/invite', { method: 'POST', body: JSON.stringify({ email }) })
-
-// ─── ADMIN DASHBOARD ──────────────────────────────────────────
+// ─── ADMIN DASHBOARD ───────────────────────────────────────────
 export const adminGetStats = () =>
   adminRequest('/admin/stats')
 
 export const adminGetActivityLog = () =>
   adminRequest('/admin/activity-log')
 
-// ─── ADMIN USER MANAGEMENT ────────────────────────────────────
 export const adminGetUsers = ({ search = '', filter = 'all', page = 1 } = {}) =>
   adminRequest(`/admin/users?search=${encodeURIComponent(search)}&filter=${filter}&page=${page}`)
 
@@ -228,7 +273,6 @@ export const adminSuspendUser = (userId) =>
 export const adminUnsuspendUser = (userId) =>
   adminRequest(`/admin/users/${userId}/unsuspend`, { method: 'POST' })
 
-// ─── ADMIN AD MANAGER ─────────────────────────────────────────
 export const adminGetCampaigns = () =>
   adminRequest('/admin/campaigns')
 
@@ -241,7 +285,6 @@ export const adminDeleteCampaign = (campaignId) =>
 export const adminCreateCampaign = (payload) =>
   adminRequest('/admin/campaigns', { method: 'POST', body: JSON.stringify(payload) })
 
-// ─── ADMIN TEAM ───────────────────────────────────────────────
 export const adminGetTeam = () =>
   adminRequest('/admin/team')
 
@@ -251,21 +294,23 @@ export const adminUpdateTeamMember = (adminId, payload) =>
 export const adminRemoveTeamMember = (adminId) =>
   adminRequest(`/admin/team/${adminId}`, { method: 'DELETE' })
 
+export const adminInvite = (email) =>
+  adminRequest('/admin/invite', { method: 'POST', body: JSON.stringify({ email }) })
+
 export default {
-  requestMagicLink, verifyMagicLink, getCurrentUser, connectWallet,
+  getMe,
+  requestMagicLink, verifyMagicLink, connectWallet,
   getFeedPosts, getFeedCategories, createPost, likePost, unlikePost, getTrendingTopics,
-  getComments, createComment,
+  getComments, createComment, createReply, likeComment, unlikeComment, likeReply, unlikeReply,
   getUser, getSuggestedUsers, followUser, unfollowUser, updateProfile, getUserPosts,
   getLeaderboard, getMyLeaderboardStats,
   getStakingInfo, stakeTokens, unstakeTokens, claimRewards,
   getMarketplaceCampaigns, getMarketplaceAds, getMarketplacePricing, createCampaign,
   getNetworkStats,
-  adminLogin, adminVerify2FA, adminResend2FA,
-  adminValidateSetupToken, adminSetup,
-  adminValidateInviteToken, adminRegister,
-  adminInvite,
+  adminLogin, adminVerifyOtp, adminForgotPassword, adminResetPassword,
+  adminVerifyEmail, adminSendInvite, adminRegister,
   adminGetStats, adminGetActivityLog,
   adminGetUsers, adminUpdateUser, adminSuspendUser, adminUnsuspendUser,
   adminGetCampaigns, adminUpdateCampaign, adminDeleteCampaign, adminCreateCampaign,
-  adminGetTeam, adminUpdateTeamMember, adminRemoveTeamMember,
+  adminGetTeam, adminUpdateTeamMember, adminRemoveTeamMember, adminInvite,
 }

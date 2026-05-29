@@ -43,8 +43,19 @@ const queryClient = new QueryClient()
 
 // ── Route guards ──────────────────────────────────────────────
 function ProtectedRoute({ children }) {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
   const { pathname } = useLocation()
+
+  // Wait for /auth/me to resolve before deciding to redirect.
+  // Without this, a cookie-authed user gets bounced to /login on every refresh.
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <div className="w-8 h-8 border-[4px] border-on-surface border-t-primary-container animate-spin" />
+      </div>
+    )
+  }
+
   if (!user) return <Navigate to="/login" state={{ from: pathname }} replace />
   return children
 }

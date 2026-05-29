@@ -4,15 +4,14 @@ import { useAuth } from '../context/AuthContext'
 
 /**
  * /auth/callback
- * 
- * Backend redirects here after Google OAuth with a token:
+ *
+ * Backend redirects here after Google OAuth or magic-link with a
+ * one-time token in the query string:
  *   https://chicago-ten.vercel.app/auth/callback?token=xxx
- * 
- * Or after magic-link verification:
- *   https://chicago-ten.vercel.app/auth/callback?token=xxx
- * 
- * This page picks up the token, calls verifyMagicLink() to exchange
- * it for a session, then redirects to the feed.
+ *
+ * We exchange it via verifyMagicLink() — the backend sets HttpOnly
+ * access + refresh cookies and returns the user object.
+ * No token is ever stored in localStorage.
  */
 export default function AuthCallback() {
   const [searchParams] = useSearchParams()
@@ -30,10 +29,8 @@ export default function AuthCallback() {
 
     verifyMagicLink(token)
       .then(() => navigate('/', { replace: true }))
-      .catch((err) => {
-        setError('Sign-in failed. The link may have expired. Please try again.')
-      })
-  }, [])
+      .catch(() => setError('Sign-in failed. The link may have expired. Please try again.'))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (error) {
     return (

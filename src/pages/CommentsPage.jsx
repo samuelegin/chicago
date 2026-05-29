@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Icon } from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
-import { getComments, createComment as apiCreateComment } from '../services/api'
+import { getComments, createComment as apiCreateComment, createReply as apiCreateReply } from '../services/api'
 
 // ── Emoji Data ────────────────────────────────────────────────
 const EMOJI_TABS = [
@@ -69,6 +69,7 @@ function ReplyInput({ parentName, onSubmit, onCancel }) {
   const [text, setText] = useState('')
   const [showEmoji, setShowEmoji] = useState(false)
   const ref = useRef(null)
+  const { user } = useAuth()
 
   const submit = () => {
     if (!text.trim()) return
@@ -306,9 +307,15 @@ export default function CommentsPage() {
         : c
     ))
     try {
-      await apiCreateComment(post.id, text) // backend can accept parentId if supported
+      const saved = await apiCreateReply(post.id, commentId, text)
+      // Replace optimistic reply with real one from server
+      setComments(prev => prev.map(c =>
+        c.id === commentId
+          ? { ...c, replies: c.replies.map(r => r.id === optimistic.id ? saved : r) }
+          : c
+      ))
     } catch {
-      // keep optimistic reply
+      // keep optimistic reply on failure
     }
   }
 
