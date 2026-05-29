@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AdminShell, AdminButton, AdminAlert, AdminInput } from './AdminShared'
-import { adminSetup } from '../../services/api'
-
-const adminValidateSetupToken = () => Promise.resolve({ valid: true })
+import { adminValidateSetupToken, adminSetup } from '../../services/api'
 
 // ── Password strength ──────────────────────────────────────────
 function getStrength(pw) {
