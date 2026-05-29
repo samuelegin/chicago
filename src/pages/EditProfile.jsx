@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getMe as getCurrentUser, updateProfile } from '../services/api'
+import { getCurrentUser, updateProfile } from '../services/api'
 
 export default function EditProfile() {
   const navigate = useNavigate()

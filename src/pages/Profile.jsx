@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { Icon } from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
-import { getMe as getCurrentUser, getMyLeaderboardStats, getUserPosts } from '../services/api'
+import { getCurrentUser, getMyLeaderboardStats, getUserPosts } from '../services/api'
 
 // Referral code derived from user id (in production, comes from backend)
 // Influence score config

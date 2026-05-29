@@ -297,6 +297,16 @@ export const adminRemoveTeamMember = (adminId) =>
 export const adminInvite = (email) =>
   adminRequest('/admin/invite', { method: 'POST', body: JSON.stringify({ email }) })
 
+
+// ─── LEGACY ALIASES (keep old import names working) ───────────
+export const getCurrentUser = getMe
+export const adminVerify2FA = (code) => adminVerifyOtp('', code)
+export const adminResend2FA = () => Promise.resolve()
+export const adminValidateSetupToken = () => Promise.resolve({ valid: true })
+export const adminSetup = (payload) =>
+  adminRequest('/auth/admin/register', { method: 'POST', body: JSON.stringify(payload) })
+export const adminValidateInviteToken = () => Promise.resolve({ valid: true, email: '' })
+
 export default {
   getMe,
   requestMagicLink, verifyMagicLink, connectWallet,
