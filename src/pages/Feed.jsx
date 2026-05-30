@@ -191,42 +191,48 @@ export default function Feed() {
   const [posts, setPosts] = useState([])
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES)
   const [activeFilter, setActiveFilter] = useState('general')
-  const [postCategory, setPostCategory] = useState('general')
+  // postCategory holds the UUID from GET /api/categories — starts null until categories load
+  const [postCategory, setPostCategory] = useState(null)
   const [suggested, setSuggested] = useState([])
   const [trendingTopics, setTrendingTopics] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
-  const [page, setPage] = useState(1)
+  const [nextCursor, setNextCursor] = useState(null)
   const [error, setError] = useState(null)
   const [postContent, setPostContent] = useState('')
   const feedTopRef = useRef(null)
 
-  // Load sidebar data once on mount
+  // Load categories from backend on mount.
+  // The backend returns real UUIDs — these are required for POST /api/posts.
+  // We replace DEFAULT_CATEGORIES entirely once the real ones arrive.
   useEffect(() => {
     Promise.all([getFeedCategories(), getSuggestedUsers(), getTrendingTopics()])
       .then(([catsData, suggestData, trendData]) => {
-        // Merge backend cats with defaults (backend cats take precedence if they exist)
-        const merged = catsData.length > 0
-          ? [...DEFAULT_CATEGORIES, ...catsData.filter(c => !DEFAULT_CATEGORIES.find(d => d.name.toLowerCase() === c.name?.toLowerCase()))]
-          : DEFAULT_CATEGORIES
-        setCategories(merged)
+        if (catsData.length > 0) {
+          setCategories(catsData)
+          // Set the composer default to the first real UUID from the backend
+          setPostCategory(catsData[0].id)
+        }
+        // If backend returns nothing, DEFAULT_CATEGORIES stay for display only
+        // postCategory remains null and the Post button will be disabled
         setSuggested(suggestData)
         setTrendingTopics(trendData)
       })
       .catch(() => {})
   }, [])
 
-  // Load posts whenever filter changes — reset pagination
+  // Load posts on mount and when filter changes — reset cursor pagination
   useEffect(() => {
     setLoading(true)
     setError(null)
-    setPage(1)
+    setNextCursor(null)
     setHasMore(true)
-    getFeedPosts(activeFilter, 1)
+    getFeedPosts(null)
       .then((data) => {
         const incoming = data.posts ?? []
         setPosts(incoming)
+        setNextCursor(data.nextCursor ?? null)
         if (!data.hasMore || incoming.length === 0) setHasMore(false)
       })
       .catch(err => setError(err.message || 'Failed to load posts'))
@@ -234,17 +240,16 @@ export default function Feed() {
   }, [activeFilter])
 
   const handleLoadMore = async () => {
-    if (loadingMore || !hasMore) return
-    const nextPage = page + 1
+    if (loadingMore || !hasMore || !nextCursor) return
     setLoadingMore(true)
     try {
-      const data = await getFeedPosts(activeFilter, nextPage)
+      const data = await getFeedPosts(nextCursor)
       const incoming = data.posts ?? []
       if (incoming.length === 0 || !data.hasMore) {
         setHasMore(false)
       } else {
         setPosts(prev => [...prev, ...incoming])
-        setPage(nextPage)
+        setNextCursor(data.nextCursor ?? null)
       }
     } catch {
       // silently fail — user can retry
@@ -318,12 +323,14 @@ export default function Feed() {
 
   const handlePost = async () => {
     if (!postContent.trim()) return
-    // Find the real category — if backend returned a UUID for this category use it,
-    // otherwise use the local id string (backend may reject non-UUIDs, handled in catch)
-    const cat = categories.find(c => c.id === postCategory) ?? categories[0]
-    const categoryId = cat?.id ?? 'general'
+    // postCategory is null until real backend categories load (UUIDs from GET /api/categories)
+    // Posting with a slug like 'general' causes the backend to return 422
+    if (!postCategory) {
+      toast.error('Categories are still loading. Please try again in a moment.')
+      return
+    }
     try {
-      const res = await apiCreatePost({ content: postContent, categoryId, isPublished: true })
+      const res = await apiCreatePost({ content: postContent, categoryId: postCategory, isPublished: true })
       const created = res?.data ?? res
       if (created?.id) {
         setPosts([created, ...posts])
@@ -469,12 +476,14 @@ export default function Feed() {
               {/* Category selector */}
               <div className="flex items-center gap-2">
                 <select
-                  value={postCategory}
+                  value={postCategory ?? ''}
                   onChange={e => setPostCategory(e.target.value)}
-                  className="text-xs lg:text-sm font-bold border border-on-background/20 bg-surface-container text-on-background px-2 py-1 cursor-pointer focus:outline-none focus:border-primary-container"
+                  disabled={!postCategory}
+                  className="text-xs lg:text-sm font-bold border border-on-background/20 bg-surface-container text-on-background px-2 py-1 cursor-pointer focus:outline-none focus:border-primary-container disabled:opacity-50"
                 >
+                  {!postCategory && <option value="">Loading…</option>}
                   {categories.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    <option key={cat.id} value={cat.id}>{cat.name ?? cat.label}</option>
                   ))}
                 </select>
                 <button

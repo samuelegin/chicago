@@ -89,12 +89,14 @@ export const connectWallet = (address) =>
   request('/auth/wallet/connect', { method: 'POST', body: JSON.stringify({ address }) })
 
 // ─── FEED / POSTS ─────────────────────────────────────────────
-// GET /posts  (Swagger: GET /api/posts)
-export const getFeedPosts = (filter = 'general', page = 1) =>
-  request(`/posts?limit=10${page > 1 ? `&cursor=${page}` : ''}`)
+// GET /api/posts — Swagger: limit + opaque cursor string for pagination
+// cursor comes from the previous response (nextCursor / meta.cursor), never a page number
+export const getFeedPosts = (cursor = null) =>
+  request(`/posts?limit=30${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`)
     .then(data => ({
-      posts: Array.isArray(data) ? data : (data.posts ?? data.data ?? []),
-      hasMore: data.hasMore ?? data.meta?.hasMore ?? false,
+      posts:      Array.isArray(data) ? data : (data.posts ?? data.data ?? []),
+      hasMore:    data.hasMore ?? data.meta?.hasMore ?? false,
+      nextCursor: data.nextCursor ?? data.cursor ?? data.meta?.cursor ?? null,
     }))
 
 // GET /categories
