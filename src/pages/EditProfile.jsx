@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getCurrentUser, getProfile, updateProfile } from '../services/api'
+import { getProfile, updateProfile } from '../services/api'
 
 export default function EditProfile() {
   const navigate = useNavigate()
@@ -20,32 +20,31 @@ export default function EditProfile() {
   const fileInputRef = useRef(null)
 
   useEffect(() => {
-    getCurrentUser().then(async (data) => {
-      const base = data?.data?.user ?? data?.user ?? (data?.id ? data : {})
-      try {
-        const profileData = await getProfile(base.id)
-        const p = profileData?.data ?? profileData ?? {}
-        setForm({
-          name:      p.fullName || base.name || '',
-          bio:       p.bio      || base.bio  || '',
-          website:   p.socialLinks?.website   || base.website   || '',
-          twitter:   p.socialLinks?.twitter   || base.twitter   || '',
-          farcaster: p.socialLinks?.farcaster || base.farcaster || '',
-        })
-        const av = p.avatarUrl || base.avatar || ''
-        setAvatarPreview(av)
-        setOriginalAvatar(av)
-      } catch {
-        setForm({ name: base.name || '', bio: base.bio || '', website: base.website || '', twitter: base.twitter || '', farcaster: base.farcaster || '' })
-        setAvatarPreview(base.avatar || '')
-        setOriginalAvatar(base.avatar || '')
-      }
+    if (!authUser) return
+    // authUser already has profile data merged in by AuthContext (name, bio, avatar, etc.)
+    // Try to get fresh profile data, fall back to authUser
+    getProfile(authUser.id).then(profileData => {
+      const p = profileData?.data ?? profileData ?? {}
+      setForm({
+        name:      p.fullName || authUser.name || '',
+        bio:       p.bio      || authUser.bio  || '',
+        website:   p.socialLinks?.website   || authUser.website   || '',
+        twitter:   p.socialLinks?.twitter   || authUser.twitter   || '',
+        farcaster: p.socialLinks?.farcaster || authUser.farcaster || '',
+      })
+      const av = p.avatarUrl || authUser.avatar || ''
+      setAvatarPreview(av)
+      setOriginalAvatar(av)
     }).catch(() => {
-      if (authUser) {
-        setForm({ name: authUser.name || '', bio: '', website: '', twitter: '', farcaster: '' })
-        setAvatarPreview(authUser.avatar || '')
-        setOriginalAvatar(authUser.avatar || '')
-      }
+      setForm({
+        name:      authUser.name      || '',
+        bio:       authUser.bio       || '',
+        website:   authUser.website   || '',
+        twitter:   authUser.twitter   || '',
+        farcaster: authUser.farcaster || '',
+      })
+      setAvatarPreview(authUser.avatar || '')
+      setOriginalAvatar(authUser.avatar || '')
     })
   }, [authUser])
 
