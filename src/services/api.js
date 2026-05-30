@@ -97,17 +97,11 @@ export const getFeedPosts = (filter = 'general', page = 1) =>
       hasMore: data.hasMore ?? data.meta?.hasMore ?? false,
     }))
 
-// GET /categories
+// GET /categories  (Swagger: GET /api/categories)
 export const getFeedCategories = () =>
   request('/categories')
-    .then(data => Array.isArray(data) ? data : (data.categories ?? data.data ?? []))
+    .then(data => Array.isArray(data) ? data : (data.categories ?? []))
     .catch(() => [])
-
-// POST /categories
-export const createCategory = (name, description = '') =>
-  request('/categories', { method: 'POST', body: JSON.stringify({ name, description }) })
-export const createCategory = (name) =>
-  request('/categories', { method: 'POST', body: JSON.stringify({ name }) })
 
 // POST /posts  (Swagger: POST /api/posts)
 export const createPost = (payload) =>
