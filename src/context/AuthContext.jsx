@@ -21,7 +21,12 @@ export function AuthProvider({ children }) {
   // ── Restore session on every page load ──────────────────────
   useEffect(() => {
     api.getMe()
-      .then(data => setUser(data?.user ?? data ?? null))
+      .then(data => {
+        console.log('[AuthContext] /auth/me raw response:', JSON.stringify(data))
+        const resolved = data?.user ?? data ?? null
+        console.log('[AuthContext] resolved user:', JSON.stringify(resolved))
+        setUser(resolved)
+      })
       .finally(() => setLoading(false))
   }, [])
 
