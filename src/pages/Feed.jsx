@@ -7,7 +7,6 @@ import { useToast } from '../context/ToastContext'
 import {
   getFeedPosts,
   getFeedCategories,
-  createCategory,
   getSuggestedUsers,
   getTrendingTopics,
   createPost as apiCreatePost,
@@ -172,6 +171,15 @@ function PostSkeleton() {
   )
 }
 
+// Default categories — admin can add more via backend later
+const DEFAULT_CATEGORIES = [
+  { id: 'general',       name: 'General' },
+  { id: 'meme',          name: 'Meme' },
+  { id: 'crypto-insight',name: 'Crypto Insight' },
+  { id: 'humor',         name: 'Humor' },
+  { id: 'devlog',        name: 'DevLog' },
+]
+
 export default function Feed() {
   const { user } = useAuth()
   const toast = useToast()
@@ -181,8 +189,9 @@ export default function Feed() {
   const [onboardingDone, setOnboardingDone] = useState(false)
   const showOnboarding = needsOnboarding && !onboardingDone
   const [posts, setPosts] = useState([])
-  const [categories, setCategories] = useState([])
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES)
   const [activeFilter, setActiveFilter] = useState('general')
+  const [postCategory, setPostCategory] = useState('general')
   const [suggested, setSuggested] = useState([])
   const [trendingTopics, setTrendingTopics] = useState([])
   const [loading, setLoading] = useState(true)
@@ -196,20 +205,12 @@ export default function Feed() {
   // Load sidebar data once on mount
   useEffect(() => {
     Promise.all([getFeedCategories(), getSuggestedUsers(), getTrendingTopics()])
-      .then(async ([catsData, suggestData, trendData]) => {
-        let cats = catsData
-        // No categories yet — auto-create General so posting works
-        if (!cats || cats.length === 0) {
-          try {
-            const created = await createCategory('General')
-            const newCat = created?.data ?? created
-            cats = newCat?.id ? [newCat] : []
-          } catch { cats = [] }
-        }
-        setCategories(cats)
-        if (cats.length > 0 && activeFilter === 'general') {
-          setActiveFilter(cats[0].id)
-        }
+      .then(([catsData, suggestData, trendData]) => {
+        // Merge backend cats with defaults (backend cats take precedence if they exist)
+        const merged = catsData.length > 0
+          ? [...DEFAULT_CATEGORIES, ...catsData.filter(c => !DEFAULT_CATEGORIES.find(d => d.name.toLowerCase() === c.name?.toLowerCase()))]
+          : DEFAULT_CATEGORIES
+        setCategories(merged)
         setSuggested(suggestData)
         setTrendingTopics(trendData)
       })
@@ -317,20 +318,12 @@ export default function Feed() {
 
   const handlePost = async () => {
     if (!postContent.trim()) return
-    // categoryId is required — use activeFilter if it's a UUID, else first available category
-    const categoryId = activeFilter !== 'general'
-      ? activeFilter
-      : (categories[0]?.id ?? null)
-    if (!categoryId) {
-      toast.error('No categories available yet. Please try again in a moment.')
-      return
-    }
+    // Find the real category — if backend returned a UUID for this category use it,
+    // otherwise use the local id string (backend may reject non-UUIDs, handled in catch)
+    const cat = categories.find(c => c.id === postCategory) ?? categories[0]
+    const categoryId = cat?.id ?? 'general'
     try {
-      const res = await apiCreatePost({
-        content: postContent,
-        categoryId,
-        isPublished: true,
-      })
+      const res = await apiCreatePost({ content: postContent, categoryId, isPublished: true })
       const created = res?.data ?? res
       if (created?.id) {
         setPosts([created, ...posts])
@@ -472,13 +465,25 @@ export default function Feed() {
                   <Icon name="sentiment_satisfied" className="cursor-pointer text-[18px] lg:text-[24px]" />
                 </button>
               </div>
-              <button
-                onClick={handlePost}
-                className="px-4 lg:px-8 py-1.5 lg:py-2 bg-primary-container text-on-primary-fixed font-bold text-sm lg:text-base border border-on-background/20 lg:neo-border lg:neo-shadow-sm active:scale-95 transition-all"
-              >
-                Post
-              </button>
-            </div>
+
+              {/* Category selector */}
+              <div className="flex items-center gap-2">
+                <select
+                  value={postCategory}
+                  onChange={e => setPostCategory(e.target.value)}
+                  className="text-xs lg:text-sm font-bold border border-on-background/20 bg-surface-container text-on-background px-2 py-1 cursor-pointer focus:outline-none focus:border-primary-container"
+                >
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={handlePost}
+                  className="px-4 lg:px-8 py-1.5 lg:py-2 bg-primary-container text-on-primary-fixed font-bold text-sm lg:text-base border border-on-background/20 lg:neo-border lg:neo-shadow-sm active:scale-95 transition-all"
+                >
+                  Post
+                </button>
+              </div>
 
             {/* Poll creator (inline below toolbar) */}
             {showPollCreator && !poll && (
@@ -491,24 +496,22 @@ export default function Feed() {
         </div>
       </section>
 
-      {/* Category Filters — only show when admin has created multiple categories */}
-      {categories.length > 1 && (
-        <div className="flex gap-2 lg:gap-4 overflow-x-auto pb-2 no-scrollbar">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveFilter(cat.id)}
-              className={`shrink-0 px-3 lg:px-6 py-1 lg:py-2 text-sm lg:text-base font-bold border border-on-background/20 lg:neo-border transition-colors ${
-                activeFilter === cat.id
-                  ? 'bg-primary-container text-on-primary-fixed lg:neo-shadow-sm'
-                  : 'bg-surface-container hover:bg-primary-container/20 text-on-background'
-              }`}
-            >
-              {cat.label ?? cat.name}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Category Filters */}
+      <div className="flex gap-2 lg:gap-4 overflow-x-auto pb-2 no-scrollbar">
+        {categories.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => setActiveFilter(cat.id)}
+            className={`shrink-0 px-3 lg:px-6 py-1 lg:py-2 text-sm lg:text-base font-bold border border-on-background/20 lg:neo-border transition-colors ${
+              activeFilter === cat.id
+                ? 'bg-primary-container text-on-primary-fixed lg:neo-shadow-sm'
+                : 'bg-surface-container hover:bg-primary-container/20 text-on-background'
+            }`}
+          >
+            {cat.name ?? cat.label}
+          </button>
+        ))}
+      </div>
 
       {/* Posts */}
       {error ? (
