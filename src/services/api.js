@@ -98,6 +98,9 @@ export const verifyMagicLink = (token) =>
 export const getCurrentUser = () =>
   request('/auth/me')
 
+// Alias used by AuthContext
+export const getMe = getCurrentUser
+
 export const connectWallet = (address) =>
   request('/auth/wallet/connect', { method: 'POST', body: JSON.stringify({ address }) })
 
@@ -255,7 +258,7 @@ export const adminRemoveTeamMember = (adminId) =>
   adminRequest(`/admin/team/${adminId}`, { method: 'DELETE' })
 
 export default {
-  requestMagicLink, verifyMagicLink, getCurrentUser, connectWallet,
+  requestMagicLink, verifyMagicLink, getCurrentUser, getMe, connectWallet,
   getFeedPosts, getFeedCategories, createPost, likePost, unlikePost, getTrendingTopics,
   getComments, createComment, createReply,
   getUser, getSuggestedUsers, followUser, unfollowUser, updateProfile,
