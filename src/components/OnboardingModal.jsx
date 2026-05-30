@@ -33,12 +33,7 @@ export default function OnboardingModal({ onComplete }) {
         username: usernameClean,
         bio: bio.trim(),
       }
-      // Try creating profile first (new user), fall back to update
-      try {
-        await createProfile(userId, payload)
-      } catch {
-        await updateProfile(userId, payload)
-      }
+      await createProfile(userId, payload)
       await refreshUser()
       onComplete()
     } catch (err) {

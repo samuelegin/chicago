@@ -52,7 +52,7 @@ export default function EditProfile() {
       await updateProfile(userId, {
         fullName: form.name,
         bio: form.bio,
-        avatarUrl: avatarPreview,
+        avatarUrl: avatarPreview !== originalAvatar ? avatarPreview : undefined,
         socialLinks: {
           twitter: form.twitter,
           website: form.website,

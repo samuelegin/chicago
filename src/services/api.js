@@ -145,10 +145,11 @@ export const unfollowUser = (userId) =>
   request(`/users/${userId}/follow`, { method: 'DELETE' })
 
 // POST /profiles (create profile - first time)
-export const createProfile = (userId, payload) =>
-  request('/profiles', { method: 'POST', body: JSON.stringify({ userId, ...payload }) })
+// POST /profiles — backend identifies user from session cookie, do NOT send userId in body
+export const createProfile = (_userId, payload) =>
+  request('/profiles', { method: 'POST', body: JSON.stringify(payload) })
 
-// PATCH /profiles/:userId (update existing profile)
+// PATCH /profiles/:userId
 export const updateProfile = (userId, payload) =>
   request(`/profiles/${userId}`, { method: 'PATCH', body: JSON.stringify(payload) })// ─── LEADERBOARD ──────────────────────────────────────────────
 export const getLeaderboard = (type = 'creators') =>
