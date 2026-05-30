@@ -41,7 +41,7 @@ async function request(path, options = {}) {
       const body = await res.json()
       message = body.error || body.message || message
     } catch { /* ignore */ }
-    throw new Error(message)
+    const err = new Error(message); err.status = res.status; throw err
   }
   return res.json()
 }

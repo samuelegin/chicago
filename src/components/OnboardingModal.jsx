@@ -33,7 +33,17 @@ export default function OnboardingModal({ onComplete }) {
         username: usernameClean,
         bio: bio.trim(),
       }
-      await createProfile(userId, payload)
+      try {
+        await createProfile(userId, payload)
+      } catch (createErr) {
+        // 409 = already exists, 422 = validation, 5xx = server error on duplicate key
+        // In all cases fall back to update so returning users aren't stuck
+        if (createErr.status === 409 || createErr.status >= 500 || createErr.status === 422) {
+          await updateProfile(userId, payload)
+        } else {
+          throw createErr
+        }
+      }
       await refreshUser()
       onComplete()
     } catch (err) {
