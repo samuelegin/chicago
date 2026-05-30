@@ -156,7 +156,7 @@ export default function Profile() {
           )}
 
           {/* Stats row */}
-          <div className="flex gap-4 lg:gap-6 mt-3 lg:mt-4 pt-3 lg:pt-4 border-t border-on-background/10">
+          <div className="flex justify-between mt-3 lg:mt-4 pt-3 lg:pt-4 border-t border-on-background/10">
             {[
               { label: 'Posts',     value: (user.posts ?? 0).toLocaleString() },
               { label: 'Followers', value: (user.followers ?? 0) >= 1000 ? `${((user.followers ?? 0) / 1000).toFixed(1)}k` : (user.followers ?? 0) },
