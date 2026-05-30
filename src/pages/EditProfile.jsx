@@ -64,16 +64,18 @@ export default function EditProfile() {
     setSaveError('')
     try {
       const userId = authUser?.id || authUser?._id
-      await updateProfile(userId, {
-        fullName: form.name,
-        bio: form.bio,
-        avatarUrl: avatarPreview !== originalAvatar ? avatarPreview : undefined,
-        socialLinks: {
-          twitter: form.twitter,
-          website: form.website,
-          farcaster: form.farcaster,
-        },
-      })
+      // Only send fields that have values — empty/undefined fields cause 422
+      const payload = {}
+      if (form.name)    payload.fullName = form.name
+      if (form.bio)     payload.bio      = form.bio
+      if (avatarPreview !== originalAvatar && avatarPreview) payload.avatarUrl = avatarPreview
+      const links = {}
+      if (form.twitter)   links.twitter   = form.twitter
+      if (form.website)   links.website   = form.website
+      if (form.farcaster) links.farcaster = form.farcaster
+      if (Object.keys(links).length) payload.socialLinks = links
+
+      await updateProfile(userId, payload)
       patchUser({
         name: form.name,
         bio: form.bio,
