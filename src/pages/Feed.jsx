@@ -8,7 +8,6 @@ import {
   getFeedPosts,
   getFeedCategories,
   createCategory,
-  createCategory,
   getSuggestedUsers,
   getTrendingTopics,
   createPost as apiCreatePost,
