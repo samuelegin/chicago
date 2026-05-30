@@ -33,25 +33,40 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 
 const ADMIN_SLUG = '/portal-ax92-v1'
 
-const wagmiConfig = getDefaultConfig({
-  appName: 'Chicago Web3',
-  projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ?? 'fallback',
-  chains: [mainnet, sepolia],
-  transports: {
-    [mainnet.id]: http(),
-    [sepolia.id]: http(),
-  },
-  ssr: false,
-})
+// Initialized lazily to avoid crashes during module load
+let _wagmiConfig = null
+let _queryClient = null
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-      refetchOnWindowFocus: false,
-    },
-  },
-})
+function getWagmiConfig() {
+  if (!_wagmiConfig) {
+    _wagmiConfig = getDefaultConfig({
+      appName: 'Chicago Web3',
+      projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '',
+      chains: [mainnet, sepolia],
+      transports: {
+        [mainnet.id]: http(),
+        [sepolia.id]: http(),
+      },
+      ssr: false,
+    })
+  }
+  return _wagmiConfig
+}
+
+function getQueryClient() {
+  if (!_queryClient) {
+    _queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          refetchOnWindowFocus: false,
+          gcTime: 1000 * 60 * 5,
+        },
+      },
+    })
+  }
+  return _queryClient
+}
 
 // ── Route guards ──────────────────────────────────────────────
 function ProtectedRoute({ children }) {
@@ -145,8 +160,8 @@ function AppRoutes() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <WagmiProvider config={wagmiConfig}>
-        <QueryClientProvider client={queryClient}>
+      <WagmiProvider config={getWagmiConfig()}>
+        <QueryClientProvider client={getQueryClient()}>
           <RainbowKitProvider>
             <BrowserRouter>
               <ThemeProvider>
