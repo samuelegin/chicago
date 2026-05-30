@@ -21,10 +21,22 @@ export function AuthProvider({ children }) {
   // ── Restore session on every page load ──────────────────────
   useEffect(() => {
     api.getMe()
-      .then(data => {
-        // Handle both { id, email, ... } flat and { data: { user: {...} } } wrapped
-        const u = data?.data?.user ?? data?.user ?? (data?.id ? data : null)
-        setUser(u)
+      .then(async data => {
+        const base = data?.data?.user ?? data?.user ?? (data?.id ? data : null)
+        if (!base) { setUser(null); return }
+        try {
+          const profileData = await api.getProfile(base.id)
+          const p = profileData?.data ?? profileData ?? {}
+          setUser({
+            ...base,
+            name:   p.fullName  || base.name   || '',
+            handle: p.username  ? `@${p.username}` : (base.handle || ''),
+            avatar: p.avatarUrl || base.avatar  || '',
+            bio:    p.bio       || base.bio     || '',
+          })
+        } catch {
+          setUser(base)
+        }
       })
       .finally(() => setLoading(false))
   }, [])
@@ -57,9 +69,25 @@ export function AuthProvider({ children }) {
   // ── Refresh user data (call after profile edits etc.) ────────
   const refreshUser = useCallback(async () => {
     const data = await api.getMe()
-    const refreshed = data?.data?.user ?? data?.user ?? (data?.id ? data : null)
-    setUser(refreshed)
-    return refreshed
+    const base = data?.data?.user ?? data?.user ?? (data?.id ? data : null)
+    if (!base) { setUser(null); return null }
+    // Merge profile data (fullName, username, avatarUrl) on top of auth/me
+    try {
+      const profileData = await api.getProfile(base.id)
+      const p = profileData?.data ?? profileData ?? {}
+      const merged = {
+        ...base,
+        name:   p.fullName  || base.name   || '',
+        handle: p.username  ? `@${p.username}` : (base.handle || ''),
+        avatar: p.avatarUrl || base.avatar  || '',
+        bio:    p.bio       || base.bio     || '',
+      }
+      setUser(merged)
+      return merged
+    } catch {
+      setUser(base)
+      return base
+    }
   }, [])
 
   // ── Patch local user state (call after profile edits to update sidebar immediately) ──

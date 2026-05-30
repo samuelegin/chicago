@@ -45,13 +45,13 @@ export default function OnboardingModal({ onComplete }) {
           throw createErr
         }
       }
-      // Update auth context user immediately so sidebar shows name/handle without waiting for /auth/me
+      await refreshUser()
+      // Patch AFTER refreshUser so sidebar name doesn't get wiped by stale /auth/me response
       patchUser({
         name: displayName.trim(),
         handle: `@${usernameClean}`,
         bio: bio.trim(),
       })
-      await refreshUser()
       onComplete()
     } catch (err) {
       setError(typeof err?.message === 'string' ? err.message : 'Something went wrong. Please try again.')

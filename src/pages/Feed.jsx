@@ -173,8 +173,8 @@ function PostSkeleton() {
 export default function Feed() {
   const { user } = useAuth()
 
-  // Show onboarding if user hasn't set their display name or username yet
-  const needsOnboarding = user && !user.displayName && !user.username
+  // Show onboarding if user hasn't set their name yet (checks all possible field names)
+  const needsOnboarding = user && !user.name && !user.displayName && !user.username && !user.fullName
   const [onboardingDone, setOnboardingDone] = useState(false)
   const showOnboarding = needsOnboarding && !onboardingDone
   const [posts, setPosts] = useState([])
