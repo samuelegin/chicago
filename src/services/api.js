@@ -150,6 +150,9 @@ export const getLeaderboard = (type = 'creators') =>
 export const getMyLeaderboardStats = () =>
   request('/leaderboard/me')
 
+export const getUserPosts = (page = 1) =>
+  request(`/users/me/posts?page=${page}`)
+
 // ─── STAKING ──────────────────────────────────────────────────
 export const getStakingInfo = () =>
   request('/staking/info')
@@ -253,7 +256,7 @@ export default {
   getFeedPosts, getFeedCategories, createPost, likePost, unlikePost, getTrendingTopics,
   getComments, createComment,
   getUser, getSuggestedUsers, followUser, unfollowUser, updateProfile,
-  getLeaderboard, getMyLeaderboardStats,
+  getLeaderboard, getMyLeaderboardStats, getUserPosts,
   getStakingInfo, stakeTokens, unstakeTokens, claimRewards,
   getMarketplaceCampaigns, getMarketplaceAds, getMarketplacePricing, createCampaign,
   getNetworkStats,
