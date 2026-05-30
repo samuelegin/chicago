@@ -303,15 +303,9 @@ export default function Feed() {
   const removeGif = (i) => setSelectedGifs(prev => prev.filter((_, idx) => idx !== i))
 
   const handlePost = async () => {
-    if (!postContent.trim() && selectedFiles.length === 0 && selectedGifs.length === 0 && !poll) return
-    // Build minimal payload — only include fields that have real values
-    // Sending null/empty arrays causes 422 on strict backends
-    const payload = { content: postContent }
-    const gifUrls = selectedGifs.filter(g => g.startsWith('http'))
-    if (gifUrls.length) payload.images = gifUrls
-    if (poll) payload.poll = poll
+    if (!postContent.trim()) return
     try {
-      const res = await apiCreatePost(payload)
+      const res = await apiCreatePost({ content: postContent })
       const created = res?.data ?? res
       if (created?.id) {
         setPosts([created, ...posts])
