@@ -49,7 +49,16 @@ export default function EditProfile() {
     setSaveError('')
     try {
       const userId = authUser?.id || authUser?._id
-      await updateProfile(userId, { ...form, avatar: avatarPreview })
+      await updateProfile(userId, {
+        fullName: form.name,
+        bio: form.bio,
+        avatarUrl: avatarPreview,
+        socialLinks: {
+          twitter: form.twitter,
+          website: form.website,
+          farcaster: form.farcaster,
+        },
+      })
       navigate('/profile')
     } catch (err) {
       setSaveError(err.message || 'Failed to save. Please try again.')

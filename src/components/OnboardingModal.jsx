@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { updateProfile } from '../services/api'
+import { createProfile, updateProfile } from '../services/api'
 
 /**
  * OnboardingModal
@@ -28,11 +28,17 @@ export default function OnboardingModal({ onComplete }) {
     try {
       const userId = user?.id
       if (!userId) throw new Error('Could not resolve user ID — please refresh and try again.')
-      await updateProfile(userId, {
-        displayName: displayName.trim(),
+      const payload = {
+        fullName: displayName.trim(),
         username: usernameClean,
         bio: bio.trim(),
-      })
+      }
+      // Try creating profile first (new user), fall back to update
+      try {
+        await createProfile(userId, payload)
+      } catch {
+        await updateProfile(userId, payload)
+      }
       await refreshUser()
       onComplete()
     } catch (err) {
