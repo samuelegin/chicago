@@ -127,6 +127,9 @@ export const getComments = (postId) =>
 export const createComment = (postId, content) =>
   request(`/posts/${postId}/comments`, { method: 'POST', body: JSON.stringify({ content }) })
 
+export const createReply = (postId, commentId, content) =>
+  request(`/posts/${postId}/comments/${commentId}/replies`, { method: 'POST', body: JSON.stringify({ content }) })
+
 // ─── USERS ────────────────────────────────────────────────────
 export const getUser = (userId) =>
   request(`/users/${userId}`)
@@ -254,7 +257,7 @@ export const adminRemoveTeamMember = (adminId) =>
 export default {
   requestMagicLink, verifyMagicLink, getCurrentUser, connectWallet,
   getFeedPosts, getFeedCategories, createPost, likePost, unlikePost, getTrendingTopics,
-  getComments, createComment,
+  getComments, createComment, createReply,
   getUser, getSuggestedUsers, followUser, unfollowUser, updateProfile,
   getLeaderboard, getMyLeaderboardStats, getUserPosts,
   getStakingInfo, stakeTokens, unstakeTokens, claimRewards,
