@@ -41,7 +41,7 @@ async function request(path, options = {}) {
   if (!BASE_URL) {
     throw new Error('API not configured: set VITE_API_BASE_URL in your .env file')
   }
-  const res = await fetch(`${BASE_URL}/api${path}`, {
+  const res = await fetch(`${BASE_URL}${path}`, {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ async function adminRequest(path, options = {}) {
   if (!BASE_URL) {
     throw new Error('API not configured: set VITE_API_BASE_URL in your .env file')
   }
-  const res = await fetch(`${BASE_URL}/api${path}`, {
+  const res = await fetch(`${BASE_URL}${path}`, {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
