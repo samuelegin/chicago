@@ -41,7 +41,8 @@ async function request(path, options = {}) {
   if (!BASE_URL) {
     throw new Error('API not configured: set VITE_API_BASE_URL in your .env file')
   }
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(`${BASE_URL}/api${path}`, {
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...getAuthHeaders(),
@@ -68,7 +69,7 @@ async function adminRequest(path, options = {}) {
   if (!BASE_URL) {
     throw new Error('API not configured: set VITE_API_BASE_URL in your .env file')
   }
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(`${BASE_URL}/api${path}`, {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
@@ -106,13 +107,13 @@ export const connectWallet = (address) =>
 
 // ─── FEED ─────────────────────────────────────────────────────
 export const getFeedPosts = (filter = 'general', page = 1) =>
-  request(`/feed/posts?filter=${filter}&page=${page}`)
+  request(`/posts?filter=${filter}&page=${page}`)
 
 export const getFeedCategories = () =>
-  request('/feed/categories')
+  request('/categories')
 
 export const createPost = (payload) =>
-  request('/feed/posts', { method: 'POST', body: JSON.stringify(payload) })
+  request('/posts', { method: 'POST', body: JSON.stringify(payload) })
 
 export const likePost = (postId) =>
   request(`/posts/${postId}/like`, { method: 'POST' })
@@ -121,17 +122,17 @@ export const unlikePost = (postId) =>
   request(`/posts/${postId}/like`, { method: 'DELETE' })
 
 export const getTrendingTopics = () =>
-  request('/feed/trending')
+  request('/posts/trending')
 
 // ─── COMMENTS ─────────────────────────────────────────────────
 export const getComments = (postId) =>
-  request(`/posts/${postId}/comments`)
+  request(`/comment?postId=${postId}`)
 
 export const createComment = (postId, content) =>
-  request(`/posts/${postId}/comments`, { method: 'POST', body: JSON.stringify({ content }) })
+  request(`/comment`, { method: 'POST', body: JSON.stringify({ postId, content }) })
 
 export const createReply = (postId, commentId, content) =>
-  request(`/posts/${postId}/comments/${commentId}/replies`, { method: 'POST', body: JSON.stringify({ content }) })
+  request(`/comment`, { method: 'POST', body: JSON.stringify({ postId, parentId: commentId, content }) })
 
 // ─── USERS ────────────────────────────────────────────────────
 export const getUser = (userId) =>
@@ -191,28 +192,28 @@ export const getNetworkStats = () =>
 
 // ─── ADMIN AUTH ───────────────────────────────────────────────
 export const adminLogin = (email, password) =>
-  adminRequest('/admin/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
+  adminRequest('/auth/admin/login', { method: 'POST', body: JSON.stringify({ email, password }) })
 
 export const adminVerify2FA = (code) =>
-  adminRequest('/admin/auth/verify-2fa', { method: 'POST', body: JSON.stringify({ code }) })
+  adminRequest('/auth/admin/login/verify-otp', { method: 'POST', body: JSON.stringify({ code }) })
 
 export const adminResend2FA = () =>
-  adminRequest('/admin/auth/resend-2fa', { method: 'POST' })
+  adminRequest('/auth/admin/login/verify-otp', { method: 'POST' })
 
 export const adminValidateSetupToken = (token) =>
-  adminRequest(`/admin/auth/validate-setup-token?token=${token}`)
+  adminRequest(`/auth/admin/validate-setup-token?token=${token}`)
 
 export const adminSetup = (payload) =>
-  adminRequest('/admin/auth/setup', { method: 'POST', body: JSON.stringify(payload) })
+  adminRequest('/auth/admin/setup', { method: 'POST', body: JSON.stringify(payload) })
 
 export const adminValidateInviteToken = (token) =>
-  adminRequest(`/admin/auth/validate-invite?token=${token}`)
+  adminRequest(`/auth/admin/validate-invite?token=${token}`)
 
 export const adminRegister = (payload) =>
-  adminRequest('/admin/auth/register', { method: 'POST', body: JSON.stringify(payload) })
+  adminRequest('/auth/admin/register', { method: 'POST', body: JSON.stringify(payload) })
 
 export const adminInvite = (email) =>
-  adminRequest('/admin/invite', { method: 'POST', body: JSON.stringify({ email }) })
+  adminRequest('/auth/admin/invites', { method: 'POST', body: JSON.stringify({ email }) })
 
 // ─── ADMIN DASHBOARD ──────────────────────────────────────────
 export const adminGetStats = () =>
