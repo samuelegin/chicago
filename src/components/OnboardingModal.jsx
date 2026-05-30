@@ -26,7 +26,7 @@ export default function OnboardingModal({ onComplete }) {
     setLoading(true)
     setError('')
     try {
-      const userId = user?.id || user?._id
+      const userId = user?.id
       if (!userId) throw new Error('Could not resolve user ID — please refresh and try again.')
       await updateProfile(userId, {
         displayName: displayName.trim(),
