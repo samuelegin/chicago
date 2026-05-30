@@ -209,9 +209,9 @@ export default function Feed() {
     setHasMore(true)
     getFeedPosts(activeFilter, 1)
       .then((data) => {
-        const incoming = Array.isArray(data) ? data : data.posts ?? []
+        const incoming = data.posts ?? []
         setPosts(incoming)
-        if (incoming.length === 0) setHasMore(false)
+        if (!data.hasMore || incoming.length === 0) setHasMore(false)
       })
       .catch(err => setError(err.message || 'Failed to load posts'))
       .finally(() => setLoading(false))
@@ -223,8 +223,8 @@ export default function Feed() {
     setLoadingMore(true)
     try {
       const data = await getFeedPosts(activeFilter, nextPage)
-      const incoming = Array.isArray(data) ? data : data.posts ?? []
-      if (incoming.length === 0) {
+      const incoming = data.posts ?? []
+      if (incoming.length === 0 || !data.hasMore) {
         setHasMore(false)
       } else {
         setPosts(prev => [...prev, ...incoming])

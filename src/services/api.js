@@ -19,24 +19,6 @@ function notifyUnauthorized() {
   unauthorizedCallbacks.forEach(cb => cb())
 }
 
-function getAuthHeaders() {
-  try {
-    const user = JSON.parse(localStorage.getItem('chicago_user') || 'null')
-    return user?.token ? { Authorization: `Bearer ${user.token}` } : {}
-  } catch {
-    return {}
-  }
-}
-
-function getAdminAuthHeaders() {
-  try {
-    const token = sessionStorage.getItem('admin_temp_token')
-    return token ? { Authorization: `Bearer ${token}` } : {}
-  } catch {
-    return {}
-  }
-}
-
 async function request(path, options = {}) {
   if (!BASE_URL) {
     throw new Error('API not configured: set VITE_API_BASE_URL in your .env file')
@@ -45,7 +27,6 @@ async function request(path, options = {}) {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeaders(),
       ...options.headers,
     },
     ...options,
@@ -58,7 +39,7 @@ async function request(path, options = {}) {
     let message = `API error ${res.status}`
     try {
       const body = await res.json()
-      message = body.message || body.error || message
+      message = body.error || body.message || message
     } catch { /* ignore parse errors */ }
     throw new Error(message)
   }
@@ -73,7 +54,6 @@ async function adminRequest(path, options = {}) {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...getAdminAuthHeaders(),
       ...options.headers,
     },
     ...options,
@@ -82,7 +62,7 @@ async function adminRequest(path, options = {}) {
     let message = `API error ${res.status}`
     try {
       const body = await res.json()
-      message = body.message || body.error || message
+      message = body.error || body.message || message
     } catch { /* ignore parse errors */ }
     throw new Error(message)
   }
@@ -107,13 +87,15 @@ export const connectWallet = (address) =>
 
 // ─── FEED ─────────────────────────────────────────────────────
 export const getFeedPosts = (filter = 'general', page = 1) =>
-  request(`/posts?limit=10${page > 1 ? `&cursor=${page}` : ''}`)
+  request(`/feed/posts?filter=${filter}&page=${page}`)
+    .then(data => ({ posts: data.posts ?? [], hasMore: data.hasMore ?? false, page: data.page ?? page }))
 
 export const getFeedCategories = () =>
-  request('/categories')
+  request('/feed/categories')
+    .then(data => data.categories ?? [])
 
 export const createPost = (payload) =>
-  request('/posts', { method: 'POST', body: JSON.stringify(payload) })
+  request('/feed/posts', { method: 'POST', body: JSON.stringify(payload) })
 
 export const likePost = (postId) =>
   request(`/posts/${postId}/like`, { method: 'POST' })
@@ -122,24 +104,29 @@ export const unlikePost = (postId) =>
   request(`/posts/${postId}/like`, { method: 'DELETE' })
 
 export const getTrendingTopics = () =>
-  request('/categories').catch(() => [])
+  request('/feed/trending')
+    .then(data => data.topics ?? [])
+    .catch(() => [])
 
 // ─── COMMENTS ─────────────────────────────────────────────────
 export const getComments = (postId) =>
-  request(`/comment?postId=${postId}`)
+  request(`/posts/${postId}/comments`)
+    .then(data => data.comments ?? [])
 
 export const createComment = (postId, content) =>
-  request(`/comment`, { method: 'POST', body: JSON.stringify({ postId, content }) })
+  request(`/posts/${postId}/comments`, { method: 'POST', body: JSON.stringify({ content }) })
 
 export const createReply = (postId, commentId, content) =>
-  request(`/comment`, { method: 'POST', body: JSON.stringify({ postId, parentId: commentId, content }) })
+  request(`/posts/${postId}/comments/${commentId}/replies`, { method: 'POST', body: JSON.stringify({ content }) })
 
 // ─── USERS ────────────────────────────────────────────────────
 export const getUser = (userId) =>
   request(`/users/${userId}`)
 
 export const getSuggestedUsers = () =>
-  Promise.resolve([])
+  request('/users/suggestions')
+    .then(data => data.users ?? [])
+    .catch(() => [])
 
 export const followUser = (userId) =>
   request(`/users/${userId}/follow`, { method: 'POST' })
@@ -147,8 +134,8 @@ export const followUser = (userId) =>
 export const unfollowUser = (userId) =>
   request(`/users/${userId}/follow`, { method: 'DELETE' })
 
-export const updateProfile = (userId, payload) =>
-  request(`/profiles/${userId}`, { method: 'PATCH', body: JSON.stringify(payload) })
+export const updateProfile = (payload) =>
+  request('/users/me', { method: 'PATCH', body: JSON.stringify(payload) })
 
 // ─── LEADERBOARD ──────────────────────────────────────────────
 export const getLeaderboard = (type = 'creators') =>
@@ -192,28 +179,28 @@ export const getNetworkStats = () =>
 
 // ─── ADMIN AUTH ───────────────────────────────────────────────
 export const adminLogin = (email, password) =>
-  adminRequest('/auth/admin/login', { method: 'POST', body: JSON.stringify({ email, password }) })
+  adminRequest('/admin/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
 
 export const adminVerify2FA = (code) =>
-  adminRequest('/auth/admin/login/verify-otp', { method: 'POST', body: JSON.stringify({ code }) })
+  adminRequest('/admin/auth/verify-2fa', { method: 'POST', body: JSON.stringify({ code }) })
 
 export const adminResend2FA = () =>
-  adminRequest('/auth/admin/login/verify-otp', { method: 'POST' })
+  adminRequest('/admin/auth/resend-2fa', { method: 'POST' })
 
 export const adminValidateSetupToken = (token) =>
-  adminRequest(`/auth/admin/validate-setup-token?token=${token}`)
+  adminRequest(`/admin/auth/validate-setup-token?token=${token}`)
 
 export const adminSetup = (payload) =>
-  adminRequest('/auth/admin/setup', { method: 'POST', body: JSON.stringify(payload) })
+  adminRequest('/admin/auth/setup', { method: 'POST', body: JSON.stringify(payload) })
 
 export const adminValidateInviteToken = (token) =>
-  adminRequest(`/auth/admin/validate-invite?token=${token}`)
+  adminRequest(`/admin/auth/validate-invite?token=${token}`)
 
 export const adminRegister = (payload) =>
-  adminRequest('/auth/admin/register', { method: 'POST', body: JSON.stringify(payload) })
+  adminRequest('/admin/auth/register', { method: 'POST', body: JSON.stringify(payload) })
 
 export const adminInvite = (email) =>
-  adminRequest('/auth/admin/invites', { method: 'POST', body: JSON.stringify({ email }) })
+  adminRequest('/admin/invite', { method: 'POST', body: JSON.stringify({ email }) })
 
 // ─── ADMIN DASHBOARD ──────────────────────────────────────────
 export const adminGetStats = () =>

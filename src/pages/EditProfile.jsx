@@ -48,7 +48,7 @@ export default function EditProfile() {
     setSaving(true)
     setSaveError('')
     try {
-      await updateProfile(authUser?.id, { ...form, avatar: avatarPreview })
+      await updateProfile({ ...form, avatar: avatarPreview })
       navigate('/profile')
     } catch (err) {
       setSaveError(err.message || 'Failed to save. Please try again.')

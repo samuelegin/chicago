@@ -26,11 +26,8 @@ export default function OnboardingModal({ onComplete }) {
     setLoading(true)
     setError('')
     try {
-      const userId = user._id || user.id
-      if (!userId) throw new Error('User ID not found. Please refresh and try again.')
-      await updateProfile(userId, {
-        displayName: displayName.trim(),
-        username: usernameClean,
+      await updateProfile({
+        name: displayName.trim(),
         bio: bio.trim(),
       })
       await refreshUser()
