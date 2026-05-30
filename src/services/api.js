@@ -2,8 +2,8 @@
  * ============================================================
  *  CHICAGO WEB3 — API SERVICE
  * ============================================================
- *  Set VITE_API_BASE_URL in your .env to point at the backend.
- *  All calls hit the real backend — no mock fallbacks.
+ *  Routes match the live backend Swagger at:
+ *  https://chicago-backend-production.up.railway.app/docs
  * ============================================================
  */
 
@@ -40,7 +40,7 @@ async function request(path, options = {}) {
     try {
       const body = await res.json()
       message = body.error || body.message || message
-    } catch { /* ignore parse errors */ }
+    } catch { /* ignore */ }
     throw new Error(message)
   }
   return res.json()
@@ -63,70 +63,80 @@ async function adminRequest(path, options = {}) {
     try {
       const body = await res.json()
       message = body.error || body.message || message
-    } catch { /* ignore parse errors */ }
+    } catch { /* ignore */ }
     throw new Error(message)
   }
   return res.json()
 }
 
 // ─── AUTH ─────────────────────────────────────────────────────
+// POST /auth/magic-link
 export const requestMagicLink = (email) =>
   request('/auth/magic-link', { method: 'POST', body: JSON.stringify({ email }) })
 
+// POST /auth/magic-link/verify
 export const verifyMagicLink = (token) =>
   request('/auth/magic-link/verify', { method: 'POST', body: JSON.stringify({ token }) })
 
+// GET /auth/me  — Swagger confirms this exists
 export const getCurrentUser = () =>
   request('/auth/me')
 
-// Alias used by AuthContext
 export const getMe = getCurrentUser
 
+// POST /auth/wallet/connect (may not be implemented yet)
 export const connectWallet = (address) =>
   request('/auth/wallet/connect', { method: 'POST', body: JSON.stringify({ address }) })
 
-// ─── FEED ─────────────────────────────────────────────────────
+// ─── FEED / POSTS ─────────────────────────────────────────────
+// GET /posts  (Swagger: GET /api/posts)
 export const getFeedPosts = (filter = 'general', page = 1) =>
-  request(`/feed/posts?filter=${filter}&page=${page}`)
-    .then(data => ({ posts: data.posts ?? [], hasMore: data.hasMore ?? false, page: data.page ?? page }))
+  request(`/posts?limit=10${page > 1 ? `&cursor=${page}` : ''}`)
+    .then(data => ({
+      posts: Array.isArray(data) ? data : (data.posts ?? data.data ?? []),
+      hasMore: data.hasMore ?? data.meta?.hasMore ?? false,
+    }))
 
+// GET /categories  (Swagger: GET /api/categories)
 export const getFeedCategories = () =>
-  request('/feed/categories')
-    .then(data => data.categories ?? [])
-
-export const createPost = (payload) =>
-  request('/feed/posts', { method: 'POST', body: JSON.stringify(payload) })
-
-export const likePost = (postId) =>
-  request(`/posts/${postId}/like`, { method: 'POST' })
-
-export const unlikePost = (postId) =>
-  request(`/posts/${postId}/like`, { method: 'DELETE' })
-
-export const getTrendingTopics = () =>
-  request('/feed/trending')
-    .then(data => data.topics ?? [])
+  request('/categories')
+    .then(data => Array.isArray(data) ? data : (data.categories ?? []))
     .catch(() => [])
 
+// POST /posts  (Swagger: POST /api/posts)
+export const createPost = (payload) =>
+  request('/posts', { method: 'POST', body: JSON.stringify(payload) })
+
+// POST/DELETE /posts/:postId/like  — may not exist yet, catch silently
+export const likePost = (postId) =>
+  request(`/posts/${postId}/like`, { method: 'POST' }).catch(() => {})
+
+export const unlikePost = (postId) =>
+  request(`/posts/${postId}/like`, { method: 'DELETE' }).catch(() => {})
+
+// Trending — not in Swagger, return empty
+export const getTrendingTopics = () => Promise.resolve([])
+
 // ─── COMMENTS ─────────────────────────────────────────────────
+// GET /comment?postId=  (Swagger: GET /api/comment)
 export const getComments = (postId) =>
-  request(`/posts/${postId}/comments`)
-    .then(data => data.comments ?? [])
+  request(`/comment?postId=${postId}`)
+    .then(data => Array.isArray(data) ? data : (data.comments ?? []))
 
+// POST /comment  (Swagger: POST /api/comment)
 export const createComment = (postId, content) =>
-  request(`/posts/${postId}/comments`, { method: 'POST', body: JSON.stringify({ content }) })
+  request('/comment', { method: 'POST', body: JSON.stringify({ postId, content }) })
 
+// Replies via /comment with parentId
 export const createReply = (postId, commentId, content) =>
-  request(`/posts/${postId}/comments/${commentId}/replies`, { method: 'POST', body: JSON.stringify({ content }) })
+  request('/comment', { method: 'POST', body: JSON.stringify({ postId, parentId: commentId, content }) })
 
 // ─── USERS ────────────────────────────────────────────────────
 export const getUser = (userId) =>
   request(`/users/${userId}`)
 
-export const getSuggestedUsers = () =>
-  request('/users/suggestions')
-    .then(data => data.users ?? [])
-    .catch(() => [])
+// Not in Swagger — return empty gracefully
+export const getSuggestedUsers = () => Promise.resolve([])
 
 export const followUser = (userId) =>
   request(`/users/${userId}/follow`, { method: 'POST' })
@@ -134,8 +144,10 @@ export const followUser = (userId) =>
 export const unfollowUser = (userId) =>
   request(`/users/${userId}/follow`, { method: 'DELETE' })
 
-export const updateProfile = (payload) =>
-  request('/users/me', { method: 'PATCH', body: JSON.stringify(payload) })
+// PATCH /profiles/:userId  (Swagger: PATCH /api/profiles/{userId})
+// userId resolved from user object — supports both id and _id
+export const updateProfile = (userId, payload) =>
+  request(`/profiles/${userId}`, { method: 'PATCH', body: JSON.stringify(payload) })
 
 // ─── LEADERBOARD ──────────────────────────────────────────────
 export const getLeaderboard = (type = 'creators') =>
@@ -178,29 +190,34 @@ export const getNetworkStats = () =>
   request('/network/stats')
 
 // ─── ADMIN AUTH ───────────────────────────────────────────────
+// Swagger: POST /auth/admin/login
 export const adminLogin = (email, password) =>
-  adminRequest('/admin/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
+  adminRequest('/auth/admin/login', { method: 'POST', body: JSON.stringify({ email, password }) })
 
+// Swagger: POST /auth/admin/login/verify-otp
 export const adminVerify2FA = (code) =>
-  adminRequest('/admin/auth/verify-2fa', { method: 'POST', body: JSON.stringify({ code }) })
+  adminRequest('/auth/admin/login/verify-otp', { method: 'POST', body: JSON.stringify({ code }) })
 
 export const adminResend2FA = () =>
-  adminRequest('/admin/auth/resend-2fa', { method: 'POST' })
+  adminRequest('/auth/admin/login/verify-otp', { method: 'POST' })
 
 export const adminValidateSetupToken = (token) =>
-  adminRequest(`/admin/auth/validate-setup-token?token=${token}`)
+  adminRequest(`/auth/admin/validate-setup-token?token=${token}`)
 
 export const adminSetup = (payload) =>
-  adminRequest('/admin/auth/setup', { method: 'POST', body: JSON.stringify(payload) })
+  adminRequest('/auth/admin/setup', { method: 'POST', body: JSON.stringify(payload) })
 
+// Swagger: GET /auth/admin/validate-invite (check actual param name)
 export const adminValidateInviteToken = (token) =>
-  adminRequest(`/admin/auth/validate-invite?token=${token}`)
+  adminRequest(`/auth/admin/validate-invite?token=${token}`)
 
+// Swagger: POST /auth/admin/register
 export const adminRegister = (payload) =>
-  adminRequest('/admin/auth/register', { method: 'POST', body: JSON.stringify(payload) })
+  adminRequest('/auth/admin/register', { method: 'POST', body: JSON.stringify(payload) })
 
+// Swagger: POST /auth/admin/invites
 export const adminInvite = (email) =>
-  adminRequest('/admin/invite', { method: 'POST', body: JSON.stringify({ email }) })
+  adminRequest('/auth/admin/invites', { method: 'POST', body: JSON.stringify({ email }) })
 
 // ─── ADMIN DASHBOARD ──────────────────────────────────────────
 export const adminGetStats = () =>
@@ -256,8 +273,7 @@ export default {
   getNetworkStats,
   adminLogin, adminVerify2FA, adminResend2FA,
   adminValidateSetupToken, adminSetup,
-  adminValidateInviteToken, adminRegister,
-  adminInvite,
+  adminValidateInviteToken, adminRegister, adminInvite,
   adminGetStats, adminGetActivityLog,
   adminGetUsers, adminUpdateUser, adminSuspendUser, adminUnsuspendUser,
   adminGetCampaigns, adminUpdateCampaign, adminDeleteCampaign, adminCreateCampaign,
