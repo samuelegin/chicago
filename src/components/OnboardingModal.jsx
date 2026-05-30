@@ -27,6 +27,7 @@ export default function OnboardingModal({ onComplete }) {
     setError('')
     try {
       const userId = user?.id
+      console.log('[Onboarding] user object:', user, '| userId:', userId)
       if (!userId) throw new Error('Could not resolve user ID — please refresh and try again.')
       const payload = {
         fullName: displayName.trim(),

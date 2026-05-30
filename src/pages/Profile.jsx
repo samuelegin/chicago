@@ -46,8 +46,8 @@ export default function Profile() {
   useEffect(() => {
     setProfileError(null)
     getCurrentUser()
-      .then(async (authData) => {
-        const base = authData?.data?.user ?? authData ?? {}
+      .then(async (data) => {
+        const base = data?.data?.user ?? data?.user ?? (data?.id ? data : {})
         // /auth/me may not include profile fields — fetch /profiles/:id and merge
         try {
           const profileData = await getProfile(base.id)

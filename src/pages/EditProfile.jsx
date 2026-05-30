@@ -20,8 +20,8 @@ export default function EditProfile() {
   const fileInputRef = useRef(null)
 
   useEffect(() => {
-    getCurrentUser().then(async (authData) => {
-      const base = authData?.data?.user ?? authData ?? {}
+    getCurrentUser().then(async (data) => {
+      const base = data?.data?.user ?? data?.user ?? (data?.id ? data : {})
       try {
         const profileData = await getProfile(base.id)
         const p = profileData?.data ?? profileData ?? {}

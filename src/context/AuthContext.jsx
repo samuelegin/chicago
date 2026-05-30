@@ -21,7 +21,11 @@ export function AuthProvider({ children }) {
   // ── Restore session on every page load ──────────────────────
   useEffect(() => {
     api.getMe()
-      .then(data => setUser(data?.data?.user ?? null))
+      .then(data => {
+        // Handle both { id, email, ... } flat and { data: { user: {...} } } wrapped
+        const u = data?.data?.user ?? data?.user ?? (data?.id ? data : null)
+        setUser(u)
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -39,7 +43,7 @@ export function AuthProvider({ children }) {
 
   const verifyMagicLink = useCallback(async (token) => {
     const data = await api.verifyMagicLink(token)
-    const loggedInUser = data?.data?.user ?? data?.user ?? null
+    const loggedInUser = data?.data?.user ?? data?.user ?? (data?.id ? data : null)
     setUser(loggedInUser)
     return loggedInUser
   }, [])
@@ -53,7 +57,7 @@ export function AuthProvider({ children }) {
   // ── Refresh user data (call after profile edits etc.) ────────
   const refreshUser = useCallback(async () => {
     const data = await api.getMe()
-    const refreshed = data?.data?.user ?? null
+    const refreshed = data?.data?.user ?? data?.user ?? (data?.id ? data : null)
     setUser(refreshed)
     return refreshed
   }, [])
