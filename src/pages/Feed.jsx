@@ -28,10 +28,6 @@ function GifKeyboard({ onSelect, onClose }) {
   // Wire this up when the backend is ready.
 
   return (
-    <>
-      {showOnboarding && (
-        <OnboardingModal onComplete={() => setOnboardingDone(true)} />
-      )}
     <div className="absolute bottom-full mb-2 left-0 w-80 bg-surface-container border-2 border-on-background neo-shadow z-50 p-3">
       <div className="flex justify-between items-center mb-2">
         <span className="font-bold text-xs uppercase tracking-widest text-primary-container">GIFs</span>
@@ -338,6 +334,10 @@ export default function Feed() {
   }
 
   return (
+    <>
+      {showOnboarding && (
+        <OnboardingModal onComplete={() => setOnboardingDone(true)} />
+      )}
     <div ref={feedTopRef} className="flex-1 lg:ml-[300px] lg:mr-[340px] max-w-2xl w-full flex flex-col gap-4 lg:gap-8 min-w-0">
       {/* Hidden file input */}
       <input
@@ -549,5 +549,6 @@ export default function Feed() {
         onHashtagClick={handleHashtagClick}
       />
     </div>
+    </>
   )
 }
