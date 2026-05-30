@@ -8,7 +8,7 @@ import { updateProfile } from '../services/api'
  * Collects: display name, username, bio — then calls PATCH /users/me.
  */
 export default function OnboardingModal({ onComplete }) {
-  const { refreshUser } = useAuth()
+  const { user, refreshUser } = useAuth()
 
   const [step, setStep] = useState(1) // 1 = name+username, 2 = bio
   const [displayName, setDisplayName] = useState('')
@@ -26,7 +26,7 @@ export default function OnboardingModal({ onComplete }) {
     setLoading(true)
     setError('')
     try {
-      await updateProfile({
+      await updateProfile(user.id, {
         displayName: displayName.trim(),
         username: usernameClean,
         bio: bio.trim(),
