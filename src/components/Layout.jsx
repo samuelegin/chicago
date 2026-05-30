@@ -73,11 +73,12 @@ export function TopBar() {
         {/* Connect Wallet — always visible */}
         <ConnectButton.Custom>
           {({ account, chain, openConnectModal, openAccountModal, mounted }) => {
-            const connected = mounted && account
+            if (!mounted) return null
+            const connected = !!account
             return (
               <button
                 type="button"
-                onClick={connected ? openAccountModal : openConnectModal}
+                onClick={connected ? openAccountModal ?? undefined : openConnectModal ?? undefined}
                 className="flex items-center gap-2 px-3 md:px-4 py-2 bg-surface text-on-surface font-bold border-[3px] border-on-surface hover:bg-primary-container/10 transition-all text-sm"
                 style={{ boxShadow: '3px 3px 0px 0px var(--neo-shadow-color)' }}
               >
