@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getCurrentUser, updateProfile } from '../services/api'
+import { getCurrentUser, getProfile, updateProfile } from '../services/api'
 
 export default function EditProfile() {
   const navigate = useNavigate()
@@ -20,10 +20,26 @@ export default function EditProfile() {
   const fileInputRef = useRef(null)
 
   useEffect(() => {
-    getCurrentUser().then(u => {
-      setForm({ name: u.name || '', bio: u.bio || '', website: u.website || '', twitter: u.twitter || '', farcaster: u.farcaster || '' })
-      setAvatarPreview(u.avatar || '')
-      setOriginalAvatar(u.avatar || '')
+    getCurrentUser().then(async (authData) => {
+      const base = authData?.data?.user ?? authData ?? {}
+      try {
+        const profileData = await getProfile(base.id)
+        const p = profileData?.data ?? profileData ?? {}
+        setForm({
+          name:      p.fullName || base.name || '',
+          bio:       p.bio      || base.bio  || '',
+          website:   p.socialLinks?.website   || base.website   || '',
+          twitter:   p.socialLinks?.twitter   || base.twitter   || '',
+          farcaster: p.socialLinks?.farcaster || base.farcaster || '',
+        })
+        const av = p.avatarUrl || base.avatar || ''
+        setAvatarPreview(av)
+        setOriginalAvatar(av)
+      } catch {
+        setForm({ name: base.name || '', bio: base.bio || '', website: base.website || '', twitter: base.twitter || '', farcaster: base.farcaster || '' })
+        setAvatarPreview(base.avatar || '')
+        setOriginalAvatar(base.avatar || '')
+      }
     }).catch(() => {
       if (authUser) {
         setForm({ name: authUser.name || '', bio: '', website: '', twitter: '', farcaster: '' })

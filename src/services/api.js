@@ -145,6 +145,10 @@ export const unfollowUser = (userId) =>
   request(`/users/${userId}/follow`, { method: 'DELETE' })
 
 // POST /profiles (create profile - first time)
+// GET /profiles/:userId
+export const getProfile = (userId) =>
+  request(`/profiles/${userId}`)
+
 // POST /profiles — backend identifies user from session cookie, do NOT send userId in body
 export const createProfile = (_userId, payload) =>
   request('/profiles', { method: 'POST', body: JSON.stringify(payload) })
@@ -268,7 +272,7 @@ export default {
   requestMagicLink, verifyMagicLink, getCurrentUser, getMe, connectWallet,
   getFeedPosts, getFeedCategories, createPost, likePost, unlikePost, getTrendingTopics,
   getComments, createComment, createReply,
-  getUser, getSuggestedUsers, followUser, unfollowUser, createProfile, updateProfile,
+  getUser, getSuggestedUsers, followUser, unfollowUser, getProfile, createProfile, updateProfile,
   getLeaderboard, getMyLeaderboardStats, getUserPosts,
   getStakingInfo, stakeTokens, unstakeTokens, claimRewards,
   getMarketplaceCampaigns, getMarketplaceAds, getMarketplacePricing, createCampaign,

@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { Icon } from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
-import { getCurrentUser, getMyLeaderboardStats, getUserPosts } from '../services/api'
+import { getCurrentUser, getProfile, getMyLeaderboardStats, getUserPosts } from '../services/api'
 
 // Referral code derived from user id (in production, comes from backend)
 // Influence score config
@@ -46,7 +46,27 @@ export default function Profile() {
   useEffect(() => {
     setProfileError(null)
     getCurrentUser()
-      .then(setUser)
+      .then(async (authData) => {
+        const base = authData?.data?.user ?? authData ?? {}
+        // /auth/me may not include profile fields — fetch /profiles/:id and merge
+        try {
+          const profileData = await getProfile(base.id)
+          const p = profileData?.data ?? profileData ?? {}
+          setUser({
+            ...base,
+            name:   p.fullName  || base.name   || '',
+            handle: p.username  ? `@${p.username}` : (base.handle || ''),
+            avatar: p.avatarUrl || base.avatar  || '',
+            bio:    p.bio       || base.bio     || '',
+            website:  p.socialLinks?.website  || base.website  || '',
+            twitter:  p.socialLinks?.twitter  || base.twitter  || '',
+            farcaster: p.socialLinks?.farcaster || base.farcaster || '',
+          })
+        } catch {
+          // profile not found yet — just use auth/me data as-is
+          setUser(base)
+        }
+      })
       .catch(err => { setProfileError(err.message); setUser(authUser) })
     getMyLeaderboardStats().then(setMyStats).catch(() => {})
     setPostsLoading(true)
