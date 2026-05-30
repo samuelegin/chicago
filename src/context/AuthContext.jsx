@@ -62,6 +62,11 @@ export function AuthProvider({ children }) {
     return refreshed
   }, [])
 
+  // ── Patch local user state (call after profile edits to update sidebar immediately) ──
+  const patchUser = useCallback((fields) => {
+    setUser(prev => prev ? { ...prev, ...fields } : prev)
+  }, [])
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -70,6 +75,7 @@ export function AuthProvider({ children }) {
       verifyMagicLink,
       logout,
       refreshUser,
+      patchUser,
       isAdmin: user?.role === 'admin',
     }}>
       {children}

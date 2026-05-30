@@ -8,7 +8,7 @@ import { createProfile, updateProfile } from '../services/api'
  * Collects: display name, username, bio — then calls PATCH /users/me.
  */
 export default function OnboardingModal({ onComplete }) {
-  const { user, refreshUser } = useAuth()
+  const { user, refreshUser, patchUser } = useAuth()
 
   const [step, setStep] = useState(1) // 1 = name+username, 2 = bio
   const [displayName, setDisplayName] = useState('')
@@ -45,6 +45,12 @@ export default function OnboardingModal({ onComplete }) {
           throw createErr
         }
       }
+      // Update auth context user immediately so sidebar shows name/handle without waiting for /auth/me
+      patchUser({
+        name: displayName.trim(),
+        handle: `@${usernameClean}`,
+        bio: bio.trim(),
+      })
       await refreshUser()
       onComplete()
     } catch (err) {

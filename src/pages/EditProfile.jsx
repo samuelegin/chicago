@@ -5,7 +5,7 @@ import { getCurrentUser, getProfile, updateProfile } from '../services/api'
 
 export default function EditProfile() {
   const navigate = useNavigate()
-  const { user: authUser } = useAuth()
+  const { user: authUser, patchUser } = useAuth()
   const [form, setForm] = useState({
     name: '',
     bio: '',
@@ -74,6 +74,14 @@ export default function EditProfile() {
           website: form.website,
           farcaster: form.farcaster,
         },
+      })
+      patchUser({
+        name: form.name,
+        bio: form.bio,
+        avatar: avatarPreview !== originalAvatar ? avatarPreview : undefined,
+        website: form.website,
+        twitter: form.twitter,
+        farcaster: form.farcaster,
       })
       navigate('/profile')
     } catch (err) {
