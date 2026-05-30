@@ -107,7 +107,7 @@ export const connectWallet = (address) =>
 
 // ─── FEED ─────────────────────────────────────────────────────
 export const getFeedPosts = (filter = 'general', page = 1) =>
-  request(`/posts?filter=${filter}&page=${page}`)
+  request(`/posts?limit=10${page > 1 ? `&cursor=${page}` : ''}`)
 
 export const getFeedCategories = () =>
   request('/categories')
@@ -122,7 +122,7 @@ export const unlikePost = (postId) =>
   request(`/posts/${postId}/like`, { method: 'DELETE' })
 
 export const getTrendingTopics = () =>
-  request('/posts/trending')
+  request('/categories').catch(() => [])
 
 // ─── COMMENTS ─────────────────────────────────────────────────
 export const getComments = (postId) =>
@@ -139,7 +139,7 @@ export const getUser = (userId) =>
   request(`/users/${userId}`)
 
 export const getSuggestedUsers = () =>
-  request('/users/suggestions')
+  Promise.resolve([])
 
 export const followUser = (userId) =>
   request(`/users/${userId}/follow`, { method: 'POST' })

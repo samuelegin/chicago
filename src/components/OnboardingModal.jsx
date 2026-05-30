@@ -26,7 +26,9 @@ export default function OnboardingModal({ onComplete }) {
     setLoading(true)
     setError('')
     try {
-      await updateProfile(user.id, {
+      const userId = user._id || user.id
+      if (!userId) throw new Error('User ID not found. Please refresh and try again.')
+      await updateProfile(userId, {
         displayName: displayName.trim(),
         username: usernameClean,
         bio: bio.trim(),
@@ -34,7 +36,7 @@ export default function OnboardingModal({ onComplete }) {
       await refreshUser()
       onComplete()
     } catch (err) {
-      setError(err.message || 'Something went wrong. Please try again.')
+      setError(typeof err?.message === 'string' ? err.message : 'Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
