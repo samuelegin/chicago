@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { getDefaultConfig, RainbowKitProvider } from '@rainbow-me/rainbowkit'
+import { http } from 'wagmi'
 import { WagmiProvider } from 'wagmi'
 import { mainnet, sepolia } from 'wagmi/chains'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -36,10 +37,21 @@ const wagmiConfig = getDefaultConfig({
   appName: 'Chicago Web3',
   projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ?? 'fallback',
   chains: [mainnet, sepolia],
+  transports: {
+    [mainnet.id]: http(),
+    [sepolia.id]: http(),
+  },
   ssr: false,
 })
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
 
 // ── Route guards ──────────────────────────────────────────────
 function ProtectedRoute({ children }) {
