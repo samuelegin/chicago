@@ -3,6 +3,7 @@ import OnboardingModal from '../components/OnboardingModal'
 import { Icon, RightSidebar } from '../components/Layout'
 import PostCard from '../components/PostCard'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
 import {
   getFeedPosts,
   getFeedCategories,
@@ -172,6 +173,7 @@ function PostSkeleton() {
 
 export default function Feed() {
   const { user } = useAuth()
+  const toast = useToast()
 
   // Show onboarding if user hasn't set their name yet (checks all possible field names)
   const needsOnboarding = user && !user.name && !user.displayName && !user.username && !user.fullName
@@ -304,26 +306,23 @@ export default function Feed() {
     if (!postContent.trim() && selectedFiles.length === 0 && selectedGifs.length === 0 && !poll) return
     const payload = {
       content: postContent,
-      images: [...selectedGifs, ...selectedFiles.map(f => f.url)],
+      // Only send GIF URLs (real URLs); skip local blob: URLs from file picker — backend can't use them
+      images: selectedGifs.filter(g => g.startsWith('http')),
       poll: poll || null,
       category: 'General',
     }
     try {
-      const created = await apiCreatePost(payload)
-      setPosts([created, ...posts])
-    } catch {
-      // Fallback: optimistic local add
-      setPosts([{
-        id: `p_${Date.now()}`,
-        author: user,
-        ...payload,
-        likes: 0,
-        comments: 0,
-        shares: 0,
-        trending: false,
-        timestamp: 'just now',
-        liked: false,
-      }, ...posts])
+      const res = await apiCreatePost(payload)
+      // Unwrap response — backend may return { data: post } or the post directly
+      const created = res?.data ?? res
+      if (created?.id) {
+        setPosts([created, ...posts])
+      } else {
+        // Response didn't include post object — refetch from backend to get the real post
+        getFeedPosts(activeFilter, 1).then(data => setPosts(data.posts ?? []))
+      }
+    } catch (err) {
+      toast.error(err?.message || 'Failed to create post. Please try again.')
     }
     setPostContent('')
     setSelectedFiles([])
