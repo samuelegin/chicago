@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import OnboardingModal from '../components/OnboardingModal'
 import { Icon, RightSidebar } from '../components/Layout'
 import PostCard from '../components/PostCard'
 import { useAuth } from '../context/AuthContext'
@@ -27,6 +28,10 @@ function GifKeyboard({ onSelect, onClose }) {
   // Wire this up when the backend is ready.
 
   return (
+    <>
+      {showOnboarding && (
+        <OnboardingModal onComplete={() => setOnboardingDone(true)} />
+      )}
     <div className="absolute bottom-full mb-2 left-0 w-80 bg-surface-container border-2 border-on-background neo-shadow z-50 p-3">
       <div className="flex justify-between items-center mb-2">
         <span className="font-bold text-xs uppercase tracking-widest text-primary-container">GIFs</span>
@@ -171,6 +176,11 @@ function PostSkeleton() {
 
 export default function Feed() {
   const { user } = useAuth()
+
+  // Show onboarding if user hasn't set their display name or username yet
+  const needsOnboarding = user && !user.displayName && !user.username
+  const [onboardingDone, setOnboardingDone] = useState(false)
+  const showOnboarding = needsOnboarding && !onboardingDone
   const [posts, setPosts] = useState([])
   const [categories, setCategories] = useState([])
   const [activeFilter, setActiveFilter] = useState('general')
