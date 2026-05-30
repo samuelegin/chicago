@@ -484,6 +484,7 @@ export default function Feed() {
                   Post
                 </button>
               </div>
+            </div>
 
             {/* Poll creator (inline below toolbar) */}
             {showPollCreator && !poll && (
