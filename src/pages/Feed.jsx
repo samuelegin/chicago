@@ -197,6 +197,10 @@ export default function Feed() {
     Promise.all([getFeedCategories(), getSuggestedUsers(), getTrendingTopics()])
       .then(([catsData, suggestData, trendData]) => {
         setCategories(catsData)
+        // Set activeFilter to first real category UUID once loaded
+        if (catsData.length > 0 && activeFilter === 'general') {
+          setActiveFilter(catsData[0].id)
+        }
         setSuggested(suggestData)
         setTrendingTopics(trendData)
       })
@@ -304,8 +308,20 @@ export default function Feed() {
 
   const handlePost = async () => {
     if (!postContent.trim()) return
+    // categoryId is required — use activeFilter if it's a UUID, else first available category
+    const categoryId = activeFilter !== 'general'
+      ? activeFilter
+      : (categories[0]?.id ?? null)
+    if (!categoryId) {
+      toast.error('No categories available yet. Please try again in a moment.')
+      return
+    }
     try {
-      const res = await apiCreatePost({ content: postContent })
+      const res = await apiCreatePost({
+        content: postContent,
+        categoryId,
+        isPublished: true,
+      })
       const created = res?.data ?? res
       if (created?.id) {
         setPosts([created, ...posts])
