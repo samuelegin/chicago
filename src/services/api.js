@@ -144,12 +144,13 @@ export const followUser = (userId) =>
 export const unfollowUser = (userId) =>
   request(`/users/${userId}/follow`, { method: 'DELETE' })
 
-// PATCH /profiles/:userId  (Swagger: PATCH /api/profiles/{userId})
-// userId resolved from user object — supports both id and _id
-export const updateProfile = (userId, payload) =>
-  request(`/profiles/${userId}`, { method: 'PATCH', body: JSON.stringify(payload) })
+// POST /profiles (create profile - first time)
+export const createProfile = (userId, payload) =>
+  request('/profiles', { method: 'POST', body: JSON.stringify({ userId, ...payload }) })
 
-// ─── LEADERBOARD ──────────────────────────────────────────────
+// PATCH /profiles/:userId (update existing profile)
+export const updateProfile = (userId, payload) =>
+  request(`/profiles/${userId}`, { method: 'PATCH', body: JSON.stringify(payload) })// ─── LEADERBOARD ──────────────────────────────────────────────
 export const getLeaderboard = (type = 'creators') =>
   request(`/leaderboard?type=${type}`)
 
@@ -266,7 +267,7 @@ export default {
   requestMagicLink, verifyMagicLink, getCurrentUser, getMe, connectWallet,
   getFeedPosts, getFeedCategories, createPost, likePost, unlikePost, getTrendingTopics,
   getComments, createComment, createReply,
-  getUser, getSuggestedUsers, followUser, unfollowUser, updateProfile,
+  getUser, getSuggestedUsers, followUser, unfollowUser, createProfile, updateProfile,
   getLeaderboard, getMyLeaderboardStats, getUserPosts,
   getStakingInfo, stakeTokens, unstakeTokens, claimRewards,
   getMarketplaceCampaigns, getMarketplaceAds, getMarketplacePricing, createCampaign,
