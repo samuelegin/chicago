@@ -97,11 +97,15 @@ export const getFeedPosts = (filter = 'general', page = 1) =>
       hasMore: data.hasMore ?? data.meta?.hasMore ?? false,
     }))
 
-// GET /categories  (Swagger: GET /api/categories)
+// GET /categories
 export const getFeedCategories = () =>
   request('/categories')
-    .then(data => Array.isArray(data) ? data : (data.categories ?? []))
+    .then(data => Array.isArray(data) ? data : (data.categories ?? data.data ?? []))
     .catch(() => [])
+
+// POST /categories
+export const createCategory = (name, description = '') =>
+  request('/categories', { method: 'POST', body: JSON.stringify({ name, description }) })
 
 // POST /posts  (Swagger: POST /api/posts)
 export const createPost = (payload) =>
@@ -270,7 +274,7 @@ export const adminRemoveTeamMember = (adminId) =>
 
 export default {
   requestMagicLink, verifyMagicLink, getCurrentUser, getMe, connectWallet,
-  getFeedPosts, getFeedCategories, createPost, likePost, unlikePost, getTrendingTopics,
+  getFeedPosts, getFeedCategories, createCategory, createPost, likePost, unlikePost, getTrendingTopics,
   getComments, createComment, createReply,
   getUser, getSuggestedUsers, followUser, unfollowUser, getProfile, createProfile, updateProfile,
   getLeaderboard, getMyLeaderboardStats, getUserPosts,
