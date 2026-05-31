@@ -151,8 +151,8 @@ export function LeftSidebar() {
             end={link.path === '/'}
             className={({ isActive }) =>
               isActive
-                ? 'flex items-center gap-3 px-5 py-4 bg-primary-container text-on-primary-container border-b-[3px] border-on-background font-bold transition-all'
-                : 'flex items-center gap-3 px-5 py-4 text-on-surface hover:bg-primary-container/10 border-b-[3px] border-on-background/20 hover:border-on-background transition-all'
+                ? 'flex items-center gap-3 px-5 py-4 bg-primary-container text-on-primary-container font-bold transition-all'
+                : 'flex items-center gap-3 px-5 py-4 text-on-surface hover:bg-primary-container/10 transition-all'
             }
           >
             {({ isActive }) => (
@@ -169,7 +169,6 @@ export function LeftSidebar() {
       {user && (
         <div
           className="border-[4px] border-on-background bg-surface p-4 flex items-center gap-3"
-          style={{ boxShadow: '4px 4px 0px 0px rgba(212,175,55,1)' }}
         >
           <button
             onClick={() => navigate('/profile')}

@@ -468,10 +468,6 @@ export default function Feed() {
                   <Icon name="poll" className="cursor-pointer text-[18px] lg:text-[24px]" />
                 </button>
 
-                {/* Emoji icon */}
-                <button title="Emoji" className="hover:text-primary-container transition-colors">
-                  <Icon name="sentiment_satisfied" className="cursor-pointer text-[18px] lg:text-[24px]" />
-                </button>
               </div>
 
               {/* Category select + Post button */}
