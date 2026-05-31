@@ -353,7 +353,7 @@ export default function Feed() {
       {showOnboarding && (
         <OnboardingModal onComplete={() => setOnboardingDone(true)} />
       )}
-    <div ref={feedTopRef} className="flex-1 lg:ml-[300px] lg:mr-[340px] max-w-2xl w-full flex flex-col gap-4 lg:gap-8 min-w-0">
+    <div ref={feedTopRef} className="flex-1 lg:ml-[300px] lg:mr-[340px] w-full flex flex-col gap-4 lg:gap-8 min-w-0 overflow-x-hidden">
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
@@ -430,6 +430,7 @@ export default function Feed() {
               </div>
             )}
 
+            {/* Toolbar row: icons left, Post button right */}
             <div className="flex justify-between items-center mt-2 lg:mt-4 relative">
               <div className="flex gap-2 lg:gap-4 text-on-surface-variant relative">
                 {/* Image/File icon */}
@@ -473,13 +474,13 @@ export default function Feed() {
                 </button>
               </div>
 
-              {/* Category selector */}
-              <div className="flex items-center gap-2">
+              {/* Category select + Post button */}
+              <div className="flex items-center gap-2 min-w-0">
                 <select
                   value={postCategory ?? ''}
                   onChange={e => setPostCategory(e.target.value)}
                   disabled={!postCategory}
-                  className="text-xs lg:text-sm font-bold border border-on-background/20 bg-surface-container text-on-background px-2 py-1 cursor-pointer focus:outline-none focus:border-primary-container disabled:opacity-50"
+                  className="min-w-0 max-w-[110px] lg:max-w-[160px] text-xs font-bold border border-on-background/20 bg-surface-container text-on-background px-2 py-1 cursor-pointer focus:outline-none focus:border-primary-container disabled:opacity-50 truncate"
                 >
                   {!postCategory && <option value="">Loading…</option>}
                   {categories.map(cat => (
@@ -488,7 +489,7 @@ export default function Feed() {
                 </select>
                 <button
                   onClick={handlePost}
-                  className="px-4 lg:px-8 py-1.5 lg:py-2 bg-primary-container text-on-primary-fixed font-bold text-sm lg:text-base border border-on-background/20 lg:neo-border lg:neo-shadow-sm active:scale-95 transition-all"
+                  className="shrink-0 px-4 lg:px-8 py-1.5 lg:py-2 bg-primary-container text-on-primary-fixed font-bold text-sm lg:text-base border border-on-background/20 lg:neo-border lg:neo-shadow-sm active:scale-95 transition-all"
                 >
                   Post
                 </button>
@@ -507,22 +508,20 @@ export default function Feed() {
       </section>
 
       {/* Category Filters */}
-      <div className="w-full min-w-0 overflow-hidden">
-        <div className="flex gap-2 lg:gap-3 overflow-x-auto pb-2 no-scrollbar">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveFilter(cat.id)}
-              className={`shrink-0 whitespace-nowrap px-3 lg:px-5 py-1.5 lg:py-2 text-xs lg:text-sm font-bold border border-on-background/20 lg:neo-border transition-colors ${
-                activeFilter === cat.id
-                  ? 'bg-primary-container text-on-primary-fixed lg:neo-shadow-sm'
-                  : 'bg-surface-container hover:bg-primary-container/20 text-on-background'
-              }`}
-            >
-              {cat.name ?? cat.label}
-            </button>
-          ))}
-        </div>
+      <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        {categories.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => setActiveFilter(cat.id)}
+            className={`flex-none whitespace-nowrap px-4 py-1.5 text-sm font-bold border border-on-background/20 lg:neo-border transition-colors ${
+              activeFilter === cat.id
+                ? 'bg-primary-container text-on-primary-fixed lg:neo-shadow-sm'
+                : 'bg-surface-container hover:bg-primary-container/20 text-on-background'
+            }`}
+          >
+            {cat.name ?? cat.label}
+          </button>
+        ))}
       </div>
 
       {/* Posts */}
