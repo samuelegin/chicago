@@ -141,7 +141,7 @@ export function LeftSidebar() {
     <aside className="fixed left-[max(0px,calc(50%-640px))] top-[88px] h-[calc(100vh-100px)] w-[260px] hidden lg:flex flex-col gap-4 overflow-y-auto">
 
       {/* Nav links */}
-      <nav className="flex flex-col gap-1 border-[4px] border-on-background bg-surface"
+      <nav className="flex flex-col border-[4px] border-on-background bg-surface rounded-none"
         style={{ boxShadow: '4px 4px 0px 0px var(--neo-shadow-color)' }}
       >
         {navLinks.map((link) => (
@@ -151,8 +151,8 @@ export function LeftSidebar() {
             end={link.path === '/'}
             className={({ isActive }) =>
               isActive
-                ? 'flex items-center gap-3 px-5 py-4 bg-primary-container text-on-primary-container font-bold transition-all'
-                : 'flex items-center gap-3 px-5 py-4 text-on-surface hover:bg-primary-container/10 transition-all'
+                ? 'flex items-center gap-3 px-5 py-4 bg-primary-container text-on-primary-container font-bold transition-all border-b-[3px] border-on-background last:border-b-0'
+                : 'flex items-center gap-3 px-5 py-4 text-on-surface hover:bg-primary-container/10 transition-all border-b-[3px] border-on-background/20 last:border-b-0'
             }
           >
             {({ isActive }) => (
@@ -168,7 +168,7 @@ export function LeftSidebar() {
       {/* User card */}
       {user && (
         <div
-          className="border-[4px] border-on-background bg-surface p-4 flex items-center gap-3"
+          className="border-[4px] border-on-background bg-surface p-4 flex items-center gap-3 rounded-none"
         >
           <button
             onClick={() => navigate('/profile')}
