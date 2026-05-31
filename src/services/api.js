@@ -89,12 +89,28 @@ export const connectWallet = (address) =>
   request('/auth/wallet/connect', { method: 'POST', body: JSON.stringify({ address }) })
 
 // ─── FEED / POSTS ─────────────────────────────────────────────
+// Normalize a raw backend post → shape expected by PostCard
+// Backend may return user/profile/authorProfile instead of author
+function normalizePost(p) {
+  if (!p) return p
+  // Build author from whatever the backend sends
+  const src = p.author ?? p.user ?? p.profile ?? p.authorProfile ?? {}
+  const profile = src.profile ?? src ?? {}
+  const author = {
+    id:     src.id     ?? p.userId ?? p.authorId ?? '',
+    name:   profile.fullName  ?? src.fullName  ?? src.name    ?? src.displayName ?? 'Anonymous',
+    handle: profile.username  ? `@${profile.username}` : (src.username ? `@${src.username}` : (src.handle ?? '')),
+    avatar: profile.avatarUrl ?? src.avatarUrl ?? src.avatar  ?? '',
+  }
+  return { ...p, author }
+}
+
 // GET /api/posts — Swagger: limit + opaque cursor string for pagination
 // cursor comes from the previous response (nextCursor / meta.cursor), never a page number
 export const getFeedPosts = (cursor = null) =>
   request(`/posts?limit=30${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`)
     .then(data => ({
-      posts:      Array.isArray(data) ? data : (data.posts ?? data.data ?? []),
+      posts:      (Array.isArray(data) ? data : (data.posts ?? data.data ?? [])).map(normalizePost),
       hasMore:    data.hasMore ?? data.meta?.hasMore ?? false,
       nextCursor: data.nextCursor ?? data.cursor ?? data.meta?.cursor ?? null,
     }))

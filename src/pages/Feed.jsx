@@ -328,6 +328,10 @@ export default function Feed() {
       toast.error('Categories are still loading. Please try again in a moment.')
       return
     }
+    if (poll) {
+      toast.error('Polls are not yet supported by the backend. Coming soon!')
+      return
+    }
     try {
       await apiCreatePost({ content: postContent, categoryId: postCategory, isPublished: true })
       // Always refetch after posting — backend response doesn't include full author shape

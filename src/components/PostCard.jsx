@@ -173,8 +173,10 @@ export default function PostCard({ post, onLike }) {
   const [commentCount] = useState(post.comments ?? 0)
 
   const handleAvatarClick = () => {
-    if (user?.id && post.author.id === user.id) navigate('/profile')
-    else navigate(`/profile/${post.author.id}`)
+    const authorId = post.author?.id
+    if (!authorId) return
+    if (user?.id && authorId === user.id) navigate('/profile')
+    else navigate(`/profile/${authorId}`)
   }
 
   const openComments = () => {
