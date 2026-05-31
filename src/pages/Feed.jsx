@@ -329,13 +329,12 @@ export default function Feed() {
       return
     }
     try {
-      const res = await apiCreatePost({ content: postContent, categoryId: postCategory, isPublished: true })
-      const created = res?.data ?? res
-      if (created?.id) {
-        setPosts(prev => [created, ...prev])
-      } else {
-        getFeedPosts(null).then(data => setPosts(data.posts ?? []))
-      }
+      await apiCreatePost({ content: postContent, categoryId: postCategory, isPublished: true })
+      // Always refetch after posting — backend response doesn't include full author shape
+      const data = await getFeedPosts(null)
+      setPosts(data.posts ?? [])
+      setNextCursor(data.nextCursor ?? null)
+      setHasMore(data.hasMore ?? true)
     } catch (err) {
       toast.error(err?.message || 'Failed to create post. Please try again.')
     }

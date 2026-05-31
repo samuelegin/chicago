@@ -104,11 +104,11 @@ function Comment({ comment, depth = 0 }) {
 
   return (
     <div className={`flex gap-3 ${depth > 0 ? 'ml-8 pl-3 border-l-2 border-primary-container/40' : ''}`}>
-      <img src={comment.author.avatar} alt={comment.author.name} className="w-8 h-8 shrink-0 border border-on-background/20 object-cover" />
+      <img src={comment.author?.avatar || '/favicon.jpg'} alt={comment.author?.name || 'User'} className="w-8 h-8 shrink-0 border border-on-background/20 object-cover" />
       <div className="flex-1 min-w-0">
         <div className="bg-surface-container/60 px-3 py-2 border border-on-background/10">
-          <span className="font-bold text-xs text-on-background">{comment.author.name}</span>
-          <span className="text-[10px] text-on-surface-variant font-mono ml-2">{comment.author.handle}</span>
+          <span className="font-bold text-xs text-on-background">{comment.author?.name || 'Anonymous'}</span>
+          <span className="text-[10px] text-on-surface-variant font-mono ml-2">{comment.author?.handle || ''}</span>
           <p className="text-sm text-on-background mt-1 leading-relaxed">{comment.content}</p>
         </div>
         {/* Actions */}
@@ -135,7 +135,7 @@ function Comment({ comment, depth = 0 }) {
                 value={replyText}
                 onChange={e => setReplyText(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitReply() } }}
-                placeholder={`Reply to ${comment.author.name}…`}
+                placeholder={`Reply to ${comment.author?.name || 'User'}…`}
                 rows={2}
                 className="w-full bg-background border border-on-background/20 focus:border-primary-container focus:outline-none px-3 py-2 text-xs resize-none text-on-surface"
               />
@@ -218,16 +218,16 @@ export default function PostCard({ post, onLike }) {
         <div className="flex gap-2 lg:gap-4">
           <button onClick={handleAvatarClick} className="shrink-0 focus:outline-none group">
             <img
-              src={post.author.avatar} alt={post.author.name}
+              src={post.author?.avatar || '/favicon.jpg'} alt={post.author?.name || 'User'}
               className="w-9 h-9 lg:w-12 lg:h-12 border border-on-background/20 lg:neo-border object-cover group-hover:brightness-90 group-hover:ring-2 group-hover:ring-primary-container transition-all"
             />
           </button>
           <div>
             <div className="flex items-center gap-1 lg:gap-2">
               <button onClick={handleAvatarClick} className="font-bold text-on-background text-sm lg:text-base hover:text-primary-container transition-colors">
-                {post.author.name}
+                {post.author?.name || 'Anonymous'}
               </button>
-              <span className="text-[11px] text-on-surface-variant font-mono">{post.author.handle}</span>
+              <span className="text-[11px] text-on-surface-variant font-mono">{post.author?.handle || ''}</span>
             </div>
             <span className="text-[11px] text-on-surface-variant font-mono">{post.timestamp}</span>
           </div>
