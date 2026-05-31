@@ -507,20 +507,22 @@ export default function Feed() {
       </section>
 
       {/* Category Filters */}
-      <div className="flex gap-2 lg:gap-4 overflow-x-auto pb-2 no-scrollbar">
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setActiveFilter(cat.id)}
-            className={`shrink-0 px-3 lg:px-6 py-1 lg:py-2 text-sm lg:text-base font-bold border border-on-background/20 lg:neo-border transition-colors ${
-              activeFilter === cat.id
-                ? 'bg-primary-container text-on-primary-fixed lg:neo-shadow-sm'
-                : 'bg-surface-container hover:bg-primary-container/20 text-on-background'
-            }`}
-          >
-            {cat.name ?? cat.label}
-          </button>
-        ))}
+      <div className="w-full min-w-0 overflow-hidden">
+        <div className="flex gap-2 lg:gap-3 overflow-x-auto pb-2 no-scrollbar">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setActiveFilter(cat.id)}
+              className={`shrink-0 whitespace-nowrap px-3 lg:px-5 py-1.5 lg:py-2 text-xs lg:text-sm font-bold border border-on-background/20 lg:neo-border transition-colors ${
+                activeFilter === cat.id
+                  ? 'bg-primary-container text-on-primary-fixed lg:neo-shadow-sm'
+                  : 'bg-surface-container hover:bg-primary-container/20 text-on-background'
+              }`}
+            >
+              {cat.name ?? cat.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Posts */}
