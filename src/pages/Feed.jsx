@@ -211,11 +211,10 @@ export default function Feed() {
       .then(([catsData, suggestData, trendData]) => {
         if (catsData.length > 0) {
           setCategories(catsData)
-          // Set the composer default to the first real UUID from the backend
+          // Sync both the active filter tab and the composer dropdown to the first real UUID
+          setActiveFilter(catsData[0].id)
           setPostCategory(catsData[0].id)
         }
-        // If backend returns nothing, DEFAULT_CATEGORIES stay for display only
-        // postCategory remains null and the Post button will be disabled
         setSuggested(suggestData)
         setTrendingTopics(trendData)
       })
@@ -333,9 +332,9 @@ export default function Feed() {
       const res = await apiCreatePost({ content: postContent, categoryId: postCategory, isPublished: true })
       const created = res?.data ?? res
       if (created?.id) {
-        setPosts([created, ...posts])
+        setPosts(prev => [created, ...prev])
       } else {
-        getFeedPosts(activeFilter, 1).then(data => setPosts(data.posts ?? []))
+        getFeedPosts(null).then(data => setPosts(data.posts ?? []))
       }
     } catch (err) {
       toast.error(err?.message || 'Failed to create post. Please try again.')
@@ -508,7 +507,7 @@ export default function Feed() {
         {categories.map((cat) => (
           <button
             key={cat.id}
-            onClick={() => setActiveFilter(cat.id)}
+            onClick={() => { setActiveFilter(cat.id); setPostCategory(cat.id) }}
             className={`flex-none whitespace-nowrap px-4 py-1.5 text-sm font-bold border border-on-background/20 lg:neo-border transition-colors ${
               activeFilter === cat.id
                 ? 'bg-primary-container text-on-primary-fixed lg:neo-shadow-sm'
