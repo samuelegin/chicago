@@ -90,35 +90,58 @@ export const connectWallet = (address) =>
 
 // ─── FEED / POSTS ─────────────────────────────────────────────
 // Normalize a raw backend post → shape expected by PostCard
-// Backend may return user/profile/authorProfile instead of author
+// Confirmed response: { success, data: [...posts], meta: { hasNextPage, nextCursor } }
+// Each post has: id, content, userId, categoryId, isPublished, createdAt
+// Author is nested as p.user, p.profile, p.author, or p.authorProfile
 function normalizePost(p) {
   if (!p) return p
-  // Build author from whatever the backend sends
+
+  // Author: try every possible nesting the backend might use
   const src = p.author ?? p.user ?? p.profile ?? p.authorProfile ?? {}
-  const profile = src.profile ?? src ?? {}
+  const prof = src.profile ?? src ?? {}
   const author = {
-    id:     src.id     ?? p.userId ?? p.authorId ?? '',
-    name:   profile.fullName  ?? src.fullName  ?? src.name    ?? src.displayName ?? 'Anonymous',
-    handle: profile.username  ? `@${profile.username}` : (src.username ? `@${src.username}` : (src.handle ?? '')),
-    avatar: profile.avatarUrl ?? src.avatarUrl ?? src.avatar  ?? '',
+    id:     src.id      ?? p.userId   ?? p.authorId ?? '',
+    name:   prof.fullName ?? src.fullName ?? src.name ?? src.displayName ?? 'Anonymous',
+    handle: prof.username  ? `@${prof.username}`
+          : src.username   ? `@${src.username}`
+          : (src.handle    ?? ''),
+    avatar: prof.avatarUrl ?? src.avatarUrl ?? src.avatar ?? '',
   }
-  return { ...p, author }
+
+  // Likes: backend may use _count.likes, likeCount, likesCount, or likes (number)
+  const likes = p._count?.likes ?? p.likeCount ?? p.likesCount
+                ?? (typeof p.likes === 'number' ? p.likes : 0)
+
+  // Comments: same pattern
+  const comments = p._count?.comments ?? p.commentCount ?? p.commentsCount
+                   ?? (typeof p.comments === 'number' ? p.comments : 0)
+
+  // Timestamp
+  const timestamp = p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric'
+  }) : ''
+
+  return { ...p, author, likes, comments, timestamp }
 }
 
-// GET /api/posts — Swagger: limit + opaque cursor string for pagination
-// cursor comes from the previous response (nextCursor / meta.cursor), never a page number
+// GET /api/posts — confirmed shape: { success, data, meta: { hasNextPage, nextCursor } }
 export const getFeedPosts = (cursor = null) =>
   request(`/posts?limit=30${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`)
-    .then(data => ({
-      posts:      (Array.isArray(data) ? data : (data.posts ?? data.data ?? [])).map(normalizePost),
-      hasMore:    data.hasMore ?? data.meta?.hasMore ?? false,
-      nextCursor: data.nextCursor ?? data.cursor ?? data.meta?.cursor ?? null,
-    }))
+    .then(data => {
+      const raw = Array.isArray(data) ? data
+                : Array.isArray(data.data) ? data.data
+                : (data.posts ?? [])
+      return {
+        posts:      raw.map(normalizePost),
+        hasMore:    data.meta?.hasNextPage ?? data.hasMore ?? data.meta?.hasMore ?? false,
+        nextCursor: data.meta?.nextCursor  ?? data.nextCursor ?? data.cursor ?? null,
+      }
+    })
 
-// GET /categories
+// GET /categories — same { success, data } envelope
 export const getFeedCategories = () =>
   request('/categories')
-    .then(data => Array.isArray(data) ? data : (data.categories ?? data.data ?? []))
+    .then(data => Array.isArray(data) ? data : (data.data ?? data.categories ?? []))
     .catch(() => [])
 
 // POST /categories
@@ -140,18 +163,40 @@ export const unlikePost = (postId) =>
 export const getTrendingTopics = () => Promise.resolve([])
 
 // ─── COMMENTS ─────────────────────────────────────────────────
+// Normalize comment author shape
+function normalizeComment(c) {
+  if (!c) return c
+  const src = c.author ?? c.user ?? c.profile ?? {}
+  const prof = src.profile ?? src ?? {}
+  const author = {
+    id:     src.id ?? c.userId ?? '',
+    name:   prof.fullName ?? src.fullName ?? src.name ?? src.displayName ?? 'Anonymous',
+    handle: prof.username ? `@${prof.username}` : (src.username ? `@${src.username}` : (src.handle ?? '')),
+    avatar: prof.avatarUrl ?? src.avatarUrl ?? src.avatar ?? '',
+  }
+  const timestamp = c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric'
+  }) : ''
+  return { ...c, author, timestamp }
+}
+
 // GET /comment?postId=  (Swagger: GET /api/comment)
 export const getComments = (postId) =>
   request(`/comment?postId=${postId}`)
-    .then(data => Array.isArray(data) ? data : (data.comments ?? []))
+    .then(data => {
+      const raw = Array.isArray(data) ? data
+                : Array.isArray(data.data) ? data.data
+                : (data.comments ?? [])
+      return raw.map(normalizeComment)
+    })
 
 // POST /comment  (Swagger: POST /api/comment)
 export const createComment = (postId, content) =>
   request('/comment', { method: 'POST', body: JSON.stringify({ postId, content }) })
 
-// Replies via /comment with parentId
+// Replies via /comment with parentCommentId (Swagger field name)
 export const createReply = (postId, commentId, content) =>
-  request('/comment', { method: 'POST', body: JSON.stringify({ postId, parentId: commentId, content }) })
+  request('/comment', { method: 'POST', body: JSON.stringify({ postId, parentCommentId: commentId, content }) })
 
 // ─── USERS ────────────────────────────────────────────────────
 export const getUser = (userId) =>

@@ -275,7 +275,7 @@ export default function Feed() {
     setPosts((prev) =>
       prev.map((p) =>
         p.id === postId
-          ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 }
+          ? { ...p, liked: !p.liked, likes: p.liked ? (Number(p.likes) || 0) - 1 : (Number(p.likes) || 0) + 1 }
           : p
       )
     )

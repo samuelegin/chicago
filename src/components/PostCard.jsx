@@ -274,7 +274,7 @@ export default function PostCard({ post, onLike }) {
         <div className="flex items-center gap-5 lg:gap-8">
           <button className="flex items-center gap-1.5 group transition-all" onClick={() => onLike(post.id)}>
             <Icon name="favorite" filled={post.liked} className={`text-[18px] lg:text-[24px] text-on-surface-variant group-hover:text-error transition-colors ${post.liked ? 'text-error' : ''}`} />
-            <span className="text-[11px] lg:text-[12px] text-on-surface-variant">{post.likes >= 1000 ? `${(post.likes/1000).toFixed(1)}k` : post.likes}</span>
+            <span className="text-[11px] lg:text-[12px] text-on-surface-variant">{(() => { const n = Number(post.likes) || 0; return n >= 1000 ? `${(n/1000).toFixed(1)}k` : n || '' })()} </span>
           </button>
           <button
             className="flex items-center gap-1.5 group transition-all"
@@ -290,7 +290,7 @@ export default function PostCard({ post, onLike }) {
           onClick={handleShare}
         >
           <Icon name="share" className="text-[18px] lg:text-[24px] text-on-surface-variant group-hover:text-primary transition-colors" />
-          <span className="text-[11px] lg:text-[12px] text-on-surface-variant">{post.shares}</span>
+          <span className="text-[11px] lg:text-[12px] text-on-surface-variant">{post.shares || ''}</span>
         </button>
       </div>
     </article>
